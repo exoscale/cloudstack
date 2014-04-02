@@ -19,18 +19,17 @@ package org.apache.cloudstack.hypervisor.xenserver;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import com.xensource.xenapi.Connection;
+import com.xensource.xenapi.Event;
+import com.xensource.xenapi.EventBatch;
 import com.xensource.xenapi.Host;
 import com.xensource.xenapi.Pool;
 import com.xensource.xenapi.Types.XenAPIException;
 import com.xensource.xenapi.VM;
-
-import com.xensource.xenapi.Event;
 import com.xensource.xenapi.Task;
 import com.xensource.xenapi.Types;
 import org.apache.xmlrpc.XmlRpcException;
@@ -113,10 +112,10 @@ public class XenServerResourceNewBase extends XenServer620SP1Resource {
         String token = "";
         Double t = new Double(timeout / 1000);
         while (true) {
-            Map<?, ?> map = Event.properFrom(c, classes, token, t);
-            token = (String)map.get("token");
+            EventBatch map = Event.from(c, classes, token, t);
+            token = map.token;
             @SuppressWarnings("unchecked")
-            Set<Event.Record> events = (Set<Event.Record>)map.get("events");
+            Set<Event.Record> events = map.events;
             if (events.size() == 0) {
                 String msg = "No event for task " + task.toWireString();
                 s_logger.warn(msg);
@@ -185,17 +184,17 @@ public class XenServerResourceNewBase extends XenServer620SP1Resource {
             while (!_stop) {
                 try {
                     Connection conn = getConnection();
-                    Map<?, ?> results;
+                    EventBatch results;
                     try {
-                        results = Event.properFrom(conn, _classes, _token, new Double(30));
+                        results = Event.from(conn, _classes, _token, new Double(30));
                     } catch (Exception e) {
                         s_logger.error("Retrying the waiting on VM events due to: ", e);
                         continue;
                     }
 
-                    _token = (String)results.get("token");
+                    _token = results.token;
                     @SuppressWarnings("unchecked")
-                    Set<Event.Record> events = (Set<Event.Record>)results.get("events");
+                    Set<Event.Record> events = results.events;
                     for (Event.Record event : events) {
                         try {
                             if (!(event.snapshot instanceof VM.Record)) {
@@ -322,14 +321,14 @@ public class XenServerResourceNewBase extends XenServer620SP1Resource {
             if (_isMaster) {
                 // Throw away the initial set of events because they're history
                 Connection conn = getConnection();
-                Map<?, ?> results;
+                EventBatch results;
                 try {
-                    results = Event.properFrom(conn, _classes, _token, new Double(30));
+                    results = Event.from(conn, _classes, _token, new Double(30));
                 } catch (Exception e) {
                     s_logger.error("Retrying the waiting on VM events due to: ", e);
                     throw new CloudRuntimeException("Unable to start a listener thread to listen to VM events", e);
                 }
-                _token = (String)results.get("token");
+                _token = results.token;
                 s_logger.debug("Starting the event listener thread for " + _host.uuid);
                 super.start();
             }
