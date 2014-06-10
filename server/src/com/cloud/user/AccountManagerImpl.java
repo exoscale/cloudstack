@@ -969,7 +969,7 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
 
         checkAccess(CallContext.current().getCallingAccount(), domain);
 
-        Account account = _accountDao.findEnabledAccount(accountName, domainId);
+        Account account = _accountDao.findActiveAccount(accountName, domainId);
         if (account == null || account.getType() == Account.ACCOUNT_TYPE_PROJECT) {
             throw new InvalidParameterValueException("Unable to find account " + accountName + " in domain id=" + domainId + " to create user");
         }
