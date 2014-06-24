@@ -27,12 +27,25 @@ from optparse import OptionParser, OptionGroup, OptParseError, BadOptionError, O
 import re
 import traceback
 import libvirt
+from contextlib import contextmanager
+from posix_ipc import Semaphore, O_CREAT, BusyError
 
 logpath = "/var/run/cloud/"        # FIXME: Logs should reside in /var/log/cloud
 iptables = Command("iptables")
 bash = Command("/bin/bash")
 ebtablessave = Command("ebtables-save")
 ebtables = Command("ebtables")
+
+@contextmanager
+def lock(name, timeout=20):
+    s = Semaphore(name, flags=O_CREAT, initial_value=0)
+    s.acquire(timeout)
+    try:
+        yield
+    finally:
+        s.release()
+        s.close()
+
 def execute(cmd):
     logging.debug(cmd)
     return bash("-c", cmd).stdout
@@ -169,40 +182,61 @@ def destroy_network_rules_for_vm(vm_name, vif=None):
 
     try:
         if vmchain_default != None:
-            execute("iptables -F " + vmchain_default)
+            with lock("iptables"):
+                execute("iptables -F " + vmchain_default)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete chain " + vmchain_default)
 
     try:
         if vmchain_default != None:
-            execute("iptables -X " + vmchain_default)
+            with lock("iptables"):
+                execute("iptables -X " + vmchain_default)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete chain " + vmchain_default)
 
     try:
-        execute("iptables -F " + vmchain)
+        with lock("iptables"):
+            execute("iptables -F " + vmchain)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete chain " + vmchain)
 
     try:
-        execute("iptables -X " + vmchain)
+        with lock("iptables"):
+            execute("iptables -X " + vmchain)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete chain " + vmchain)
 
 
     try:
-        execute("iptables -F " + vmchain_egress)
+        with lock("iptables"):
+            execute("iptables -F " + vmchain_egress)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete chain " + vmchain_egress)
 
     try:
-        execute("iptables -X " + vmchain_egress)
+        with lock("iptables"):
+            execute("iptables -X " + vmchain_egress)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete chain " + vmchain_egress)
 
     try:
-        execute("ipset -F " + vm_name)
-        execute("ipset -X " + vm_name)
+        with lock("ipset"):
+            execute("ipset -F " + vm_name)
+            execute("ipset -X " + vm_name)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Ignoring failure to delete ipset " + vmchain)
 
@@ -211,7 +245,10 @@ def destroy_network_rules_for_vm(vm_name, vif=None):
             dnats = execute("""iptables -t nat -S | awk '/%s/ { sub(/-A/, "-D", $1) ; print }'""" % vif ).split("\n")
             for dnat in dnats:
                 try:
-                    execute("iptables -t nat " + dnat)
+                    with lock("iptables"):
+                        execute("iptables -t nat " + dnat)
+                except BusyError:
+                    logging.exception("Oups timeout occurred on the lock")
                 except:
                     logging.debug("Ignoring failure to delete dnat: " + dnat)
         except:
@@ -247,14 +284,20 @@ def destroy_ebtables_rules(vm_name, vif):
 
     for cmd in delcmds:
         try:
-            execute("ebtables -t nat " + cmd)
+            with lock("ebtables"):
+                execute("ebtables -t nat " + cmd)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
         except:
             logging.debug("Ignoring failure to delete ebtables rules for vm " + vm_name)
     chains = [vm_name+"-in", vm_name+"-out", vm_name+"-in-ips", vm_name+"-out-ips"]
     for chain in chains:
         try:
-            execute("ebtables -t nat -F " + chain)
-            execute("ebtables -t nat -X " + chain)
+            with lock("ebtables"):
+                execute("ebtables -t nat -F " + chain)
+                execute("ebtables -t nat -X " + chain)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
         except:
             logging.debug("Ignoring failure to delete ebtables chain for vm " + vm_name)
 
@@ -266,42 +309,58 @@ def default_ebtables_rules(vm_name, vm_ip, vm_mac, vif):
 
     for chain in [vmchain_in, vmchain_out, vmchain_in_ips, vmchain_out_ips]:
         try:
-            execute("ebtables -t nat -N " + chain)
+            with lock("ebtables"):
+                execute("ebtables -t nat -N " + chain)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
         except:
-            execute("ebtables -t nat -F " + chain)
+            try:
+                with lock("ebtables"):
+                    execute("ebtables -t nat -F " + chain)
+            except BusyError:
+                logging.exception("Oups timeout occurred on the lock")
 
     try:
-        # -s ! 52:54:0:56:44:32 -j DROP
-        execute("ebtables -t nat -A PREROUTING -i " + vif + " -j " + vmchain_in)
-        execute("ebtables -t nat -A POSTROUTING -o " + vif + " -j " + vmchain_out)
-        execute("ebtables -t nat -A " + vmchain_in_ips + " -j DROP")
-        execute("ebtables -t nat -A " + vmchain_out_ips + " -j DROP")
+        with lock("ebtables"):
+            # -s ! 52:54:0:56:44:32 -j DROP
+            execute("ebtables -t nat -A PREROUTING -i " + vif + " -j " + vmchain_in)
+            execute("ebtables -t nat -A POSTROUTING -o " + vif + " -j " + vmchain_out)
+            execute("ebtables -t nat -A " + vmchain_in_ips + " -j DROP")
+            execute("ebtables -t nat -A " + vmchain_out_ips + " -j DROP")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Failed to program default rules")
         return 'false'
 
     try:
-        execute("ebtables -t nat -A " + vmchain_in + " -s ! " + vm_mac + " -j DROP")
-        execute("ebtables -t nat -A " + vmchain_in + " -p ARP -s ! " + vm_mac + " -j DROP")
-        execute("ebtables -t nat -A " + vmchain_in + " -p ARP --arp-mac-src ! " + vm_mac + " -j DROP")
-        if vm_ip is not None:
-            execute("ebtables -t nat -A " + vmchain_in + " -p ARP -j " + vmchain_in_ips)
-            execute("ebtables -t nat -I " + vmchain_in_ips + " -p ARP --arp-ip-src " + vm_ip + " -j RETURN")
-        execute("ebtables -t nat -A " + vmchain_in + " -p ARP --arp-op Request -j ACCEPT")
-        execute("ebtables -t nat -A " + vmchain_in + " -p ARP --arp-op Reply -j ACCEPT")
-        execute("ebtables -t nat -A " + vmchain_in + " -p ARP -j DROP")
+        with lock("ebtables"):
+            execute("ebtables -t nat -A " + vmchain_in + " -s ! " + vm_mac + " -j DROP")
+            execute("ebtables -t nat -A " + vmchain_in + " -p ARP -s ! " + vm_mac + " -j DROP")
+            execute("ebtables -t nat -A " + vmchain_in + " -p ARP --arp-mac-src ! " + vm_mac + " -j DROP")
+            if vm_ip is not None:
+                execute("ebtables -t nat -A " + vmchain_in + " -p ARP -j " + vmchain_in_ips)
+                execute("ebtables -t nat -I " + vmchain_in_ips + " -p ARP --arp-ip-src " + vm_ip + " -j RETURN")
+            execute("ebtables -t nat -A " + vmchain_in + " -p ARP --arp-op Request -j ACCEPT")
+            execute("ebtables -t nat -A " + vmchain_in + " -p ARP --arp-op Reply -j ACCEPT")
+            execute("ebtables -t nat -A " + vmchain_in + " -p ARP -j DROP")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.exception("Failed to program default ebtables IN rules")
         return 'false'
 
     try:
-        execute("ebtables -t nat -A " + vmchain_out + " -p ARP --arp-op Reply --arp-mac-dst ! " + vm_mac + " -j DROP")
-        if vm_ip is not None:
-            execute("ebtables -t nat -A " + vmchain_out + " -p ARP -j " + vmchain_out_ips )
-            execute("ebtables -t nat -I " + vmchain_out_ips + " -p ARP --arp-ip-dst " + vm_ip + " -j RETURN")
-        execute("ebtables -t nat -A " + vmchain_out + " -p ARP --arp-op Request -j ACCEPT")
-        execute("ebtables -t nat -A " + vmchain_out + " -p ARP --arp-op Reply -j ACCEPT")
-        execute("ebtables -t nat -A " + vmchain_out + " -p ARP -j DROP")
+        with lock("ebtables"):
+            execute("ebtables -t nat -A " + vmchain_out + " -p ARP --arp-op Reply --arp-mac-dst ! " + vm_mac + " -j DROP")
+            if vm_ip is not None:
+                execute("ebtables -t nat -A " + vmchain_out + " -p ARP -j " + vmchain_out_ips )
+                execute("ebtables -t nat -I " + vmchain_out_ips + " -p ARP --arp-ip-dst " + vm_ip + " -j RETURN")
+            execute("ebtables -t nat -A " + vmchain_out + " -p ARP --arp-op Request -j ACCEPT")
+            execute("ebtables -t nat -A " + vmchain_out + " -p ARP --arp-op Reply -j ACCEPT")
+            execute("ebtables -t nat -A " + vmchain_out + " -p ARP -j DROP")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Failed to program default ebtables OUT rules")
         return 'false'
@@ -315,9 +374,14 @@ def default_network_rules_systemvm(vm_name, localbrname):
     delete_rules_for_vm_in_bridge_firewall_chain(vm_name)
 
     try:
-        execute("iptables -N " + vmchain)
+        with lock("iptables"):
+            execute("iptables -N " + vmchain)
     except:
-        execute("iptables -F " + vmchain)
+        try:
+            with lock("iptables"):
+                execute("iptables -F " + vmchain)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     for bridge in bridges:
         if bridge != localbrname:
@@ -327,14 +391,20 @@ def default_network_rules_systemvm(vm_name, localbrname):
             vifs = getVifsForBridge(vm_name, bridge)
             for vif in vifs:
                 try:
-                    execute("iptables -A " + brfw + "-OUT" + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -j " + vmchain)
-                    execute("iptables -A " + brfw + "-IN" + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -j " + vmchain)
-                    execute("iptables -A " + vmchain + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -j RETURN")
+                    with lock("iptables"):
+                        execute("iptables -A " + brfw + "-OUT" + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -j " + vmchain)
+                        execute("iptables -A " + brfw + "-IN" + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -j " + vmchain)
+                        execute("iptables -A " + vmchain + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -j RETURN")
+                except BusyError:
+                    logging.exception("Oups timeout occurred on the lock")
                 except:
                     logging.debug("Failed to program default rules")
                     return 'false'
-
-    execute("iptables -A " + vmchain + " -j ACCEPT")
+    try:
+        with lock("iptables"):
+            execute("iptables -A " + vmchain + " -j ACCEPT")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
 
     if write_rule_log_for_vm(vm_name, '-1', '_ignore_', domid, '_initial_', '-1') == False:
         logging.debug("Failed to log default network rules for systemvm, ignoring")
@@ -375,13 +445,20 @@ def write_secip_log_for_vm (vmName, secIps, vmId):
 def create_ipset_forvm (ipsetname):
     result = True
     try:
-        logging.debug("Creating ipset chain .... " + ipsetname)
-        execute("ipset -F " + ipsetname)
-        execute("ipset -X " + ipsetname)
-        execute("ipset -N " + ipsetname + " iphash")
+        with lock("ipset"):
+            logging.debug("Creating ipset chain .... " + ipsetname)
+            execute("ipset -F " + ipsetname)
+            execute("ipset -X " + ipsetname)
+            execute("ipset -N " + ipsetname + " iphash")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("ipset chain not exists creating.... " + ipsetname)
-        execute("ipset -N " + ipsetname + " iphash")
+        try:
+            with lock("ipset"):
+                execute("ipset -N " + ipsetname + " iphash")
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     return result
 
@@ -390,7 +467,10 @@ def add_to_ipset(ipsetname, ips, action):
     for ip in ips:
         try:
             logging.debug("vm ip " + ip)
-            execute("ipset " + action + " " + ipsetname + " " + ip)
+            with lock("ipset"):
+                execute("ipset " + action + " " + ipsetname + " " + ip)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
         except:
             logging.debug("vm ip already in ip set " + ip)
             continue
@@ -418,8 +498,11 @@ def ebtables_rules_vmip (vmname, ips, action):
     for ip in ips:
         logging.debug("ip = "+ip)
         try:
-            execute("ebtables -t nat -I " + vmchain_inips + " -p ARP --arp-ip-src " + ip + " -j RETURN")
-            execute("ebtables -t nat -I " + vmchain_outips + " -p ARP --arp-ip-dst " + ip + " -j RETURN")
+            with lock("ebtables"):
+                execute("ebtables -t nat -I " + vmchain_inips + " -p ARP --arp-ip-src " + ip + " -j RETURN")
+                execute("ebtables -t nat -I " + vmchain_outips + " -p ARP --arp-ip-dst " + ip + " -j RETURN")
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
         except:
             logging.debug("Failed to program ebtables rules for secondary ip "+ ip)
         continue
@@ -439,19 +522,38 @@ def default_network_rules(vm_name, vm_id, vm_ip, vm_mac, vif, brname, sec_ips):
     destroy_ebtables_rules(vmName, vif)
 
     try:
-        execute("iptables -N " + vmchain)
+        with lock("iptables"):
+            execute("iptables -N " + vmchain)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
-        execute("iptables -F " + vmchain)
+        try:
+            with lock("iptables"):
+                execute("iptables -F " + vmchain)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     try:
-        execute("iptables -N " + vmchain_egress)
+        with lock("iptables"):
+            execute("iptables -N " + vmchain_egress)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
-        execute("iptables -F " + vmchain_egress)
+        try:
+            with lock("iptables"):
+                execute("iptables -F " + vmchain_egress)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     try:
-        execute("iptables -N " + vmchain_default)
+        with lock("iptables"):
+            execute("iptables -N " + vmchain_default)
     except:
-        execute("iptables -F " + vmchain_default)
+        try:
+            with lock("iptables"):
+                execute("iptables -F " + vmchain_default)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     action = "-A"
     vmipsetName = vm_name
@@ -479,19 +581,22 @@ def default_network_rules(vm_name, vm_id, vm_ip, vm_mac, vif, brname, sec_ips):
             logging.debug("Failed to log default network rules, ignoring")
 
     try:
-        execute("iptables -A " + brfw + "-OUT" + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -j " + vmchain_default)
-        execute("iptables -A " + brfw + "-IN" + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -j " + vmchain_default)
-        execute("iptables -A " + vmchain_default + " -m state --state RELATED,ESTABLISHED -j ACCEPT")
-        #allow dhcp
-        execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -p udp --dport 67 --sport 68 -j ACCEPT")
-        execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -p udp --dport 68 --sport 67  -j ACCEPT")
+        with lock("iptables"):
+            execute("iptables -A " + brfw + "-OUT" + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -j " + vmchain_default)
+            execute("iptables -A " + brfw + "-IN" + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -j " + vmchain_default)
+            execute("iptables -A " + vmchain_default + " -m state --state RELATED,ESTABLISHED -j ACCEPT")
+            #allow dhcp
+            execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -p udp --dport 67 --sport 68 -j ACCEPT")
+            execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -p udp --dport 68 --sport 67  -j ACCEPT")
 
-        #don't let vm spoof its ip address
-        if vm_ip is not None:
-            execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -m set --set " + vmipsetName + " src -p udp --dport 53  -j RETURN ")
-            execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -m set --set " + vmipsetName + " src -j " + vmchain_egress)
-        execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -j " + vmchain)
-        execute("iptables -A " + vmchain + " -j DROP")
+            #don't let vm spoof its ip address
+            if vm_ip is not None:
+                execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -m set --set " + vmipsetName + " src -p udp --dport 53  -j RETURN ")
+                execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-in " + vif + " -m set --set " + vmipsetName + " src -j " + vmchain_egress)
+            execute("iptables -A " + vmchain_default + " -m physdev --physdev-is-bridged --physdev-out " + vif + " -j " + vmchain)
+            execute("iptables -A " + vmchain + " -j DROP")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         logging.debug("Failed to program default rules for vm " + vm_name)
         return 'false'
@@ -513,25 +618,40 @@ def post_default_network_rules(vm_name, vm_id, vm_ip, vm_mac, vif, brname, dhcpS
     vmchain_out = vm_name + "-out"
     domID = getvmId(vm_name)
     try:
-        execute("iptables -I " + vmchain_default + " 4 -m physdev --physdev-is-bridged --physdev-in " + vif + " --source " + vm_ip + " -j ACCEPT")
+        with lock("iptables"):
+            execute("iptables -I " + vmchain_default + " 4 -m physdev --physdev-is-bridged --physdev-in " + vif + " --source " + vm_ip + " -j ACCEPT")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         pass
     try:
-        execute("iptables -t nat -A PREROUTING -p tcp -m physdev --physdev-in " + vif + " -m tcp --dport 80 -d " + dhcpSvr + " -j DNAT --to-destination " + hostIp + ":80")
+        with lock("iptables"):
+            execute("iptables -t nat -A PREROUTING -p tcp -m physdev --physdev-in " + vif + " -m tcp --dport 80 -d " + dhcpSvr + " -j DNAT --to-destination " + hostIp + ":80")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         pass
 
     try:
-        execute("ebtables -t nat -I " + vmchain_in + " -p IPv4 --ip-protocol tcp --ip-destination-port 80 --ip-dst " + dhcpSvr + " -j dnat --to-destination " + hostMacAddr)
+        with lock("iptables"):
+            execute("ebtables -t nat -I " + vmchain_in + " -p IPv4 --ip-protocol tcp --ip-destination-port 80 --ip-dst " + dhcpSvr + " -j dnat --to-destination " + hostMacAddr)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         pass
 
     try:
-        execute("ebtables -t nat -I " + vmchain_in + " 4 -p ARP --arp-ip-src ! " + vm_ip + " -j DROP")
+        with lock("iptables"):
+            execute("ebtables -t nat -I " + vmchain_in + " 4 -p ARP --arp-ip-src ! " + vm_ip + " -j DROP")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         pass
     try:
-        execute("ebtables -t nat -I " + vmchain_out + " 2 -p ARP --arp-ip-dst ! " + vm_ip + " -j DROP")
+        with lock("iptables"):
+            execute("ebtables -t nat -I " + vmchain_out + " 2 -p ARP --arp-ip-dst ! " + vm_ip + " -j DROP")
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
         pass
     if write_rule_log_for_vm(vm_name, vm_id, vm_ip, domID, '_initial_', '-1') == False:
@@ -550,7 +670,8 @@ def delete_rules_for_vm_in_bridge_firewall_chain(vmName):
         if cmd == "":
             continue
         try:
-            execute("iptables " + cmd)
+            with lock("iptables"):
+                execute("iptables " + cmd)
         except:
               logging.exception("Ignoring failure to delete rules for vm " + vmName)
 
@@ -634,8 +755,12 @@ def network_rules_for_rebooted_vm(vmName):
     vifs = getVifs(vmName)
     logging.debug(vifs, brName)
     for v in vifs:
-        execute("iptables -A " + getBrfw(brName) + "-IN " + " -m physdev --physdev-is-bridged --physdev-in " + v + " -j "+ vmchain_default)
-        execute("iptables -A " + getBrfw(brName) + "-OUT " + " -m physdev --physdev-is-bridged --physdev-out " + v + " -j "+ vmchain_default)
+        try:
+            with lock("iptables"):
+                execute("iptables -A " + getBrfw(brName) + "-IN " + " -m physdev --physdev-is-bridged --physdev-in " + v + " -j "+ vmchain_default)
+                execute("iptables -A " + getBrfw(brName) + "-OUT " + " -m physdev --physdev-is-bridged --physdev-out " + v + " -j "+ vmchain_default)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     #change antispoof rule in vmchain
     try:
@@ -652,7 +777,10 @@ def network_rules_for_rebooted_vm(vmName):
 
         for ipt in ipts:
             try:
-                execute(ipt)
+                with lock("iptables"):
+                    execute(ipt)
+            except BusyError:
+                logging.exception("Oups timeout occurred on the lock")
             except:
                 logging.debug("Failed to rewrite antispoofing rules for vm " + vm_name)
     except:
@@ -810,10 +938,13 @@ def add_network_rules(vm_name, vm_id, vm_ip, signature, seqno, vmMac, rules, vif
 
     logging.debug("    programming network rules for IP: " + vm_ip + " vmname=" + vm_name)
     try:
-      vmchain = vm_name
-      execute("iptables -F " + vmchain)
-      egress_vmchain = egress_chain_name(vm_name)
-      execute("iptables -F " + egress_vmchain)
+      with lock("iptables"):
+          vmchain = vm_name
+          execute("iptables -F " + vmchain)
+          egress_vmchain = egress_chain_name(vm_name)
+          execute("iptables -F " + egress_vmchain)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
     except:
       logging.debug("Error flushing iptables rules for " + vmchain + ". Presuming firewall rules deleted, re-initializing." )
       default_network_rules(vm_name, vm_id, vm_ip, vmMac, vif, brname)
@@ -848,10 +979,18 @@ def add_network_rules(vm_name, vm_id, vm_ip, signature, seqno, vmMac, rules, vif
         if ips:
             if protocol == 'all':
                 for ip in ips:
-                    execute("iptables -I " + vmchain + " -m state --state NEW " + direction + " " + ip + " -j "+action)
+                    try:
+                        with lock("iptables"):
+                            execute("iptables -I " + vmchain + " -m state --state NEW " + direction + " " + ip + " -j "+action)
+                    except BusyError:
+                        logging.exception("Oups timeout occurred on the lock")
             elif protocol != 'icmp':
                 for ip in ips:
-                    execute("iptables -I " + vmchain + " -p " + protocol + " -m " + protocol + " --dport " + range + " -m state --state NEW " + direction + " " + ip + " -j "+ action)
+                    try:
+                        with lock("iptables"):
+                            execute("iptables -I " + vmchain + " -p " + protocol + " -m " + protocol + " --dport " + range + " -m state --state NEW " + direction + " " + ip + " -j "+ action)
+                    except BusyError:
+                        logging.exception("Oups timeout occurred on the lock")
             else:
                 range = start + "/" + end
                 if start == "-1":
@@ -861,24 +1000,44 @@ def add_network_rules(vm_name, vm_id, vm_ip, signature, seqno, vmMac, rules, vif
 
         if allow_any and protocol != 'all':
             if protocol != 'icmp':
-                execute("iptables -I " + vmchain + " -p " + protocol + " -m " + protocol + " --dport " + range + " -m state --state NEW -j "+ action)
+                try:
+                    with lock("iptables"):
+                        execute("iptables -I " + vmchain + " -p " + protocol + " -m " + protocol + " --dport " + range + " -m state --state NEW -j "+ action)
+                except BusyError:
+                    logging.exception("Oups timeout occurred on the lock")
             else:
                 range = start + "/" + end
                 if start == "-1":
                     range = "any"
-                execute("iptables -I " + vmchain + " -p icmp --icmp-type " + range + " -j "+action)
+                try:
+                    with lock("iptables"):
+                        execute("iptables -I " + vmchain + " -p icmp --icmp-type " + range + " -j "+action)
+                except BusyError:
+                    logging.exception("Oups timeout occurred on the lock")
 
     egress_vmchain = egress_chain_name(vm_name)
     if egressrule == 0 :
         iptables = "iptables -A " + egress_vmchain + " -j RETURN"
-        execute(iptables)
+        try:
+            with lock("iptables"):
+                execute(iptables)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
     else:
         iptables = "iptables -A " + egress_vmchain + " -j DROP"
-        execute(iptables)
+        try:
+            with lock("iptables"):
+                execute(iptables)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     vmchain = vm_name
     iptables = "iptables -A " + vmchain + " -j DROP"
-    execute(iptables)
+    try:
+        with lock("iptables"):
+            execute(iptables)
+    except BusyError:
+        logging.exception("Oups timeout occurred on the lock")
 
     if write_rule_log_for_vm(vmName, vm_id, vm_ip, domId, signature, seqno) == False:
         return 'false'
@@ -973,38 +1132,54 @@ def addFWFramework(brname):
     try:
         execute("iptables -L " + brfw)
     except:
-        execute("iptables -N " + brfw)
+        try:
+            with lock("iptables"):
+                execute("iptables -N " + brfw)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     brfwout = brfw + "-OUT"
     try:
         execute("iptables -L " + brfwout)
     except:
-        execute("iptables -N " + brfwout)
+        try:
+            with lock("iptables"):
+                execute("iptables -N " + brfwout)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     brfwin = brfw + "-IN"
     try:
         execute("iptables -L " + brfwin)
     except:
-        execute("iptables -N " + brfwin)
+        try:
+            with lock("iptables"):
+                execute("iptables -N " + brfwin)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
 
     try:
-        refs = execute("""iptables -n -L %s | awk '/%s(.*)references/ {gsub(/\(/, "") ;print $3}'""" % (brfw,brfw)).strip()
-        if refs == "0":
-            execute("iptables -I FORWARD -i " + brname + " -j DROP")
-            execute("iptables -I FORWARD -o " + brname + " -j DROP")
-            execute("iptables -I FORWARD -i " + brname + " -m physdev --physdev-is-bridged -j " + brfw)
-            execute("iptables -I FORWARD -o " + brname + " -m physdev --physdev-is-bridged -j " + brfw)
-            phydev = execute("brctl show | awk '/^%s[ \t]/ {print $4}'" % brname ).strip()
-            execute("iptables -A " + brfw + " -m state --state RELATED,ESTABLISHED -j ACCEPT")
-            execute("iptables -A " + brfw + " -m physdev --physdev-is-bridged --physdev-is-in -j " + brfwin)
-            execute("iptables -A " + brfw + " -m physdev --physdev-is-bridged --physdev-is-out -j " + brfwout)
-            execute("iptables -A " + brfw + " -m physdev --physdev-is-bridged --physdev-out " + phydev + " -j ACCEPT")
+        with lock("iptables"):
+            refs = execute("""iptables -n -L %s | awk '/%s(.*)references/ {gsub(/\(/, "") ;print $3}'""" % (brfw,brfw)).strip()
+            if refs == "0":
+                execute("iptables -I FORWARD -i " + brname + " -j DROP")
+                execute("iptables -I FORWARD -o " + brname + " -j DROP")
+                execute("iptables -I FORWARD -i " + brname + " -m physdev --physdev-is-bridged -j " + brfw)
+                execute("iptables -I FORWARD -o " + brname + " -m physdev --physdev-is-bridged -j " + brfw)
+                phydev = execute("brctl show | awk '/^%s[ \t]/ {print $4}'" % brname ).strip()
+                execute("iptables -A " + brfw + " -m state --state RELATED,ESTABLISHED -j ACCEPT")
+                execute("iptables -A " + brfw + " -m physdev --physdev-is-bridged --physdev-is-in -j " + brfwin)
+                execute("iptables -A " + brfw + " -m physdev --physdev-is-bridged --physdev-is-out -j " + brfwout)
+                execute("iptables -A " + brfw + " -m physdev --physdev-is-bridged --physdev-out " + phydev + " -j ACCEPT")
 
 
         return True
     except:
         try:
-            execute("iptables -F " + brfw)
+            with lock("iptables"):
+                execute("iptables -F " + brfw)
+        except BusyError:
+            logging.exception("Oups timeout occurred on the lock")
         except:
             return False
         return False
