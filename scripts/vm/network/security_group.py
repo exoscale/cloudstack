@@ -27,6 +27,9 @@ from optparse import OptionParser, OptionGroup, OptParseError, BadOptionError, O
 import re
 import traceback
 import libvirt
+import facter
+import bernhard
+import socket
 from contextlib import contextmanager
 from posix_ipc import Semaphore, O_CREAT, BusyError
 
@@ -53,6 +56,16 @@ def execute(cmd):
             return bash("-c", cmd).stdout
     except BusyError:
         logging.exception("Timeout occurred on the execute cmd lock")
+        client=bernhard.Client(host=riemanserver)
+        host = socket.gethostname()
+        txt = 'A lock occurred on security_group.py for the command %s' % cmd
+        client.send({'host': host,
+                     'service': "Cloudstack/security_group.execute.lock",
+                     'description': txt,
+                     'state': 'critical',
+                     'ttl': 3600,
+                     'metric': 1})
+        
 
 def can_bridge_firewall(privnic):
     try:
@@ -1026,6 +1039,12 @@ def addFWFramework(brname):
 
 if __name__ == '__main__':
     logging.basicConfig(filename="/var/log/cloudstack/agent/security_group.log", format="%(asctime)s - %(message)s", level=logging.DEBUG)
+    riemannserver = ''
+    facts = facter.Facter()
+    try:
+        riemannserver = facts["riemannserver"]
+    except:
+        pass
     parser = OptionParser()
     parser.add_option("--vmname", dest="vmName")
     parser.add_option("--vmip", dest="vmIP")
