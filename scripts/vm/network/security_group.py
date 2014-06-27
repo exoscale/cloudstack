@@ -56,13 +56,14 @@ def execute(cmd):
             return bash("-c", cmd).stdout
     except BusyError:
         logging.exception("Timeout occurred on the execute cmd lock")
-        client=bernhard.Client(host=riemanserver)
+        client=bernhard.Client(host=riemannserver)
         host = socket.gethostname()
         txt = 'A lock occurred on security_group.py for the command %s' % cmd
         client.send({'host': host,
                      'service': "Cloudstack/security_group.execute.lock",
                      'description': txt,
                      'state': 'critical',
+                     'tags': ['security_group.py'],
                      'ttl': 3600,
                      'metric': 1})
         
