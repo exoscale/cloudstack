@@ -27,15 +27,47 @@ from optparse import OptionParser, OptionGroup, OptParseError, BadOptionError, O
 import re
 import traceback
 import libvirt
+import facter
+import bernhard
+import socket
+from contextlib import contextmanager
+from posix_ipc import Semaphore, O_CREAT, BusyError
 
 logpath = "/var/run/cloud/"        # FIXME: Logs should reside in /var/log/cloud
 iptables = Command("iptables")
 bash = Command("/bin/bash")
 ebtablessave = Command("ebtables-save")
 ebtables = Command("ebtables")
+
+@contextmanager
+def lock(name, timeout=20):
+    s = Semaphore(name, flags=O_CREAT, initial_value=1)
+    s.acquire(timeout)
+    try:
+        yield
+    finally:
+        s.release()
+        s.close()
+
 def execute(cmd):
-    logging.debug(cmd)
-    return bash("-c", cmd).stdout
+    try:
+        with lock("execute"):
+            logging.debug(cmd)
+            return bash("-c", cmd).stdout
+    except BusyError:
+        logging.exception("Timeout occurred on the execute cmd lock")
+        client=bernhard.Client(host=riemannserver)
+        host = socket.gethostname()
+        txt = 'A lock occurred on security_group.py for the command %s' % cmd
+        client.send({'host': host,
+                     'service': "Cloudstack/security_group.execute.lock",
+                     'description': txt,
+                     'state': 'critical',
+                     'tags': ['security_group.py'],
+                     'ttl': 3600,
+                     'metric': 1})
+        
+
 def can_bridge_firewall(privnic):
     try:
         execute("which iptables")
@@ -1008,6 +1040,12 @@ def addFWFramework(brname):
 
 if __name__ == '__main__':
     logging.basicConfig(filename="/var/log/cloudstack/agent/security_group.log", format="%(asctime)s - %(message)s", level=logging.DEBUG)
+    riemannserver = ''
+    facts = facter.Facter()
+    try:
+        riemannserver = facts["riemannserver"]
+    except:
+        pass
     parser = OptionParser()
     parser.add_option("--vmname", dest="vmName")
     parser.add_option("--vmip", dest="vmIP")
