@@ -1041,7 +1041,7 @@ def addFWFramework(brname):
 if __name__ == '__main__':
     logging.basicConfig(filename="/var/log/cloudstack/agent/security_group.log", format="%(asctime)s - %(message)s", level=logging.DEBUG)
     riemannserver = ''
-    facts = facter.Facter()
+    facts = facter.Facter(facter_path="/usr/local/bin/facter")
     try:
         riemannserver = facts["riemannserver"]
     except:
