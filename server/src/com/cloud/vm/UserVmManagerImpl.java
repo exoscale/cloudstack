@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
+import javax.ws.rs.HEAD;
 
 
 import com.cloud.offering.DiskOffering;
@@ -263,6 +264,7 @@ import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.exception.ExecutionException;
 import com.cloud.utils.fsm.NoTransitionException;
 import com.cloud.utils.net.NetUtils;
+import com.cloud.utils.crypt.DBEncryptionUtil;
 import com.cloud.vm.VirtualMachine.State;
 import com.cloud.vm.dao.InstanceGroupDao;
 import com.cloud.vm.dao.InstanceGroupVMMapDao;
@@ -3530,7 +3532,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
             String password = "saved_password";
             if (template.getEnablePassword()) {
-                password = _mgr.generateRandomPassword();
+                if (vm.getDetail("password") != null) {
+                    password = DBEncryptionUtil.decrypt(vm.getDetail("password"));
+                 } else {
+                    password = _mgr.generateRandomPassword();
+                 }
             }
 
             if (!validPassword(password)) {
@@ -3570,6 +3576,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             if (template.getEnablePassword()) {
                 vm.setPassword((String)vmParamPair.second().get(VirtualMachineProfile.Param.VmPassword));
                 vm.setUpdateParameters(false);
+                if (vm.getDetail("password") != null) {
+                    _userVmDetailsDao.remove(_userVmDetailsDao.findDetail(vm.getId(), "password").getId());
+                }
                 _userVmDao.update(vm.getId(), vm);
             }
         }
@@ -4841,8 +4850,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
         }
 
+        Map<VirtualMachineProfile.Param, Object> params = null;
+        String password = null;
+
         if (template.getEnablePassword()) {
-            String password = _mgr.generateRandomPassword();
+            password = _mgr.generateRandomPassword();
             boolean result = resetVMPasswordInternal(vmId, password);
             if (result) {
                 vm.setPassword(password);
@@ -4858,7 +4870,25 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         if (needRestart) {
             try {
-                _itMgr.start(vm.getUuid(), null);
+                if (vm.getDetail("password") != null) {
+                    params = new HashMap<VirtualMachineProfile.Param, Object>();
+                    params.put(VirtualMachineProfile.Param.VmPassword, password);
+                }
+                _itMgr.start(vm.getUuid(), params);
+                vm = _userVmDao.findById(vmId);
+                if (template.getEnablePassword()) {
+                    // this value is not being sent to the backend; need only for api
+                    // display purposes
+                    vm.setPassword(password);
+                    if (vm.isUpdateParameters()) {
+                        vm.setUpdateParameters(false);
+                        _userVmDao.loadDetails(vm);
+                        if (vm.getDetail("password") != null) {
+                            _userVmDetailsDao.remove(_userVmDetailsDao.findDetail(vm.getId(), "password").getId());
+                        }
+                        _userVmDao.update(vm.getId(), vm);
+                    }
+                }
             } catch (Exception e) {
                 s_logger.debug("Unable to start VM " + vm.getUuid(), e);
                 CloudRuntimeException ex = new CloudRuntimeException("Unable to start VM with specified id" + e.getMessage());
