@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+
 import com.cloud.offering.DiskOffering;
 import com.cloud.server.ManagementService;
 import io.exo.cloudstack.restrictions.ServiceOfferingService;
@@ -4819,8 +4820,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         // Detach, destroy and create the usage event for the old root volume.
         _volsDao.detachVolume(root.getId());
         volumeMgr.destroyVolume(root);
-        UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_DELETE, root.getAccountId(), root.getDataCenterId(), root.getId(), root.getName(),
-                Volume.class.getName(), root.getUuid(), root.isDisplayVolume());
 
         // For VMware hypervisor since the old root volume is replaced by the new root volume, force expunge old root volume if it has been created in storage
         if (vm.getHypervisorType() == HypervisorType.VMware) {
