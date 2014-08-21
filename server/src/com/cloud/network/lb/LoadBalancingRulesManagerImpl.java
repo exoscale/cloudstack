@@ -1607,7 +1607,9 @@ public class LoadBalancingRulesManagerImpl<Type> extends ManagerBase implements 
             NetworkOffering off = _entityMgr.findById(NetworkOffering.class, network.getNetworkOfferingId());
             if (off.getElasticLb() && ipVO == null && network.getVpcId() == null) {
                 systemIp = _ipAddrMgr.assignSystemIp(networkId, lbOwner, true, false);
-                ipVO = _ipAddressDao.findById(systemIp.getId());
+                if (systemIp != null) {
+                    ipVO = _ipAddressDao.findById(systemIp.getId());
+                }
             }
 
             // Validate ip address
