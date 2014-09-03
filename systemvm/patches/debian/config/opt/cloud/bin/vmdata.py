@@ -148,7 +148,7 @@ def htaccess(ip, folder, file):
         unflock(fh)
         fh.close()
 
-    entry="Options -Indexes\nOrder Deny,Allow\nDeny from all\nAllow from " + ip
+    entry="Options +Indexes\nOrder Deny,Allow\nDeny from all\nAllow from " + ip
     htaccessFolder = "/var/www/html/" + folder + "/" + ip
     htaccessFile = htaccessFolder+"/.htaccess"
 
