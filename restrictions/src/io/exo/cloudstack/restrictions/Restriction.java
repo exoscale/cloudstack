@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Class representing the data for a single restriction (laoded from Yaml configuration file in our case).
+ * Class representing the data for a single restriction (loaded from Yaml configuration file in our case).
  */
 public class Restriction {
     private String serviceOfferingName = null;

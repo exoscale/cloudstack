@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Helper class to load the Yaml file containing the restrictions.
+ * Helper class needed to load the Yaml file containing the restrictions and should only be use to configure the
+ * Yaml parser.
  */
 public class RestrictionList {
 
