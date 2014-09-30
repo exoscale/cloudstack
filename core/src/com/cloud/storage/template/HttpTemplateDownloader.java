@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Date;
 
 import org.apache.commons.httpclient.ChunkedInputStream;
@@ -230,9 +231,10 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
                 remoteSize = maxTemplateSizeInBytes;
             }
 
-            InputStream in = !chunked ? new BufferedInputStream(request.getResponseBodyAsStream()) : new ChunkedInputStream(request.getResponseBodyAsStream());
+            URL url = new URL(getDownloadUrl());
+            InputStream in = url.openStream();
 
-            RandomAccessFile out = new RandomAccessFile(file, "rwd");
+            RandomAccessFile out = new RandomAccessFile(file, "rw");
             out.seek(localFileSize);
 
             s_logger.info("Starting download from " + getDownloadUrl() + " to " + toFile + " remoteSize=" + remoteSize + " , max size=" + maxTemplateSizeInBytes);
@@ -276,6 +278,8 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
                     done = true;
                 }
             }
+            out.getFD().sync();
+
             Date finish = new Date();
             String downloaded = "(incomplete download)";
             if (totalBytes >= remoteSize) {
