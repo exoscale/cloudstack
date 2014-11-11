@@ -4692,13 +4692,15 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _resourceLimitMgr.checkResourceLimit(newAccount, ResourceType.primary_storage, totalVolumesSize);
 
         // VV 4: Check if new owner can use the vm template
+	/** -- check disabled: on public clouds there is no need for this
+	 * check
         VirtualMachineTemplate template = _templateDao.findById(vm
                 .getTemplateId());
         if (!template.isPublicTemplate()) {
             Account templateOwner = _accountMgr.getAccount(template
                     .getAccountId());
             _accountMgr.checkAccess(newAccount, null, true, templateOwner);
-        }
+        }*/
 
         // VV 5: check the new account can create vm in the domain
         DomainVO domain = _domainDao.findById(cmd.getDomainId());
