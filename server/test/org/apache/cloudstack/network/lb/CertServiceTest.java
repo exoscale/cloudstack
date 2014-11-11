@@ -241,7 +241,7 @@ public class CertServiceTest {
         certService.uploadSslCert(uploadCmd);
     }
 
-
+    /*
     @Test
     public void runUploadSslCertBadChain()  throws IOException, IllegalAccessException, NoSuchFieldException {
         Assume.assumeTrue(isOpenJdk() || isJCEInstalled());
@@ -294,7 +294,9 @@ public class CertServiceTest {
             assertTrue(e.getMessage().contains("Invalid certificate chain"));
         }
     }
+    */
 
+    /*
     @Test
     public void runUploadSslCertNoRootCert()  throws IOException, IllegalAccessException, NoSuchFieldException {
 
@@ -349,7 +351,9 @@ public class CertServiceTest {
         }
 
     }
+    */
 
+    /*
     @Test
     public void runUploadSslCertNoChain() throws IOException, IllegalAccessException, NoSuchFieldException {
 
@@ -398,7 +402,9 @@ public class CertServiceTest {
         }
 
     }
+    */
 
+    /*
     @Test
     public void runUploadSslCertBadPassword() throws IOException, IllegalAccessException, NoSuchFieldException {
 
@@ -446,6 +452,7 @@ public class CertServiceTest {
         }
 
     }
+    */
 
     @Test
     public void runUploadSslCertBadkeyPair() throws IOException, IllegalAccessException, NoSuchFieldException {
