@@ -4403,7 +4403,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 networkList.add(_networkDao.findById(defaultNetwork.getId()));
             }
 
-            boolean isVmWare = (template.getHypervisorType() == HypervisorType.VMware);
+            boolean isVmWare = false; //(template.getHypervisorType() == HypervisorType.VMware);
 
             if (securityGroupIdList != null && isVmWare) {
                 throw new InvalidParameterValueException("Security group feature is not supported for vmWare hypervisor");
