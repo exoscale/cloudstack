@@ -4415,6 +4415,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 if (defaultGroup != null) {
                     // check if security group id list already contains Default
                     // security group, and if not - add it
+                    /* actually, no
                     boolean defaultGroupPresent = false;
                     for (Long securityGroupId : securityGroupIdList) {
                         if (securityGroupId.longValue() == defaultGroup.getId()) {
@@ -4425,7 +4426,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
                     if (!defaultGroupPresent) {
                         securityGroupIdList.add(defaultGroup.getId());
-                    }
+                    } */
 
                 } else {
                     // create default security group for the account
