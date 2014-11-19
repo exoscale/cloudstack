@@ -75,26 +75,24 @@ public class ApiResponseSerializer {
                     sb.append("{ \"").append(ApiConstants.COUNT).append("\":").append(count);
                 }
 
-                if ((responses != null) && !responses.isEmpty()) {
+                if ((responses != null) && !responses.isEmpty() && nonZeroCount) {
                     String jsonStr = gson.toJson(responses.get(0));
                     jsonStr = unescape(jsonStr);
 
-                    if (nonZeroCount) {
-                        sb.append(" ,\"").append(responses.get(0).getObjectName()).append("\" : [  ").append(jsonStr);
-                    }
+                    sb.append(" ,\"").append(responses.get(0).getObjectName()).append("\" : [  ").append(jsonStr);
 
                     for (int i = 1; i < ((ListResponse) result).getResponses().size(); i++) {
                         jsonStr = gson.toJson(responses.get(i));
                         jsonStr = unescape(jsonStr);
                         sb.append(", ").append(jsonStr);
                     }
-                    sb.append(" ] }");
-                } else  {
-                    if (!nonZeroCount){
-                        sb.append("{");
-                    }
+                    sb.append(" ]");
+                }
 
+                if (nonZeroCount) {
                     sb.append(" }");
+                } else {
+                    sb.append(" {}");
                 }
             } else if (result instanceof SuccessResponse) {
                 sb.append("{ \"success\" : \"").append(((SuccessResponse) result).getSuccess()).append("\"} ");
