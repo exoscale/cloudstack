@@ -645,9 +645,9 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
             }
             startPortOrType = icmpType;
             endPortOrCode = icmpCode;
-        } else if (protocol.equals(NetUtils.ALL_PROTO)) {
+        } else if ((protocol.equals(NetUtils.ALL_PROTO)) || (protocol.equals(NetUtils.GRE_PROTO)) || (protocol.equals(NetUtils.ESP_PROTO)) || (protocol.equals(NetUtils.ALL_AH_PROTO))) {
             if ((startPort != null) || (endPort != null)) {
-                throw new InvalidParameterValueException("Cannot specify startPort or endPort without specifying protocol");
+                throw new InvalidParameterValueException("Port range is supported only for TCP and UDP");
             }
             startPortOrType = 0;
             endPortOrCode = 0;

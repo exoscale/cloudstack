@@ -1456,6 +1456,15 @@
                                                             name: 'udp',
                                                             description: 'UDP'
                                                         }, {
+                                                            name: 'ah',
+                                                            description: 'AH'
+                                                        }, {
+                                                            name: 'esp',
+                                                            description: 'ESP'
+                                                        }, {
+                                                            name: 'gre',
+                                                            description: 'GRE'
+                                                        }, {
                                                             name: 'icmp',
                                                             description: 'ICMP'
                                                         }, {
@@ -1506,7 +1515,7 @@
                                                         icmptype: args.data.icmptype,
                                                         icmpcode: args.data.icmpcode
                                                     });
-                                                } else { // TCP/UDP
+                                                } else { // TCP/UDP//AH//ESP//GRE
                                                     $.extend(data, {
                                                         startport: args.data.startport,
                                                         endport: args.data.endport
@@ -1584,7 +1593,7 @@
 
                                                     args.response.success({
                                                         data: $.map(response, function(rule) {
-                                                            if (rule.protocol == 'all') {
+                                                            if (rule.protocol == 'all' || rule.protocol == 'gre' || rule.protocol == 'esp' || rule.protocol == 'ah') {
                                                                 $.extend(rule, {
                                                                     startport: 'All',
                                                                     endport: 'All'
@@ -3038,6 +3047,15 @@
                                                             name: 'udp',
                                                             description: 'UDP'
                                                         }, {
+                                                            name: 'ah',
+                                                            description: 'AH'
+                                                        }, {
+                                                            name: 'esp',
+                                                            description: 'ESP'
+                                                        }, {
+                                                            name: 'gre',
+                                                            description: 'GRE'
+                                                        }, {
                                                             name: 'icmp',
                                                             description: 'ICMP'
                                                         }]
@@ -4189,6 +4207,15 @@
                                                         }, {
                                                             name: 'udp',
                                                             description: 'UDP'
+                                                        }, {
+                                                            name: 'ah',
+                                                            description: 'AH'
+                                                        }, {
+                                                            name: 'esp',
+                                                            description: 'ESP'
+                                                        }, {
+                                                            name: 'gre',
+                                                            description: 'GRE'
                                                         }]
                                                     });
                                                 }
@@ -4713,6 +4740,15 @@
                                                         name: 'udp',
                                                         description: 'UDP'
                                                     }, {
+                                                        name: 'ah',
+                                                        description: 'AH'
+                                                    }, {
+                                                        name: 'esp',
+                                                        description: 'ESP'
+                                                    }, {
+                                                        name: 'gre',
+                                                        description: 'GRE'
+                                                    }, {
                                                         name: 'icmp',
                                                         description: 'ICMP'
                                                     }]
@@ -4768,7 +4804,7 @@
                                                     icmptype: args.data.icmptype,
                                                     icmpcode: args.data.icmpcode
                                                 });
-                                            } else { // TCP/UDP
+                                            } else { // TCP/UDP//AH/ESP/GRE
                                                 $.extend(data, {
                                                     startport: args.data.startport,
                                                     endport: args.data.endport
@@ -4912,6 +4948,15 @@
                                                         name: 'udp',
                                                         description: 'UDP'
                                                     }, {
+                                                        name: 'ah',
+                                                        description: 'AH'
+                                                    }, {
+                                                        name: 'esp',
+                                                        description: 'ESP'
+                                                    }, {
+                                                        name: 'gre',
+                                                        description: 'GRE'
+                                                    }, {
                                                         name: 'icmp',
                                                         description: 'ICMP'
                                                     }]
@@ -4967,7 +5012,7 @@
                                                     icmptype: args.data.icmptype,
                                                     icmpcode: args.data.icmpcode
                                                 });
-                                            } else { // TCP/UDP
+                                            } else { // TCP/UDP//AH//ESP//GRE
                                                 $.extend(data, {
                                                     startport: args.data.startport,
                                                     endport: args.data.endport
