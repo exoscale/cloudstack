@@ -643,7 +643,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
             }
             startPortOrType = icmpType;
             endPortOrCode = icmpCode;
-        } else if (protocol.equals(NetUtils.ALL_PROTO) {
+        } else if (protocol.equals(NetUtils.ALL_PROTO)) {
             if ((startPort != null) || (endPort != null)) {
                 throw new InvalidParameterValueException("Cannot specify startPort or endPort without specifying protocol");
             }
