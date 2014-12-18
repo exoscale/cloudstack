@@ -643,7 +643,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
             }
             startPortOrType = icmpType;
             endPortOrCode = icmpCode;
-        } else if ((protocol.equals(NetUtils.ALL_PROTO)) || (protocol.equals(NetUtils.GRE_PROTO)) || (protocol.equals(NetUtils.ESP_PROTO)) || (protocol.equals(NetUtils.ALL_AH_PROTO))) {
+        } else if ((protocol.equals(NetUtils.ALL_PROTO)) || (protocol.equals(NetUtils.GRE_PROTO)) || (protocol.equals(NetUtils.ESP_PROTO)) || (protocol.equals(NetUtils.AH_PROTO))) {
             if ((startPort != null) || (endPort != null)) {
                 throw new InvalidParameterValueException("Port range is supported only for TCP and UDP");
             }
