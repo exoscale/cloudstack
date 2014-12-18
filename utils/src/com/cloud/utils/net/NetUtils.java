@@ -58,6 +58,9 @@ public class NetUtils {
 
     public final static String UDP_PROTO = "udp";
     public final static String TCP_PROTO = "tcp";
+    public final static String ESP_PROTO = "esp";
+    public final static String GRE_PROTO = "gre";
+    public final static String AH_PROTO = "ah";
     public final static String ANY_PROTO = "any";
     public final static String ICMP_PROTO = "icmp";
     public final static String ALL_PROTO = "all";
@@ -972,7 +975,7 @@ public class NetUtils {
 
     public static boolean isValidSecurityGroupProto(String p) {
         String proto = p.toLowerCase();
-        return (proto.equals(TCP_PROTO) || proto.equals(UDP_PROTO) || proto.equals(ICMP_PROTO) || proto.equals(ALL_PROTO));
+        return (proto.equals(TCP_PROTO) || proto.equals(UDP_PROTO) || proto.equals(ESP_PROTO) || proto.equals(GRE_PROTO) || proto.equals(AH_PROTO) || proto.equals(ICMP_PROTO) || proto.equals(ALL_PROTO));
     }
 
     public static boolean isValidAlgorithm(String p) {
