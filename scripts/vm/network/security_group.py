@@ -881,7 +881,7 @@ def add_network_rules(vm_name, vm_id, vm_ip, signature, seqno, vmMac, rules, vif
             if protocol == 'all':
                 for ip in ips:
                     execute("iptables -I " + vmchain + " -m state --state NEW " + direction + " " + ip + " -j "+action)
-            elif protocol == 'tcp' or 'udp':
+            elif protocol == 'tcp' or protocol == 'udp':
                 for ip in ips:
                     execute("iptables -I " + vmchain + " -p " + protocol + " -m " + protocol + " --dport " + range + " -m state --state NEW " + direction + " " + ip + " -j "+ action)
             elif protocol == 'icmp':
@@ -893,16 +893,19 @@ def add_network_rules(vm_name, vm_id, vm_ip, signature, seqno, vmMac, rules, vif
             else:
                 #All other protocols without port range like AH, ESP, GRE
                 for ip in ips:
-                    execute("iptables -I " + vmchain + " -p " + protocol + direction + " " + ip + " -j "+action)
+                    execute("iptables -I " + vmchain + " -p " + protocol + " " + direction + " " + ip + " -j "+action)
 
         if allow_any and protocol != 'all':
-            if protocol != 'icmp':
+            if protocol == 'tcp' or protocol == 'udp':
                 execute("iptables -I " + vmchain + " -p " + protocol + " -m " + protocol + " --dport " + range + " -m state --state NEW -j "+ action)
-            else:
+            elif protocol == 'icmp':
                 range = start + "/" + end
                 if start == "-1":
                     range = "any"
                 execute("iptables -I " + vmchain + " -p icmp --icmp-type " + range + " -j "+action)
+            else:
+                #All other protocols without port range like AH, ESP, GRE
+                execute("iptables -I " + vmchain + " -p " + protocol + " -j "+ action)
 
     egress_vmchain = egress_chain_name(vm_name)
     if egressrule == 0 :
