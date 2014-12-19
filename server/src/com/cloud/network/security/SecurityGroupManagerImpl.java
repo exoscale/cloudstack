@@ -563,7 +563,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
     @ActionEvent(eventType = EventTypes.EVENT_SECURITY_GROUP_AUTHORIZE_EGRESS, eventDescription = "Adding Egress Rule ", async = true)
     public List<SecurityGroupRuleVO> authorizeSecurityGroupEgress(AuthorizeSecurityGroupEgressCmd cmd) {
         Long securityGroupId = cmd.getSecurityGroupId();
-        String protocol = cmd.getProtocol();
+        String protocol = cmd.getProtocol().toLowerCase();
         Integer startPort = cmd.getStartPort();
         Integer endPort = cmd.getEndPort();
         Integer icmpType = cmd.getIcmpType();
@@ -579,7 +579,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
     @ActionEvent(eventType = EventTypes.EVENT_SECURITY_GROUP_AUTHORIZE_INGRESS, eventDescription = "Adding Ingress Rule ", async = true)
     public List<SecurityGroupRuleVO> authorizeSecurityGroupIngress(AuthorizeSecurityGroupIngressCmd cmd) {
         Long securityGroupId = cmd.getSecurityGroupId();
-        String protocol = cmd.getProtocol();
+        String protocol = cmd.getProtocol().toLowerCase();
         Integer startPort = cmd.getStartPort();
         Integer endPort = cmd.getEndPort();
         Integer icmpType = cmd.getIcmpType();
