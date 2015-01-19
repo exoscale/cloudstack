@@ -19,7 +19,7 @@ set -x
 
 ROOTPW=password
 HOSTNAME=systemvm
-CLOUDSTACK_RELEASE=4.4.1
+CLOUDSTACK_RELEASE=4.4.2
 
 add_backports () {
     sed -i '/backports/d' /etc/apt/sources.list
@@ -38,7 +38,7 @@ install_packages() {
   apt-get --no-install-recommends -q -y --force-yes install openssh-server openssl e2fsprogs dhcp3-client tcpdump socat wget
   # apt-get --no-install-recommends -q -y --force-yes install grub-legacy
   apt-get --no-install-recommends -q -y --force-yes install python bzip2 sed gawk diffutils grep gzip less tar telnet ftp rsync traceroute psmisc lsof procps  inetutils-ping iputils-arping httping
-  apt-get --no-install-recommends -q -y --force-yes install dnsutils zip unzip ethtool uuid file iproute acpid virt-what sudo
+  apt-get --no-install-recommends -q -y --force-yes install dnsutils zip unzip ethtool uuid file iproute acpid virt-what sudo iftop 
 
   # sysstat
   echo 'sysstat sysstat/enable boolean true' | debconf-set-selections
@@ -64,7 +64,7 @@ install_packages() {
   apt-get --no-install-recommends -q -y --force-yes install openswan=1:2.6.37-3
 
   # xenstore utils
-  apt-get --no-install-recommends -q -y --force-yes install xenstore-utils libxenstore3.0
+  #apt-get --no-install-recommends -q -y --force-yes install xenstore-utils libxenstore3.0
   # keepalived and conntrackd for redundant router
   apt-get --no-install-recommends -q -y --force-yes install keepalived conntrackd ipvsadm libnetfilter-conntrack3 libnl1
   # ipcalc
@@ -79,14 +79,14 @@ install_packages() {
   
   # Hyperv  kvp daemon - 64bit only
   # Download the hv kvp daemon 
-  wget http://people.apache.org/~rajeshbattala/hv-kvp-daemon_3.1_amd64.deb
-  dpkg -i hv-kvp-daemon_3.1_amd64.deb
+  #wget http://people.apache.org/~rajeshbattala/hv-kvp-daemon_3.1_amd64.deb
+  #dpkg -i hv-kvp-daemon_3.1_amd64.deb
 
   #libraries required for rdp client (Hyper-V) 
-  DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends -qq -y --force-yes install libtcnative-1 libssl-dev libapr1-dev
+  #DEBIAN_FRONTEND=noninteractive apt-get --no-install-recommends -qq -y --force-yes install libtcnative-1 libssl-dev libapr1-dev
 
   # vmware tools
-  apt-get --no-install-recommends -q -y --force-yes install open-vm-tools
+  #apt-get --no-install-recommends -q -y --force-yes install open-vm-tools
   # commented installaion of vmware-tools  as we are using the opensource open-vm-tools:
   # apt-get --no-install-recommends -q -y --force-yes install build-essential linux-headers-`uname -r`
   # df -h
@@ -231,7 +231,7 @@ configure_services() {
   mkdir -p /var/lib/haproxy
 
   # Get config files from master
-  snapshot_url="https://git-wip-us.apache.org/repos/asf?p=cloudstack.git;a=snapshot;h=HEAD;sf=tgz"
+  snapshot_url="https://git-wip-us.apache.org/repos/asf?p=cloudstack.git;a=snapshot;h=refs/heads/4.4;sf=tgz"
   snapshot_dir="/opt/cloudstack*"
   cd /opt
   wget --no-check-certificate $snapshot_url -O cloudstack.tar.gz
@@ -264,6 +264,19 @@ do_signature() {
   echo "Cloudstack Release $CLOUDSTACK_RELEASE $(date)" > /etc/cloudstack-release
 }
 
+postconfig_script() {
+
+  touch /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo '#!/bin/bash' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo '' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo 'cd /root' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo 'wget http://deploy.internal.exoscale.ch/scripts/exoscale-vr_postconfig.sh' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo 'chmod +x exoscale-vr_postconfig.sh' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo './exoscale-vr_postconfig.sh 2>&1 |tee /var/log/exoscale-vr_postconfig.log' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  chmod +x /etc/init.d/exoscale_vr_startup-configscript.sh
+  update-rc.d exoscale_vr_startup-configscript.sh start 90 1 2 3 4 5 .
+}
+
 begin=$(date +%s)
 
 echo "*************ADDING BACKPORTS********************"
@@ -279,6 +292,9 @@ echo "*************DONE SETTING UP SERVICES********************"
 do_fixes
 echo "*************DONE FIXING CONFIGURATION********************"
 do_signature
+echo "*************DONE SIGNATURES********************"
++postconfig_script
++echo "*************DONE SETTING EXOSCALE POST CONFIG SCRIPT********************"
 
 fin=$(date +%s)
 t=$((fin-begin))

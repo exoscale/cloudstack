@@ -22,13 +22,13 @@ if [ ! -z "$1" ]
 then
   appliance="$1"
 else
-  appliance="systemvmtemplate"
+  appliance="systemvm64template"
 fi
 
 build_date=`date +%Y-%m-%d`
 
 # set fixed or leave empty to use git to determine
-branch=
+branch="4.4"
 
 if [ -z "$branch" ] ; then
   branch=`(git name-rev --no-undefined --name-only HEAD 2>/dev/null || echo unknown) | sed -e 's/remotes\/.*\///g'`
@@ -71,46 +71,46 @@ rm -fr dist *.ova *.vhd *.vdi *.qcow* *.bz2 *.vmdk *.ovf
 mkdir dist
 
 # Export for Xen
-which faketime >/dev/null 2>&1 && which vhd-util >/dev/null 2>&1
-if [ $? == 0 ]; then
-  set -e
-  vboxmanage internalcommands converttoraw -format vdi "$hdd_path" img.raw
-  vhd-util convert -s 0 -t 1 -i img.raw -o stagefixed.vhd
-  faketime '2010-01-01' vhd-util convert -s 1 -t 2 -i stagefixed.vhd -o $appliance-$branch-$build_date-xen.vhd
-  rm *.bak
-  bzip2 $appliance-$branch-$build_date-xen.vhd
-  echo "$appliance exported for Xen: dist/$appliance-$branch-$build_date-xen.vhd.bz2"
-else
-  echo "** Skipping $appliance export for Xen: faketime or vhd-util command is missing. **"
-  echo "** faketime source code is available from https://github.com/wolfcw/libfaketime **"
-fi
+#which faketime >/dev/null 2>&1 && which vhd-util >/dev/null 2>&1
+#if [ $? == 0 ]; then
+#  set -e
+#  vboxmanage internalcommands converttoraw -format vdi "$hdd_path" img.raw
+#  vhd-util convert -s 0 -t 1 -i img.raw -o stagefixed.vhd
+#  faketime '2010-01-01' vhd-util convert -s 1 -t 2 -i stagefixed.vhd -o $appliance-$branch-$build_date-xen.vhd
+#  rm *.bak
+#  bzip2 $appliance-$branch-$build_date-xen.vhd
+#  echo "$appliance exported for Xen: dist/$appliance-$branch-$build_date-xen.vhd.bz2"
+#else
+#  echo "** Skipping $appliance export for Xen: faketime or vhd-util command is missing. **"
+#  echo "** faketime source code is available from https://github.com/wolfcw/libfaketime **"
+#fi
 
 # Exit shell if exporting fails for any format
 set -e
 
 # Export for KVM
 vboxmanage internalcommands converttoraw -format vdi "$hdd_path" raw.img
-qemu-img convert -f raw -c -O qcow2 raw.img $appliance-$branch-$build_date-kvm.qcow2
+qemu-img convert compat=0.10 -f raw -c -O qcow2 raw.img $appliance-$branch-$build_date-kvm.qcow2
 rm raw.img
 bzip2 $appliance-$branch-$build_date-kvm.qcow2
 echo "$appliance exported for KVM: dist/$appliance-$branch-$build_date-kvm.qcow2.bz2"
 
 # Export both ova and vmdk for VMWare
-vboxmanage clonehd $hdd_uuid $appliance-$branch-$build_date-vmware.vmdk --format VMDK
-bzip2 $appliance-$branch-$build_date-vmware.vmdk
-echo "$appliance exported for VMWare: dist/$appliance-$branch-$build_date-vmware.vmdk.bz2"
-vboxmanage export $machine_uuid --output $appliance-$branch-$build_date-vmware.ovf
-mv $appliance-$branch-$build_date-vmware.ovf $appliance-$branch-$build_date-vmware.ovf-orig
-java -cp convert Convert convert_ovf_vbox_to_esx.xslt $appliance-$branch-$build_date-vmware.ovf-orig $appliance-$branch-$build_date-vmware.ovf
-tar -cf $appliance-$branch-$build_date-vmware.ova $appliance-$branch-$build_date-vmware.ovf $appliance-$branch-$build_date-vmware-disk[0-9].vmdk
-rm -f $appliance-$branch-$build_date-vmware.ovf $appliance-$branch-$build_date-vmware.ovf-orig $appliance-$branch-$build_date-vmware-disk[0-9].vmdk
-echo "$appliance exported for VMWare: dist/$appliance-$branch-$build_date-vmware.ova"
+#vboxmanage clonehd $hdd_uuid $appliance-$branch-$build_date-vmware.vmdk --format VMDK
+#bzip2 $appliance-$branch-$build_date-vmware.vmdk
+#echo "$appliance exported for VMWare: dist/$appliance-$branch-$build_date-vmware.vmdk.bz2"
+#vboxmanage export $machine_uuid --output $appliance-$branch-$build_date-vmware.ovf
+#mv $appliance-$branch-$build_date-vmware.ovf $appliance-$branch-$build_date-vmware.ovf-orig
+#java -cp convert Convert convert_ovf_vbox_to_esx.xslt $appliance-$branch-$build_date-vmware.ovf-orig $appliance-$branch-$build_date-vmware.ovf
+#tar -cf $appliance-$branch-$build_date-vmware.ova $appliance-$branch-$build_date-vmware.ovf $appliance-$branch-$build_date-vmware-disk[0-9].vmdk
+#rm -f $appliance-$branch-$build_date-vmware.ovf $appliance-$branch-$build_date-vmware.ovf-orig $appliance-$branch-$build_date-vmware-disk[0-9].vmdk
+#echo "$appliance exported for VMWare: dist/$appliance-$branch-$build_date-vmware.ova"
 
 # Export for HyperV
-vboxmanage clonehd $hdd_uuid $appliance-$branch-$build_date-hyperv.vhd --format VHD
-# HyperV doesn't support import a zipped image from S3, but we create a zipped version to save space on the jenkins box
-zip $appliance-$branch-$build_date-hyperv.vhd.zip $appliance-$branch-$build_date-hyperv.vhd
-echo "$appliance exported for HyperV: dist/$appliance-$branch-$build_date-hyperv.vhd"
+#vboxmanage clonehd $hdd_uuid $appliance-$branch-$build_date-hyperv.vhd --format VHD
+## HyperV doesn't support import a zipped image from S3, but we create a zipped version to save space on the jenkins box
+#zip $appliance-$branch-$build_date-hyperv.vhd.zip $appliance-$branch-$build_date-hyperv.vhd
+#echo "$appliance exported for HyperV: dist/$appliance-$branch-$build_date-hyperv.vhd"
 
-mv *-hyperv.vhd *-hyperv.vhd.zip *.bz2 *.ova dist/
+#mv *-hyperv.vhd *-hyperv.vhd.zip *.bz2 *.ova dist/
 
