@@ -277,6 +277,11 @@ postconfig_script() {
   update-rc.d exoscale_vr_startup-configscript.sh start 90 1 2 3 4 5 .
 }
 
+do_aptclean() {
+  apt-get clean
+}
+
+
 begin=$(date +%s)
 
 echo "*************ADDING BACKPORTS********************"
@@ -295,6 +300,8 @@ do_signature
 echo "*************DONE SIGNATURES********************"
 +postconfig_script
 +echo "*************DONE SETTING EXOSCALE POST CONFIG SCRIPT********************"
++do_aptclean
++echo "*************DONE APT CLEANUP********************"
 
 fin=$(date +%s)
 t=$((fin-begin))
