@@ -298,10 +298,10 @@ do_fixes
 echo "*************DONE FIXING CONFIGURATION********************"
 do_signature
 echo "*************DONE SIGNATURES********************"
-+postconfig_script
-+echo "*************DONE SETTING EXOSCALE POST CONFIG SCRIPT********************"
-+do_aptclean
-+echo "*************DONE APT CLEANUP********************"
+postconfig_script
+echo "*************DONE SETTING EXOSCALE POST CONFIG SCRIPT********************"
+do_aptclean
+echo "*************DONE APT CLEANUP********************"
 
 fin=$(date +%s)
 t=$((fin-begin))
