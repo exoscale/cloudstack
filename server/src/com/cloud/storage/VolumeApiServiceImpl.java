@@ -744,8 +744,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
         }
 
         /* Prevent disk resize on KVM for running instance in order to avoid potential corruption */
-        if (_volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM
-            && (vm.getState() == State.Running
+        if _volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM
+            && vm.getState() == State.Running {
             throw new InvalidParameterValueException("Cannot resize disk while instance is running");
         }
 
