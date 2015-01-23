@@ -838,6 +838,11 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         UserVmVO userVm = _userVmDao.findById(volume.getInstanceId());
 
+         /* Prevent disk resize on KVM for running instance in order to avoid potential corruption */
+        if (_volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM
+            && vm.getState() == State.Running) {
+            throw new InvalidParameterValueException("Cannot resize disk while instance is running");
+        }
 
         if (userVm != null) {
             // serialize VM operation
