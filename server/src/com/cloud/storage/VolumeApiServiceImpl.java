@@ -738,8 +738,9 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             throw new InvalidParameterValueException("Cloudstack currently only supports volumes marked as KVM, VMware, XenServer hypervisor for resize");
         }
 
-        /* Prevent disk resize on KVM for running instance in order to avoid potential corruption */
         UserVmVO userVm = _userVmDao.findById(volume.getInstanceId());
+
+        /* Prevent disk resize on KVM for running instance in order to avoid potential corruption */
         if (_volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM
             && userVm.getState() == State.Running) {
             throw new InvalidParameterValueException("Cannot resize disk while instance is running");
@@ -842,9 +843,6 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             _volsDao.update(volume.getId(), volume);
             return volume;
         }
-
-        UserVmVO userVm = _userVmDao.findById(volume.getInstanceId());
-
 
         if (userVm != null) {
             // serialize VM operation
