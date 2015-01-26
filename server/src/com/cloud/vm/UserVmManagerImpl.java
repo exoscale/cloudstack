@@ -2954,8 +2954,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     }
                     rootDiskSize = Long.parseLong(customParameters.get("rootdisksize"));
 
-                    // only KVM supports rootdisksize override
-                    if (hypervisor != HypervisorType.KVM) {
+                    // only KVM supports rootdisksize override. None is required for template deployment with rootdisk size override
+                    if (hypervisor != HypervisorType.KVM || hypervisor != HypervisorType.None) {
                         throw new InvalidParameterValueException("Hypervisor " + hypervisor + " does not support rootdisksize override");
                     }
 
