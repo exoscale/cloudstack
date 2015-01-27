@@ -465,6 +465,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     protected int _expungeDelay;
     protected boolean _dailyOrHourly = false;
     private int capacityReleaseInterval;
+    private long _maxVolumeSizeInGb;
 
     protected String _instance;
     protected String _zone;
