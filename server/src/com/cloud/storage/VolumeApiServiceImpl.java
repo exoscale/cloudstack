@@ -740,12 +740,6 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         UserVmVO userVm = _userVmDao.findById(volume.getInstanceId());
 
-        /* Prevent disk resize on KVM for running instance in order to avoid potential corruption */
-        if (_volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM
-            && userVm.getState() == State.Running) {
-            throw new InvalidParameterValueException("Cannot resize disk while instance is running");
-        }
-
         if (volume.getState() != Volume.State.Ready && volume.getState() != Volume.State.Allocated) {
             throw new InvalidParameterValueException("Volume should be in ready or allocated state before attempting a resize. "
                                                      + "Volume " + volume.getUuid() + " state is:" + volume.getState());
@@ -911,8 +905,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
                 hosts = new long[] {userVm.getLastHostId()};
             }
 
-            /* Xen only works offline, SR does not support VDI.resizeOnline */
-            if (_volsDao.getHypervisorType(volume.getId()) == HypervisorType.XenServer && !userVm.getState().equals(State.Stopped)) {
+            /* Xen & KVM only works offline, SR does not support VDI.resizeOnline */
+            if (_volsDao.getHypervisorType(volume.getId()) == (HypervisorType.XenServer || HypervisorType.KVM) && !userVm.getState().equals(State.Stopped)) {
                 throw new InvalidParameterValueException("VM must be stopped or disk detached in order to resize with the Xen HV");
             }
         }
