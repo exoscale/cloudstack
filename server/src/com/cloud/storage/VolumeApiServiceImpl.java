@@ -906,7 +906,7 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             }
 
             /* Xen & KVM only works offline, SR does not support VDI.resizeOnline */
-            if (_volsDao.getHypervisorType(volume.getId()) == (HypervisorType.XenServer || HypervisorType.KVM) && !userVm.getState().equals(State.Stopped)) {
+            if ((_volsDao.getHypervisorType(volume.getId()) == HypervisorType.XenServer || _volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM) && !userVm.getState().equals(State.Stopped)) {
                 throw new InvalidParameterValueException("VM must be stopped or disk detached in order to resize with the Xen HV");
             }
         }
