@@ -2973,9 +2973,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     }
 
                     // rotdisksize must not be larger than maxvolumesize settings
-                    String maxVolumeSizeInGbString = _configDao.getValue(Config.MaxVolumeSize.toString());
-                    _maxVolumeSizeInGb = NumbersUtil.parseLong(maxVolumeSizeInGbString, 2000);
-                    if (rootDiskSize > (_maxVolumeSizeInGb * 1024 * 1024 * 1024)) {
+                    String maxVolumeSizeInGbString = _configDao.getValue(Config.MaxVolumeSize.key());
+                    _maxVolumeSizeInGb = NumbersUtil.parseInt(maxVolumeSizeInGbString, Integer.parseInt(Config.MaxVolumeSize.getDefaultValue()));
+                    if (rootDiskSize > _maxVolumeSizeInGb) {
                         throw new InvalidParameterValueException("volume size " + rootDiskSize + ", but the maximum size allowed is " + _maxVolumeSizeInGb + " Gb.");
                     }
 
