@@ -101,7 +101,9 @@ import com.cloud.hypervisor.HypervisorCapabilitiesVO;
 import com.cloud.hypervisor.dao.HypervisorCapabilitiesDao;
 import com.cloud.org.Grouping;
 import com.cloud.service.dao.ServiceOfferingDetailsDao;
+import com.cloud.service.ServiceOfferingVO;
 import com.cloud.storage.Storage.ImageFormat;
+import com.cloud.service.dao.ServiceOfferingDao;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.SnapshotDao;
 import com.cloud.storage.dao.VMTemplateDao;
@@ -175,6 +177,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     private SnapshotDao _snapshotDao;
     @Inject
     protected ServiceOfferingDetailsDao _serviceOfferingDetailsDao;
+    @Inject
+    protected ServiceOfferingDao _offeringDao = null;
     @Inject
     StoragePoolDetailsDao storagePoolDetailsDao;
     @Inject
@@ -819,6 +823,12 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
         if (currentSize > newSize && !shrinkOk) {
             throw new InvalidParameterValueException("Going from existing size of " + currentSize + " to size of " + newSize
                     + " would shrink the volume, need to sign off by supplying the shrinkok parameter with value of true");
+        }
+
+        //Exoscale specific to prevent micro instance with a big disk
+        ServiceOfferingVO offering = _offeringDao.findByIdIncludingRemoved(userVm.getId(), userVm.getServiceOfferingId());
+        if (newSize > 214748364800L && offering.getRamSize() <= 512) {
+            throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
         }
 
         if (!shrinkOk) {

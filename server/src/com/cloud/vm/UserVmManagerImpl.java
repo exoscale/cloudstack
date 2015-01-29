@@ -808,6 +808,16 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         // Check that the specified service offering ID is valid
         _itMgr.checkIfCanUpgrade(vmInstance, newServiceOffering);
 
+        //Exoscale specific to prevent micro instance with a big disk
+        List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
+        for (VolumeVO volume : volumes) {
+            if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
+                if (volume.getSize() > 214748364800L && newMemory <= 512) {
+                    throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
+                }
+            }
+        }
+
         // remove diskAndMemory VM snapshots
         List<VMSnapshotVO> vmSnapshots = _vmSnapshotDao.findByVm(vmId);
         for (VMSnapshotVO vmSnapshotVO : vmSnapshots) {
@@ -2630,6 +2640,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.volume, (isIso || diskOfferingId == null ? 1 : 2));
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.primary_storage, size);
 
+        //Exoscale specific to prevent micro instance with a big disk
+        if (size > 214748364800L && offering.getRamSize() <= 512) {
+            throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
+        }
+
         // verify security group ids
         if (securityGroupIdList != null) {
             for (Long securityGroupId : securityGroupIdList) {
@@ -2947,6 +2962,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 if (isIso) {
                     vm.setIsoId(template.getId());
                 }
+
                 Long rootDiskSize = null;
                 // custom root disk size, resizes base template to larger size
                 if (customParameters.containsKey("rootdisksize")) {
@@ -2958,6 +2974,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     // only KVM supports rootdisksize override. None is required for template deployment with rootdisk size override
                     if (hypervisor != HypervisorType.KVM && hypervisor != HypervisorType.None) {
                         throw new InvalidParameterValueException("Hypervisor " + hypervisor + " does not support rootdisksize override");
+                    }
+
+                    //Exoscale specific to prevent micro instance with a big disk
+                    if (rootDiskSize > 200 && offering.getRamSize() <= 512) {
+                        throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
                     }
 
                     // rotdisksize must be larger than template
