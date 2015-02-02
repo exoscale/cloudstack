@@ -101,7 +101,9 @@ import com.cloud.hypervisor.HypervisorCapabilitiesVO;
 import com.cloud.hypervisor.dao.HypervisorCapabilitiesDao;
 import com.cloud.org.Grouping;
 import com.cloud.service.dao.ServiceOfferingDetailsDao;
+import com.cloud.service.ServiceOfferingVO;
 import com.cloud.storage.Storage.ImageFormat;
+import com.cloud.service.dao.ServiceOfferingDao;
 import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.SnapshotDao;
 import com.cloud.storage.dao.VMTemplateDao;
@@ -175,6 +177,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     private SnapshotDao _snapshotDao;
     @Inject
     protected ServiceOfferingDetailsDao _serviceOfferingDetailsDao;
+    @Inject
+    protected ServiceOfferingDao _offeringDao = null;
     @Inject
     StoragePoolDetailsDao storagePoolDetailsDao;
     @Inject
@@ -738,6 +742,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             throw new InvalidParameterValueException("Cloudstack currently only supports volumes marked as KVM, VMware, XenServer hypervisor for resize");
         }
 
+        UserVmVO userVm = _userVmDao.findById(volume.getInstanceId());
+
         if (volume.getState() != Volume.State.Ready && volume.getState() != Volume.State.Allocated) {
             throw new InvalidParameterValueException("Volume should be in ready or allocated state before attempting a resize. "
                                                      + "Volume " + volume.getUuid() + " state is:" + volume.getState());
@@ -819,6 +825,12 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
                     + " would shrink the volume, need to sign off by supplying the shrinkok parameter with value of true");
         }
 
+        //Exoscale specific to prevent micro instance with a big disk
+        ServiceOfferingVO offering = _offeringDao.findByIdIncludingRemoved(userVm.getId(), userVm.getServiceOfferingId());
+        if (newSize > 214748364800L && offering.getRamSize() <= 512) {
+            throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
+        }
+
         if (!shrinkOk) {
             /* Check resource limit for this account on primary storage resource */
             _resourceLimitMgr.checkResourceLimit(_accountMgr.getAccount(volume.getAccountId()), ResourceType.primary_storage, volume.isDisplayVolume(), new Long(newSize
@@ -835,9 +847,6 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             _volsDao.update(volume.getId(), volume);
             return volume;
         }
-
-        UserVmVO userVm = _userVmDao.findById(volume.getInstanceId());
-
 
         if (userVm != null) {
             // serialize VM operation
@@ -906,8 +915,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
                 hosts = new long[] {userVm.getLastHostId()};
             }
 
-            /* Xen only works offline, SR does not support VDI.resizeOnline */
-            if (_volsDao.getHypervisorType(volume.getId()) == HypervisorType.XenServer && !userVm.getState().equals(State.Stopped)) {
+            /* Xen & KVM only works offline, SR does not support VDI.resizeOnline */
+            if ((_volsDao.getHypervisorType(volume.getId()) == HypervisorType.XenServer || _volsDao.getHypervisorType(volume.getId()) == HypervisorType.KVM) && !userVm.getState().equals(State.Stopped)) {
                 throw new InvalidParameterValueException("VM must be stopped or disk detached in order to resize with the Xen HV");
             }
         }

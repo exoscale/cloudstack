@@ -465,6 +465,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     protected int _expungeDelay;
     protected boolean _dailyOrHourly = false;
     private int capacityReleaseInterval;
+    private long _maxVolumeSizeInGb;
 
     protected String _instance;
     protected String _zone;
@@ -806,6 +807,16 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         // Check that the specified service offering ID is valid
         _itMgr.checkIfCanUpgrade(vmInstance, newServiceOffering);
+
+        //Exoscale specific to prevent micro instance with a big disk
+        List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
+        for (VolumeVO volume : volumes) {
+            if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
+                if (volume.getSize() > 214748364800L && newMemory <= 512) {
+                    throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
+                }
+            }
+        }
 
         // remove diskAndMemory VM snapshots
         List<VMSnapshotVO> vmSnapshots = _vmSnapshotDao.findByVm(vmId);
@@ -2629,6 +2640,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.volume, (isIso || diskOfferingId == null ? 1 : 2));
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.primary_storage, size);
 
+        //Exoscale specific to prevent micro instance with a big disk
+        if (size > 214748364800L && offering.getRamSize() <= 512) {
+            throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
+        }
+
         // verify security group ids
         if (securityGroupIdList != null) {
             for (Long securityGroupId : securityGroupIdList) {
@@ -2946,6 +2962,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 if (isIso) {
                     vm.setIsoId(template.getId());
                 }
+
                 Long rootDiskSize = null;
                 // custom root disk size, resizes base template to larger size
                 if (customParameters.containsKey("rootdisksize")) {
@@ -2954,9 +2971,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     }
                     rootDiskSize = Long.parseLong(customParameters.get("rootdisksize"));
 
-                    // only KVM supports rootdisksize override
-                    if (hypervisor != HypervisorType.KVM) {
+                    // only KVM supports rootdisksize override. None is required for template deployment with rootdisk size override
+                    if (hypervisor != HypervisorType.KVM && hypervisor != HypervisorType.None) {
                         throw new InvalidParameterValueException("Hypervisor " + hypervisor + " does not support rootdisksize override");
+                    }
+
+                    //Exoscale specific to prevent micro instance with a big disk
+                    if (rootDiskSize > 200 && offering.getRamSize() <= 512) {
+                        throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
                     }
 
                     // rotdisksize must be larger than template
@@ -2969,6 +2991,13 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                         throw new InvalidParameterValueException("unsupported: rootdisksize override is smaller than template size " + templateVO.getSize());
                     } else {
                         s_logger.debug("rootdisksize of " + (rootDiskSize << 30) + " was larger than template size of " + templateVO.getSize());
+                    }
+
+                    // rotdisksize must not be larger than maxvolumesize settings
+                    String maxVolumeSizeInGbString = _configDao.getValue(Config.MaxVolumeSize.key());
+                    _maxVolumeSizeInGb = NumbersUtil.parseInt(maxVolumeSizeInGbString, Integer.parseInt(Config.MaxVolumeSize.getDefaultValue()));
+                    if (rootDiskSize > _maxVolumeSizeInGb) {
+                        throw new InvalidParameterValueException("volume size " + rootDiskSize + ", but the maximum size allowed is " + _maxVolumeSizeInGb + " Gb.");
                     }
 
                     s_logger.debug("found root disk size of " + rootDiskSize);

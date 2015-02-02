@@ -109,6 +109,10 @@ install_packages() {
   apt-get --no-install-recommends -q -y --force-yes install links:i386 libuuid1:i386
 
   apt-get --no-install-recommends -q -y --force-yes install radvd
+  
+   # do a final update and upgrade
+  apt-get update
+  apt-get -y --force-yes upgrade
 }
 
 setup_accounts() {
@@ -235,7 +239,7 @@ configure_services() {
   snapshot_dir="/opt/cloudstack*"
   cd /opt
   wget --no-check-certificate $snapshot_url -O cloudstack.tar.gz
-  tar -zxvf cloudstack.tar.gz --wildcards 'cloudstack-HEAD-???????/systemvm'
+  tar -zxvf cloudstack.tar.gz --wildcards 'cloudstack-4.4-???????/systemvm'
   cp -rv $snapshot_dir/systemvm/patches/debian/config/* /
   cp -rv $snapshot_dir/systemvm/patches/debian/vpn/* /
   mkdir -p /usr/share/cloud/
@@ -298,10 +302,10 @@ do_fixes
 echo "*************DONE FIXING CONFIGURATION********************"
 do_signature
 echo "*************DONE SIGNATURES********************"
-+postconfig_script
-+echo "*************DONE SETTING EXOSCALE POST CONFIG SCRIPT********************"
-+do_aptclean
-+echo "*************DONE APT CLEANUP********************"
+postconfig_script
+echo "*************DONE SETTING EXOSCALE POST CONFIG SCRIPT********************"
+do_aptclean
+echo "*************DONE APT CLEANUP********************"
 
 fin=$(date +%s)
 t=$((fin-begin))
