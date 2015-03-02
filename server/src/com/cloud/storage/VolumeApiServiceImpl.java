@@ -147,6 +147,8 @@ import com.cloud.vm.dao.VMInstanceDao;
 import com.cloud.vm.snapshot.VMSnapshotVO;
 import com.cloud.vm.snapshot.dao.VMSnapshotDao;
 
+import io.exo.csrestrictions.RestrictionListManager;
+
 public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiService, VmWorkJobHandler {
     private final static Logger s_logger = Logger.getLogger(VolumeApiServiceImpl.class);
 
@@ -827,9 +829,10 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         //Exoscale specific to prevent micro instance with a big disk
         ServiceOfferingVO offering = _offeringDao.findByIdIncludingRemoved(userVm.getId(), userVm.getServiceOfferingId());
-        if (newSize > 214748364800L && offering.getRamSize() <= 512) {
-            throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
-        }
+
+        RestrictionListManager.enforceRestrictions(newDiskOffering.getUuid(),
+                                                   null,
+                                                   newSize);
 
         if (!shrinkOk) {
             /* Check resource limit for this account on primary storage resource */

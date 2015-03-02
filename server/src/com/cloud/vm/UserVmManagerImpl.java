@@ -275,6 +275,8 @@ import com.cloud.vm.snapshot.VMSnapshotManager;
 import com.cloud.vm.snapshot.VMSnapshotVO;
 import com.cloud.vm.snapshot.dao.VMSnapshotDao;
 
+import io.exo.csrestrictions.RestrictionListManager;
+
 @Local(value = {UserVmManager.class, UserVmService.class})
 public class UserVmManagerImpl extends ManagerBase implements UserVmManager, VirtualMachineGuru, UserVmService, Configurable {
     private static final Logger s_logger = Logger.getLogger(UserVmManagerImpl.class);
@@ -786,6 +788,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         // Check resource limits for CPU and Memory.
         Map<String, String> customParameters = cmd.getDetails();
         ServiceOfferingVO newServiceOffering = _offeringDao.findById(svcOffId);
+        DiskOfferingVO newDiskOffering = _diskOfferingDao.findById(svcOffId);
         if (newServiceOffering.isDynamic()) {
             newServiceOffering.setDynamicFlag(true);
             validateCustomParameters(newServiceOffering, cmd.getDetails());
@@ -812,9 +815,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                if (volume.getSize() > 214748364800L && newMemory <= 512) {
-                    throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
-                }
+
+                RestrictionListManager.enforceRestrictions(newDiskOffering.getUuid(),
+                                                           null,
+                                                           volume.getSize());
             }
         }
 
@@ -2620,8 +2624,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         if (tmp != null) {
             size = tmp;
         }
+        DiskOfferingVO diskOffering = null;
         if (diskOfferingId != null) {
-            DiskOfferingVO diskOffering = _diskOfferingDao.findById(diskOfferingId);
+            diskOffering = _diskOfferingDao.findById(diskOfferingId);
             if (diskOffering != null && diskOffering.isCustomized()) {
                 if (diskSize == null) {
                     throw new InvalidParameterValueException("This disk offering requires a custom size specified");
@@ -2641,9 +2646,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.primary_storage, size);
 
         //Exoscale specific to prevent micro instance with a big disk
-        if (size > 214748364800L && offering.getRamSize() <= 512) {
-            throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
-        }
+        RestrictionListManager.enforceRestrictions(diskOffering.getUuid(),
+                                                   template.getName(),
+                                                   size);
 
         // verify security group ids
         if (securityGroupIdList != null) {
@@ -2976,16 +2981,18 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                         throw new InvalidParameterValueException("Hypervisor " + hypervisor + " does not support rootdisksize override");
                     }
 
-                    //Exoscale specific to prevent micro instance with a big disk
-                    if (rootDiskSize > 200 && offering.getRamSize() <= 512) {
-                        throw new InvalidParameterValueException("Micro instance with a rootdisk bigger than 200gb is not allowed. Please scale up your instance");
-                    }
-
                     // rotdisksize must be larger than template
                     VMTemplateVO templateVO = _templateDao.findById(template.getId());
                     if (templateVO == null) {
                         throw new InvalidParameterValueException("Unable to look up template by id " + template.getId());
                     }
+
+
+                    //Exoscale specific to prevent micro instance with a big disk
+                    DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
+                    RestrictionListManager.enforceRestrictions((offeringVO == null) ? null : offeringVO.getUuid(),
+                                                               templateVO.getName(),
+                                                               rootDiskSize);
 
                     if ((rootDiskSize << 30) < templateVO.getSize()) {
                         throw new InvalidParameterValueException("unsupported: rootdisksize override is smaller than template size " + templateVO.getSize());
