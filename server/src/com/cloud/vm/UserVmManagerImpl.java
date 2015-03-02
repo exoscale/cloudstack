@@ -3000,6 +3000,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
                 }
 
+                if (offeringVO == null) {
+                    s_logger.warn("No suitable disk/service offering were found, restrictions will not be enforced. Id was " + diskOfferingId.toString());
+                } else {
+                    s_logger.info("Will enforce restrictions for " + offeringVO.getUuid());
+                }
                 // enforce exoscale restrictions
                 RestrictionListManager.enforceRestrictions((offeringVO == null) ? null : offeringVO.getUuid(),
                                                            templateVO.getName(),
