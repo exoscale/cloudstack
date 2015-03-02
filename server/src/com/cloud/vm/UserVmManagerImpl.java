@@ -3002,7 +3002,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
                 if (offeringVO == null) {
                     s_logger.warn("No suitable disk/service offering were found, restrictions will not be enforced. Id was " +
-                                  (diskOfferingId == null)?"NULL":diskOfferingId.toString());
+                                  ((diskOfferingId == null) ? "NULL":diskOfferingId.toString()));
                 } else {
                     s_logger.info("Will enforce restrictions for " + offeringVO.getUuid());
                 }
