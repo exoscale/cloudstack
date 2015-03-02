@@ -2645,11 +2645,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.volume, (isIso || diskOfferingId == null ? 1 : 2));
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.primary_storage, size);
 
-        //Exoscale specific to prevent micro instance with a big disk
-        RestrictionListManager.enforceRestrictions(diskOffering.getUuid(),
-                                                   template.getName(),
-                                                   size);
-
         // verify security group ids
         if (securityGroupIdList != null) {
             for (Long securityGroupId : securityGroupIdList) {
@@ -2969,6 +2964,13 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 }
 
                 Long rootDiskSize = null;
+                VMTemplateVO templateVO = _templateDao.findById(template.getId());
+                DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
+
+                if (templateVO == null) {
+                    throw new InvalidParameterValueException("Unable to look up template by id " + template.getId());
+                }
+
                 // custom root disk size, resizes base template to larger size
                 if (customParameters.containsKey("rootdisksize")) {
                     if (NumbersUtil.parseLong(customParameters.get("rootdisksize"), -1) <= 0) {
@@ -2980,19 +2982,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     if (hypervisor != HypervisorType.KVM && hypervisor != HypervisorType.None) {
                         throw new InvalidParameterValueException("Hypervisor " + hypervisor + " does not support rootdisksize override");
                     }
-
-                    // rotdisksize must be larger than template
-                    VMTemplateVO templateVO = _templateDao.findById(template.getId());
-                    if (templateVO == null) {
-                        throw new InvalidParameterValueException("Unable to look up template by id " + template.getId());
-                    }
-
-
-                    //Exoscale specific to prevent micro instance with a big disk
-                    DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
-                    RestrictionListManager.enforceRestrictions((offeringVO == null) ? null : offeringVO.getUuid(),
-                                                               templateVO.getName(),
-                                                               rootDiskSize);
 
                     if ((rootDiskSize << 30) < templateVO.getSize()) {
                         throw new InvalidParameterValueException("unsupported: rootdisksize override is smaller than template size " + templateVO.getSize());
@@ -3010,6 +2999,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     s_logger.debug("found root disk size of " + rootDiskSize);
                     customParameters.remove("rootdisksize");
                 }
+
+                // enforce exoscale restrictions
+                RestrictionListManager.enforceRestrictions((offeringVO == null) ? null : offeringVO.getUuid(),
+                                                           templateVO.getName(),
+                                                           (rootDiskSize == null) ? offeringVO.getDiskSize() : rootDiskSize);
 
                 if (isDisplayVm != null) {
                     vm.setDisplayVm(isDisplayVm);
