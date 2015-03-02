@@ -50,6 +50,7 @@
     <module>dedicated-resources</module>
     <module>hypervisors/kvm</module>
     <module>event-bus/inmemory</module>
+    <module>event-bus/kafka</module>
     <module>storage-allocators/random</module>
     <module>user-authenticators/md5</module>
     <module>user-authenticators/plain-text</module>
