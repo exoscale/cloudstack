@@ -3007,9 +3007,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     s_logger.info("Will enforce restrictions for " + offeringVO.getUuid());
                 }
                 // enforce exoscale restrictions
-                RestrictionListManager.enforceRestrictions((offeringVO == null) ? null : offeringVO.getUuid(),
-                                                           templateVO.getName(),
-                                                           (rootDiskSize == null) ? offeringVO.getDiskSize() : rootDiskSize);
+                if (offeringVO != null) {
+                    RestrictionListManager.enforceRestrictions(offeringVO.getUuid(),
+                                                               templateVO.getName(),
+                                                               (rootDiskSize == null) ? offeringVO.getDiskSize() : rootDiskSize);
+                }
 
                 if (isDisplayVm != null) {
                     vm.setDisplayVm(isDisplayVm);
