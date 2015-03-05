@@ -830,7 +830,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
         //Exoscale specific to prevent micro instance with a big disk
         ServiceOfferingVO offering = _offeringDao.findByIdIncludingRemoved(userVm.getId(), userVm.getServiceOfferingId());
 
-        RestrictionListManager.enforceRestrictions(newDiskOffering.getUuid(),
+        String vmServiceOfferingId = String.valueOf(userVm.getServiceOfferingId());
+        RestrictionListManager.enforceRestrictions(vmServiceOfferingId,
                                                    null,
                                                    newSize);
 
