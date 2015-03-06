@@ -2964,6 +2964,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 }
 
                 Long rootDiskSize = null;
+                Long rootDiskSizebytes = null;
                 VMTemplateVO templateVO = _templateDao.findById(template.getId());
                 DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
 
@@ -2996,6 +2997,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                         throw new InvalidParameterValueException("volume size " + rootDiskSize + ", but the maximum size allowed is " + _maxVolumeSizeInGb + " Gb.");
                     }
 
+                    rootDiskSizebytes = (rootDiskSize * 1024 * 1024 * 1024);
+
                     s_logger.debug("found root disk size of " + rootDiskSize);
                     customParameters.remove("rootdisksize");
                 }
@@ -3005,7 +3008,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 String vmServiceOfferingName = String.valueOf(serviceOffering.getName());
                 RestrictionListManager.enforceRestrictions(vmServiceOfferingName,
                                                             templateVO.getName(),
-                                                            (rootDiskSize == null) ? offeringVO.getDiskSize() : rootDiskSize);
+                                                            (rootDiskSizebytes == null) ? offeringVO.getDiskSize() : rootDiskSizebytes);
 
                 if (isDisplayVm != null) {
                     vm.setDisplayVm(isDisplayVm);
