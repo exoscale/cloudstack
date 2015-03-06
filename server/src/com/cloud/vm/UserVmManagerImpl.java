@@ -811,7 +811,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         // Check that the specified service offering ID is valid
         _itMgr.checkIfCanUpgrade(vmInstance, newServiceOffering);
 
-        //Exoscale specific to prevent micro instance with a big disk
+        //Exoscale restrictions
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
@@ -3001,8 +3001,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 }
 
                 // enforce exoscale restrictions
-                String vmServiceOfferingId = String.valueOf(vm.getServiceOfferingId());
-                RestrictionListManager.enforceRestrictions(vmServiceOfferingId,
+                ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
+                String vmServiceOfferingName = String.valueOf(serviceOffering.getName());
+                RestrictionListManager.enforceRestrictions(vmServiceOfferingName,
                                                             templateVO.getName(),
                                                             (rootDiskSize == null) ? offeringVO.getDiskSize() : rootDiskSize);
 
