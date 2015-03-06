@@ -816,7 +816,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
 
-                RestrictionListManager.enforceRestrictions(newDiskOffering.getUuid(),
+                RestrictionListManager.enforceRestrictions(newServiceOffering.getName(),
                                                            null,
                                                            volume.getSize());
             }
