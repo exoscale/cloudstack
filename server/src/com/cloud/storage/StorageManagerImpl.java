@@ -890,17 +890,12 @@ public class StorageManagerImpl extends ManagerBase implements StorageManager, C
         List<CapacityVO> capacities = _capacityDao.search(capacitySC, null);
 
         long totalOverProvCapacity;
-        if (storagePool.getPoolType() == StoragePoolType.NetworkFilesystem || storagePool.getPoolType() == StoragePoolType.VMFS) {
-            // All this is for the inaccuracy of floats for big number multiplication.
-            BigDecimal overProvFactor = getStorageOverProvisioningFactor(storagePool.getId());
-            totalOverProvCapacity = overProvFactor.multiply(new BigDecimal(storagePool.getCapacityBytes())).longValue();
-            s_logger.debug("Found storage pool " + storagePool.getName() + " of type " + storagePool.getPoolType().toString() + " with overprovisioning factor "
-                    + overProvFactor.toString());
-            s_logger.debug("Total over provisioned capacity calculated is " + overProvFactor + " * " + storagePool.getCapacityBytes());
-        } else {
-            s_logger.debug("Found storage pool " + storagePool.getName() + " of type " + storagePool.getPoolType().toString());
-            totalOverProvCapacity = storagePool.getCapacityBytes();
-        }
+        // All this is for the inaccuracy of floats for big number multiplication.
+        BigDecimal overProvFactor = getStorageOverProvisioningFactor(storagePool.getId());
+        totalOverProvCapacity = overProvFactor.multiply(new BigDecimal(storagePool.getCapacityBytes())).longValue();
+        s_logger.debug("Found storage pool " + storagePool.getName() + " of type " + storagePool.getPoolType().toString() + " with overprovisioning factor "
+                + overProvFactor.toString());
+        s_logger.debug("Total over provisioned capacity calculated is " + overProvFactor + " * " + storagePool.getCapacityBytes());
 
         s_logger.debug("Total over provisioned capacity of the pool " + storagePool.getName() + " id: " + storagePool.getId() + " is " + totalOverProvCapacity);
         if (capacities.size() == 0) {
