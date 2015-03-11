@@ -54,5 +54,7 @@ my $msg = "pubkey:" . $key . "\ncmdline:" . $cmdline;
 my $socket = IO::Socket::UNIX->new(Peer=>$sockfile,Type=>SOCK_STREAM)
     or die "ERROR: unable to connect to $sockfile - $^E\n";
 print $socket "$msg\n";
+shutdown $socket, 1;
+<$socket>;
 close $socket;
 
