@@ -51,7 +51,7 @@ public class SecurityGroupListener implements Listener {
     public static final Logger s_logger = Logger.getLogger(SecurityGroupListener.class.getName());
 
     private static final int MAX_RETRIES_ON_FAILURE = 3;
-    private static final int MIN_TIME_BETWEEN_CLEANUPS = 30 * 60;//30 minutes
+    private static final int MIN_TIME_BETWEEN_CLEANUPS = 5 * 60;//5 minutes
     private final Random _cleanupRandom = new Random();
 
     SecurityGroupManagerImpl _securityGroupManager;
