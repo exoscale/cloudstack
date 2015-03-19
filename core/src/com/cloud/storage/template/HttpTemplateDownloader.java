@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
 
+import org.apache.cloudstack.utils.imagestore.ImageStoreUtil;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -42,7 +43,6 @@ import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.managed.context.ManagedContextRunnable;
 import org.apache.cloudstack.storage.command.DownloadCommand.ResourceType;
-import org.apache.cloudstack.utils.template.TemplateUtils;
 
 import com.cloud.agent.api.storage.Proxy;
 import com.cloud.storage.StorageLayer;
@@ -256,7 +256,7 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
                         } catch (URISyntaxException e) {
                             s_logger.warn("Invalid download url: " + getDownloadUrl() + ", This should not happen since we have validated the url before!!");
                         }
-                        String unsupportedFormat = TemplateUtils.checkTemplateFormat(file.getAbsolutePath(), uripath);
+                        String unsupportedFormat = ImageStoreUtil.checkTemplateFormat(file.getAbsolutePath(), uripath);
                             if (unsupportedFormat == null || !unsupportedFormat.isEmpty()) {
                                  try {
                                      request.abort();
