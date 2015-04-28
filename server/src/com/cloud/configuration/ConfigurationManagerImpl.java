@@ -473,11 +473,6 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
                 if (pool == null) {
                     throw new InvalidParameterValueException("unable to find storage pool by id " + resourceId);
                 }
-                if(name.equals(CapacityManager.StorageOverprovisioningFactor.key())) {
-                    if(pool.getPoolType() != StoragePoolType.NetworkFilesystem && pool.getPoolType() != StoragePoolType.VMFS) {
-                        throw new InvalidParameterValueException("Unable to update  storage pool with id " + resourceId + ". Overprovision not supported for " + pool.getPoolType());
-                    }
-                }
                 _storagePoolDetailsDao.addDetail(resourceId, name, value, true);
 
                 break;
