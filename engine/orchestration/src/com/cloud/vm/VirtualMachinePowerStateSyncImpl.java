@@ -85,10 +85,10 @@ public class VirtualMachinePowerStateSyncImpl implements VirtualMachinePowerStat
                     s_logger.debug("VM state report is updated. host: " + hostId + ", vm id: " + entry.getKey() + ", power state: " + entry.getValue());
 
                 _messageBus.publish(null, VirtualMachineManager.Topics.VM_POWER_STATE, PublishScope.GLOBAL, entry.getKey());
-            } else {
-                if (s_logger.isDebugEnabled())
-                    s_logger.debug("VM power state does not change, skip DB writing. vm id: " + entry.getKey());
-            }
+            } // else {
+              //  if (s_logger.isDebugEnabled())
+              //      s_logger.debug("VM power state does not change, skip DB writing. vm id: " + entry.getKey());
+           // }
         }
 
         // for all running/stopping VMs, we provide monitoring of missing report
@@ -131,10 +131,10 @@ public class VirtualMachinePowerStateSyncImpl implements VirtualMachinePowerStat
                             s_logger.debug("VM state report is updated. host: " + hostId + ", vm id: " + instance.getId() + ", power state: PowerReportMissing ");
 
                         _messageBus.publish(null, VirtualMachineManager.Topics.VM_POWER_STATE, PublishScope.GLOBAL, instance.getId());
-                    } else {
-                        if (s_logger.isDebugEnabled())
-                            s_logger.debug("VM power state does not change, skip DB writing. vm id: " + instance.getId());
-                    }
+                    } // else {
+                      //  if (s_logger.isDebugEnabled())
+                      //      s_logger.debug("VM power state does not change, skip DB writing. vm id: " + instance.getId());
+                   // }
                 } else {
                     s_logger.debug("vm id: " + instance.getId() + " - time since last state update(" + milliSecondsSinceLastStateUpdate + "ms) has not passed graceful period yet");
                 }
