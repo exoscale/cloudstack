@@ -29,6 +29,7 @@ import org.apache.cloudstack.api.Parameter;
 import org.apache.cloudstack.api.ResponseObject.ResponseView;
 import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.response.GuestOSResponse;
+import org.apache.cloudstack.api.response.SecurityGroupResponse;
 import org.apache.cloudstack.api.response.UserVmResponse;
 import org.apache.cloudstack.context.CallContext;
 
@@ -40,6 +41,7 @@ import com.cloud.vm.VirtualMachine;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 
 @APICommand(name = "updateVirtualMachine", description="Updates properties of a virtual machine. The VM has to be stopped and restarted for the " +
         "new properties to take effect. UpdateVirtualMachine does not first check whether the VM is stopped. " +
@@ -93,6 +95,13 @@ public class UpdateVMCmd extends BaseCustomIdCmd {
     @Parameter(name = ApiConstants.DETAILS, type = CommandType.MAP, description = "Details in key/value pairs.")
     protected Map details;
 
+    @Parameter(name = ApiConstants.SECURITY_GROUP_IDS,
+               type = CommandType.LIST,
+               collectionType = CommandType.UUID,
+               entityType = SecurityGroupResponse.class,
+               description = "list of security group ids to be applied on the virtual machine.")
+    private List<Long> securityGroupIdList;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -136,6 +145,10 @@ public class UpdateVMCmd extends BaseCustomIdCmd {
 
         Collection paramsCollection = this.details.values();
         return (Map) (paramsCollection.toArray())[0];
+    }
+
+    public List<Long> getSecurityGroupIdList() {
+        return securityGroupIdList;
     }
 
     /////////////////////////////////////////////////////

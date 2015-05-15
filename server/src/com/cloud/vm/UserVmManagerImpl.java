@@ -1864,6 +1864,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         String hostName = cmd.getHostName();
         Map details = cmd.getDetails();
         Account caller = CallContext.current().getCallingAccount();
+        List<Long> securityGroupIdList = cmd.getSecurityGroupIdList();
 
         // Input validation and permission checks
         UserVmVO vmInstance = _vmDao.findById(id.longValue());
@@ -1907,7 +1908,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             _vmDao.saveDetails(vmInstance);
         }
 
-        return updateVirtualMachine(id, displayName, group, ha, isDisplayVm, osTypeId, userData, isDynamicallyScalable, cmd.getHttpMethod(), cmd.getCustomId(), hostName);
+        return updateVirtualMachine(id, displayName, group, ha, isDisplayVm, osTypeId, userData, isDynamicallyScalable, cmd.getHttpMethod(), cmd.getCustomId(), hostName, securityGroupIdList);
     }
 
     private void saveUsageEvent(UserVmVO vm) {
@@ -1957,7 +1958,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
     @Override
     public UserVm updateVirtualMachine(long id, String displayName, String group, Boolean ha, Boolean isDisplayVmEnabled, Long osTypeId, String userData,
-            Boolean isDynamicallyScalable, HTTPMethod httpMethod, String customId, String hostName) throws ResourceUnavailableException, InsufficientCapacityException {
+            Boolean isDynamicallyScalable, HTTPMethod httpMethod, String customId, String hostName, List<Long> securityGroupIdList) throws ResourceUnavailableException, InsufficientCapacityException {
         UserVmVO vm = _vmDao.findById(id);
         if (vm == null) {
             throw new CloudRuntimeException("Unable to find virual machine with id " + id);
@@ -2010,6 +2011,25 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         if (isDynamicallyScalable == null) {
             isDynamicallyScalable = vm.isDynamicallyScalable();
+        }
+
+        // Get default guest network in Basic zone
+        DataCenterVO zone = _dcDao.findById(vm.getDataCenterId());
+        Network defaultNetwork = _networkModel.getExclusiveGuestNetwork(zone.getId());
+
+        boolean isVmWare = (vm.getHypervisorType() == HypervisorType.VMware);
+
+        if (securityGroupIdList != null && isVmWare) {
+            throw new InvalidParameterValueException("Security group feature is not supported for vmWare hypervisor");
+        } else if (securityGroupIdList != null && _networkModel.isSecurityGroupSupportedInNetwork(defaultNetwork) && _networkModel.canAddDefaultSecurityGroup()) {
+            if (vm.getState() == State.Stopped) {
+                // Remove instance from security groups
+                _securityGroupMgr.removeInstanceFromGroups(id);
+                // Add instance in provided groups
+                _securityGroupMgr.addInstanceToGroups(id, securityGroupIdList);
+            } else {
+                throw new InvalidParameterValueException("Virtual machine must be stopped prior to update security groups ");
+            }
         }
 
         if (hostName != null) {
