@@ -2022,10 +2022,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         if (securityGroupIdList != null && isVmWare) {
             throw new InvalidParameterValueException("Security group feature is not supported for vmWare hypervisor");
         } else if (securityGroupIdList != null && _networkModel.isSecurityGroupSupportedInNetwork(defaultNetwork) && _networkModel.canAddDefaultSecurityGroup()) {
-            // Remove instance from security groups
-            _securityGroupMgr.removeInstanceFromGroups(id);
-            // Add instance in provided groups
-            _securityGroupMgr.addInstanceToGroups(id, securityGroupIdList);
+            if (vm.getState() == State.Stopped) {
+                // Remove instance from security groups
+                _securityGroupMgr.removeInstanceFromGroups(id);
+                // Add instance in provided groups
+                _securityGroupMgr.addInstanceToGroups(id, securityGroupIdList);
+            } else {
+                throw new InvalidParameterValueException("Virtual machine must be stopped prior to update security groups ");
+            }
         }
 
         if (hostName != null) {

@@ -99,8 +99,7 @@ public class UpdateVMCmd extends BaseCustomIdCmd {
                type = CommandType.LIST,
                collectionType = CommandType.UUID,
                entityType = SecurityGroupResponse.class,
-               description = "list of security group ids to be applied on the virtual machine. " +
-                   "In case no security groups are provided the VM is part of the default security group.")
+               description = "list of security group ids to be applied on the virtual machine.")
     private List<Long> securityGroupIdList;
 
     /////////////////////////////////////////////////////
