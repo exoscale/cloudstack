@@ -1198,7 +1198,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private boolean passCmdLine(String vmName, String cmdLine) throws InternalErrorException {
-        final Script command = new Script(_patchViaSocketPath, 5 * 1000, s_logger);
+        final Script command = new Script(_patchViaSocketPath, 60 * 1000, s_logger);
         String result;
         command.add("-n", vmName);
         command.add("-p", cmdLine.replaceAll(" ", "%"));
