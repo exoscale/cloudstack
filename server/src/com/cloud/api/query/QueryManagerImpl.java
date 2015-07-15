@@ -101,6 +101,8 @@ import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreCapabilities;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreDriver;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
 import org.apache.cloudstack.engine.subsystem.api.storage.TemplateState;
+import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.config.Configurable;
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.cloudstack.query.QueryService;
 
@@ -212,7 +214,7 @@ import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.UserVmDetailsDao;
 
 @Component
-public class QueryManagerImpl extends ManagerBase implements QueryService {
+public class QueryManagerImpl extends ManagerBase implements QueryService, Configurable {
 
     public static final Logger s_logger = Logger.getLogger(QueryManagerImpl.class);
 
@@ -941,8 +943,8 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
             sc.setParameters("hypervisorType", hypervisor);
         }
 
-        // Don't show Destroyed and Expunging vms to the end user
-        if (!isAdmin) {
+        // Don't show Destroyed and Expunging vms to the end user if the AllowUserViewDestroyedVM flag is not set.
+        if (!isAdmin && !AllowUserViewDestroyedVM.valueIn(caller.getAccountId())) {
             sc.setParameters("stateNIN", "Destroyed", "Expunging");
         }
 
@@ -3520,4 +3522,13 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         return resourceDetailResponse;
     }
 
+    @Override
+    public String getConfigComponentName() {
+        return QueryService.class.getSimpleName();
+    }
+
+    @Override
+    public ConfigKey<?>[] getConfigKeys() {
+        return new ConfigKey<?>[] {AllowUserViewDestroyedVM};
+    }
 }
