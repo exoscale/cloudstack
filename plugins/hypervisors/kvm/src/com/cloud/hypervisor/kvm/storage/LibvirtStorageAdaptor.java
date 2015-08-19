@@ -72,7 +72,7 @@ public class LibvirtStorageAdaptor implements StorageAdaptor {
 
     public LibvirtStorageAdaptor(StorageLayer storage) {
         _storageLayer = storage;
-        _manageSnapshotPath = Script.findScript("scripts/storage/qcow2/", "managesnapshot.sh");
+        _manageSnapshotPath = Script.findScript("scripts/storage/qcow2/", "managesnapshot.py");
     }
 
     @Override

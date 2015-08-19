@@ -43,7 +43,6 @@ import org.apache.log4j.Logger;
 import org.libvirt.Connect;
 import org.libvirt.Domain;
 import org.libvirt.DomainInfo;
-import org.libvirt.DomainSnapshot;
 import org.libvirt.LibvirtException;
 
 import com.ceph.rados.IoCTX;
@@ -131,9 +130,9 @@ public class KVMStorageProcessor implements StorageProcessor {
             throw new ConfigurationException("Unable to find the createtmplt.sh");
         }
 
-        _manageSnapshotPath = Script.findScript(storageScriptsDir, "managesnapshot.sh");
+        _manageSnapshotPath = Script.findScript(storageScriptsDir, "managesnapshot.py");
         if (_manageSnapshotPath == null) {
-            throw new ConfigurationException("Unable to find the managesnapshot.sh");
+            throw new ConfigurationException("Unable to find the managesnapshot.py");
         }
 
         String value = (String)params.get("cmds.timeout");
@@ -733,8 +732,9 @@ public class KVMStorageProcessor implements StorageProcessor {
                 }
             } else {
                 Script command = new Script(_manageSnapshotPath, cmd.getWaitInMillSeconds(), s_logger);
-                command.add("-b", snapshotDisk.getPath());
-                command.add("-n", snapshotName);
+                command.add("-b");
+                command.add("-diskpath", snapshotDisk.getPath());
+                command.add("-domain", vmName);
                 command.add("-p", snapshotDestPath);
                 command.add("-t", snapshotName);
                 String result = command.execute();
@@ -772,31 +772,15 @@ public class KVMStorageProcessor implements StorageProcessor {
                     }
                 }
 
-                KVMStoragePool primaryStorage = storagePoolMgr.getStoragePool(primaryStore.getPoolType(),
-                        primaryStore.getUuid());
-                if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
-                    DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
-                    snap.delete(0);
-
-                    /*
-                     * libvirt on RHEL6 doesn't handle resume event emitted from
-                     * qemu
-                     */
-                    vm = resource.getDomain(conn, vmName);
-                    state = vm.getInfo().state;
-                    if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
-                        vm.resume();
-                    }
-                } else {
-                    if (primaryPool.getType() != StoragePoolType.RBD) {
-                        Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                        command.add("-d", snapshotDisk.getPath());
-                        command.add("-n", snapshotName);
-                        String result = command.execute();
-                        if (result != null) {
-                            s_logger.debug("Failed to delete snapshot on primary: " + result);
-                            // return new CopyCmdAnswer("Failed to backup snapshot: " + result);
-                        }
+                if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && primaryPool.getType() != StoragePoolType.RBD) {
+                    Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
+                    command.add("-d");
+                    command.add("-diskpath", snapshotDisk.getPath());
+                    command.add("-domain", vmName);
+                    String result = command.execute();
+                    if (result != null) {
+                        s_logger.debug("Failed to delete snapshot on primary: " + result);
+                        // return new CopyCmdAnswer("Failed to backup snapshot: " + result);
                     }
                 }
             } catch (Exception ex) {
@@ -1101,22 +1085,17 @@ public class KVMStorageProcessor implements StorageProcessor {
 
             KVMPhysicalDisk disk = storagePoolMgr.getPhysicalDisk(primaryStore.getPoolType(), primaryStore.getUuid(), volume.getPath());
             if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryPool.isExternalSnapshot()) {
-                String vmUuid = vm.getUUIDString();
-                Object[] args = new Object[] {snapshotName, vmUuid};
-                String snapshot = SnapshotXML.format(args);
-                s_logger.debug(snapshot);
-
-                vm.snapshotCreateXML(snapshot);
-                /*
-                 * libvirt on RHEL6 doesn't handle resume event emitted from
-                 * qemu
-                 */
-                vm = resource.getDomain(conn, vmName);
-                state = vm.getInfo().state;
-                if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
-                    vm.resume();
+                Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
+                command.add("-c");
+                command.add("-diskpath", disk.getPath());
+                command.add("-domain", vmName);
+                String result = command.execute();
+                if (result != null) {
+                    s_logger.debug("Failed to manage snapshot: " + result);
+                    return new CreateObjectAnswer("Failed to manage snapshot: " + result);
                 }
             } else {
+
                 /**
                  * For RBD we can't use libvirt to do our snapshotting or any Bash scripts.
                  * libvirt also wants to store the memory contents of the Virtual Machine,
@@ -1151,19 +1130,9 @@ public class KVMStorageProcessor implements StorageProcessor {
                     } catch (Exception e) {
                         s_logger.error("A RBD snapshot operation on " + disk.getName() + " failed. The error was: " + e.getMessage());
                     }
-                } else {
-                    /* VM is not running, create a snapshot by ourself */
-                    final Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                    command.add("-c", disk.getPath());
-                    command.add("-n", snapshotName);
-                    String result = command.execute();
-                    if (result != null) {
-                        s_logger.debug("Failed to manage snapshot: " + result);
-                        return new CreateObjectAnswer("Failed to manage snapshot: " + result);
-                    }
                 }
             }
-
+            // Exoscale if VM not running we send snap ok and will back the disk directly as libvirt cannot do snap on unregistered domains
             SnapshotObjectTO newSnapshot = new SnapshotObjectTO();
             // NOTE: sort of hack, we'd better just put snapshtoName
             newSnapshot.setPath(disk.getPath() + File.separator + snapshotName);

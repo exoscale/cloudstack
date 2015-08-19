@@ -69,7 +69,6 @@ import org.libvirt.Domain;
 import org.libvirt.DomainBlockStats;
 import org.libvirt.DomainInfo;
 import org.libvirt.DomainInterfaceStats;
-import org.libvirt.DomainSnapshot;
 import org.libvirt.LibvirtException;
 import org.libvirt.NodeInfo;
 import org.libvirt.StorageVol;
@@ -662,9 +661,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             throw new ConfigurationException("Unable to find the createvm.sh");
         }
 
-        _manageSnapshotPath = Script.findScript(storageScriptsDir, "managesnapshot.sh");
+        _manageSnapshotPath = Script.findScript(storageScriptsDir, "managesnapshot.py");
         if (_manageSnapshotPath == null) {
-            throw new ConfigurationException("Unable to find the managesnapshot.sh");
+            throw new ConfigurationException("Unable to find the managesnapshot.py");
         }
 
         _resizeVolumePath = Script.findScript(storageScriptsDir, "resizevolume.sh");
@@ -2350,26 +2349,22 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
             KVMPhysicalDisk disk = primaryPool.getPhysicalDisk(cmd.getVolumePath());
             if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryPool.isExternalSnapshot()) {
-                String vmUuid = vm.getUUIDString();
-                Object[] args = new Object[] {snapshotName, vmUuid};
-                String snapshot = SnapshotXML.format(args);
-                s_logger.debug(snapshot);
-                if (cmd.getCommandSwitch().equalsIgnoreCase(ManageSnapshotCommand.CREATE_SNAPSHOT)) {
-                    vm.snapshotCreateXML(snapshot);
-                } else {
-                    DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
-                    snap.delete(0);
-                }
+                Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
+                    if (cmd.getCommandSwitch().equalsIgnoreCase(ManageSnapshotCommand.CREATE_SNAPSHOT)) {
+                        command.add("-c");
+                        command.add("-diskpath", disk.getPath());
+                        command.add("-domain", vmName);
+                    } else {
+                        command.add("-d");
+                        command.add("-diskpath", disk.getPath());
+                        command.add("-domain", vmName);
+                    }
 
-                /*
-                 * libvirt on RHEL6 doesn't handle resume event emitted from
-                 * qemu
-                 */
-                vm = getDomain(conn, cmd.getVmName());
-                state = vm.getInfo().state;
-                if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
-                    vm.resume();
-                }
+                    String result = command.execute();
+                    if (result != null) {
+                        s_logger.debug("Failed to manage snapshot: " + result);
+                        return new ManageSnapshotAnswer(cmd, false, "Failed to manage snapshot: " + result);
+                    }
             } else {
                 /**
                  * For RBD we can't use libvirt to do our snapshotting or any Bash scripts.
@@ -2410,23 +2405,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                     } catch (Exception e) {
                         s_logger.error("A RBD snapshot operation on " + disk.getName() + " failed. The error was: " + e.getMessage());
                     }
-                } else {
-                    /* VM is not running, create a snapshot by ourself */
-                    final Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                    if (cmd.getCommandSwitch().equalsIgnoreCase(ManageSnapshotCommand.CREATE_SNAPSHOT)) {
-                        command.add("-c", disk.getPath());
-                    } else {
-                        command.add("-d", snapshotPath);
-                    }
-
-                    command.add("-n", snapshotName);
-                    String result = command.execute();
-                    if (result != null) {
-                        s_logger.debug("Failed to manage snapshot: " + result);
-                        return new ManageSnapshotAnswer(cmd, false, "Failed to manage snapshot: " + result);
-                    }
                 }
             }
+            // Exoscale if VM not running we send snap ok and will back the disk directly as libvirt cannot do snap on unregistered domains
             return new ManageSnapshotAnswer(cmd, cmd.getSnapshotId(), disk.getPath() + File.separator + snapshotName, true, null);
         } catch (LibvirtException e) {
             s_logger.debug("Failed to manage snapshot: " + e.toString());
@@ -2513,8 +2494,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             } else {
                 Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                command.add("-b", snapshotDisk.getPath());
-                command.add("-n", snapshotName);
+                command.add("-b");
+                command.add("-diskpath", snapshotDisk.getPath());
+                command.add("-domain", vmName);
                 command.add("-p", snapshotDestPath);
                 command.add("-t", snapshotName);
                 String result = command.execute();
@@ -2536,28 +2518,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             }
 
-            KVMStoragePool primaryStorage = _storagePoolMgr.getStoragePool(cmd.getPool().getType(), cmd.getPool().getUuid());
-            if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING && !primaryStorage.isExternalSnapshot()) {
-                String vmUuid = vm.getUUIDString();
-                Object[] args = new Object[] {snapshotName, vmUuid};
-                String snapshot = SnapshotXML.format(args);
-                s_logger.debug(snapshot);
-                DomainSnapshot snap = vm.snapshotLookupByName(snapshotName);
-                snap.delete(0);
-
-                /*
-                 * libvirt on RHEL6 doesn't handle resume event emitted from
-                 * qemu
-                 */
-                vm = getDomain(conn, cmd.getVmName());
-                state = vm.getInfo().state;
-                if (state == DomainInfo.DomainState.VIR_DOMAIN_PAUSED) {
-                    vm.resume();
-                }
-            } else {
+            if (state == DomainInfo.DomainState.VIR_DOMAIN_RUNNING) {
                 Script command = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
-                command.add("-d", snapshotDisk.getPath());
-                command.add("-n", snapshotName);
+                command.add("-d");
+                command.add("-diskpath", snapshotDisk.getPath());
+                command.add("-domain", vmName);
                 String result = command.execute();
                 if (result != null) {
                     s_logger.debug("Failed to backup snapshot: " + result);
