@@ -638,73 +638,71 @@ public class LibvirtVMDef {
         @Override
         public String toString() {
             StringBuilder diskBuilder = new StringBuilder();
-            // Exoscale do not create CDROM on domain
-            if (_deviceType != deviceType.CDROM) {
-                diskBuilder.append("<disk ");
-                if (_deviceType != null) {
-                    diskBuilder.append(" device='" + _deviceType + "'");
-                }
-                diskBuilder.append(" type='" + _diskType + "'");
-                diskBuilder.append(">\n");
-                diskBuilder.append("<driver name='qemu'" + " type='" + _diskFmtType
-                    + "' cache='" + _diskCacheMode + "' " + "/>\n");
-                if (_diskType == diskType.FILE) {
-                    diskBuilder.append("<source ");
-                    if (_sourcePath != null) {
-                        diskBuilder.append("file='" + _sourcePath + "'");
-                    } else if (_deviceType == deviceType.CDROM) {
-                        diskBuilder.append("file=''");
-                    }
-                    diskBuilder.append("/>\n");
-                } else if (_diskType == diskType.BLOCK) {
-                    diskBuilder.append("<source");
-                    if (_sourcePath != null) {
-                        diskBuilder.append(" dev='" + _sourcePath + "'");
-                    }
-                    diskBuilder.append("/>\n");
-                } else if (_diskType == diskType.NETWORK) {
-                    diskBuilder.append("<source ");
-                    diskBuilder.append(" protocol='" + _diskProtocol + "'");
-                    diskBuilder.append(" name='" + _sourcePath + "'");
-                    diskBuilder.append(">\n");
-                    diskBuilder.append("<host name='");
-                    diskBuilder.append(_sourceHost);
-                    if (_sourcePort != 0) {
-                        diskBuilder.append("' port='");
-                        diskBuilder.append(_sourcePort);
-                    }
-                    diskBuilder.append("'/>\n");
-                    diskBuilder.append("</source>\n");
-                    if (_authUserName != null) {
-                        diskBuilder.append("<auth username='" + _authUserName + "'>\n");
-                        diskBuilder.append("<secret type='ceph' uuid='" + _authSecretUUID + "'/>\n");
-                        diskBuilder.append("</auth>\n");
-                    }
-                }
-                diskBuilder.append("<target dev='" + _diskLabel + "'");
-                if (_bus != null) {
-                    diskBuilder.append(" bus='" + _bus + "'");
+            diskBuilder.append("<disk ");
+            if (_deviceType != null) {
+                diskBuilder.append(" device='" + _deviceType + "'");
+            }
+            diskBuilder.append(" type='" + _diskType + "'");
+            diskBuilder.append(">\n");
+            diskBuilder.append("<driver name='qemu'" + " type='" + _diskFmtType
+                + "' cache='" + _diskCacheMode + "' " + "/>\n");
+            if (_diskType == diskType.FILE) {
+                diskBuilder.append("<source ");
+                if (_sourcePath != null) {
+                    diskBuilder.append("file='" + _sourcePath + "'");
+                } else if (_deviceType == deviceType.CDROM) {
+                    diskBuilder.append("file=''");
                 }
                 diskBuilder.append("/>\n");
-
-                if ((_deviceType != deviceType.CDROM) &&
-                    (s_libvirtVersion >= 9008) &&
-                    (s_qemuVersion >= 1001000) &&
-                    (((_bytesReadRate != null) && (_bytesReadRate > 0)) || ((_bytesWriteRate != null) && (_bytesWriteRate > 0)) ||
-                        ((_iopsReadRate != null) && (_iopsReadRate > 0)) || ((_iopsWriteRate != null) && (_iopsWriteRate > 0)))) { // not CDROM, from libvirt 0.9.8 and QEMU 1.1.0
-                    diskBuilder.append("<iotune>\n");
-                    if ((_bytesReadRate != null) && (_bytesReadRate > 0))
-                        diskBuilder.append("<read_bytes_sec>" + _bytesReadRate + "</read_bytes_sec>\n");
-                    if ((_bytesWriteRate != null) && (_bytesWriteRate > 0))
-                        diskBuilder.append("<write_bytes_sec>" + _bytesWriteRate + "</write_bytes_sec>\n");
-                    if ((_iopsReadRate != null) && (_iopsReadRate > 0))
-                        diskBuilder.append("<read_iops_sec>" + _iopsReadRate + "</read_iops_sec>\n");
-                    if ((_iopsWriteRate != null) && (_iopsWriteRate > 0))
-                        diskBuilder.append("<write_iops_sec>" + _iopsWriteRate + "</write_iops_sec>\n");
-                    diskBuilder.append("</iotune>\n");
+            } else if (_diskType == diskType.BLOCK) {
+                diskBuilder.append("<source");
+                if (_sourcePath != null) {
+                    diskBuilder.append(" dev='" + _sourcePath + "'");
                 }
-                diskBuilder.append("</disk>\n");
+                diskBuilder.append("/>\n");
+            } else if (_diskType == diskType.NETWORK) {
+                diskBuilder.append("<source ");
+                diskBuilder.append(" protocol='" + _diskProtocol + "'");
+                diskBuilder.append(" name='" + _sourcePath + "'");
+                diskBuilder.append(">\n");
+                diskBuilder.append("<host name='");
+                diskBuilder.append(_sourceHost);
+                if (_sourcePort != 0) {
+                    diskBuilder.append("' port='");
+                    diskBuilder.append(_sourcePort);
+                }
+                diskBuilder.append("'/>\n");
+                diskBuilder.append("</source>\n");
+                if (_authUserName != null) {
+                    diskBuilder.append("<auth username='" + _authUserName + "'>\n");
+                    diskBuilder.append("<secret type='ceph' uuid='" + _authSecretUUID + "'/>\n");
+                    diskBuilder.append("</auth>\n");
+                }
             }
+            diskBuilder.append("<target dev='" + _diskLabel + "'");
+            if (_bus != null) {
+                diskBuilder.append(" bus='" + _bus + "'");
+            }
+            diskBuilder.append("/>\n");
+
+            if ((_deviceType != deviceType.CDROM) &&
+                (s_libvirtVersion >= 9008) &&
+                (s_qemuVersion >= 1001000) &&
+                (((_bytesReadRate != null) && (_bytesReadRate > 0)) || ((_bytesWriteRate != null) && (_bytesWriteRate > 0)) ||
+                    ((_iopsReadRate != null) && (_iopsReadRate > 0)) || ((_iopsWriteRate != null) && (_iopsWriteRate > 0)))) { // not CDROM, from libvirt 0.9.8 and QEMU 1.1.0
+                diskBuilder.append("<iotune>\n");
+                if ((_bytesReadRate != null) && (_bytesReadRate > 0))
+                    diskBuilder.append("<read_bytes_sec>" + _bytesReadRate + "</read_bytes_sec>\n");
+                if ((_bytesWriteRate != null) && (_bytesWriteRate > 0))
+                    diskBuilder.append("<write_bytes_sec>" + _bytesWriteRate + "</write_bytes_sec>\n");
+                if ((_iopsReadRate != null) && (_iopsReadRate > 0))
+                    diskBuilder.append("<read_iops_sec>" + _iopsReadRate + "</read_iops_sec>\n");
+                if ((_iopsWriteRate != null) && (_iopsWriteRate > 0))
+                    diskBuilder.append("<write_iops_sec>" + _iopsWriteRate + "</write_iops_sec>\n");
+                diskBuilder.append("</iotune>\n");
+            }
+
+            diskBuilder.append("</disk>\n");
             return diskBuilder.toString();
         }
     }
