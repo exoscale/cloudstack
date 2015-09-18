@@ -1733,7 +1733,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 }
 
                 //when start the vm next time, don;'t look at last_host_id, only choose the host based on volume/storage pool
-                vm.setLastHostId(null);
+                // exoscale we want to last host id for ressource alloc as we used it to override capacity
+                //vm.setLastHostId(null);
                 vm.setPodIdToDeployIn(destPool.getPodId());
             } else {
                 s_logger.debug("Storage migration failed");
