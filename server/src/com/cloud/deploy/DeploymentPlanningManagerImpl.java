@@ -367,8 +367,9 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
             ServiceOfferingDetailsVO offeringDetails = null;
             if (host == null) {
                 s_logger.debug("The last host of this VM cannot be found");
-            } else if (avoids.shouldAvoid(host)) {
-                s_logger.debug("The last host of this VM is in avoid set");
+           // Exoscale do not check capacity for already allocated VMs
+           // } else if (avoids.shouldAvoid(host)) {
+           //     s_logger.debug("The last host of this VM is in avoid set");
             } else if (_capacityMgr.checkIfHostReachMaxGuestLimit(host)) {
                 s_logger.debug("The last Host, hostId: " + host.getId() +
                     " already has max Running VMs(count includes system VMs), skipping this and trying other available hosts");
@@ -387,20 +388,21 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
                         }
                     }
                     if (hostTagsMatch) {
-                    long cluster_id = host.getClusterId();
-                        ClusterDetailsVO cluster_detail_cpu = _clusterDetailsDao.findDetail(cluster_id,
-                                "cpuOvercommitRatio");
-                        ClusterDetailsVO cluster_detail_ram = _clusterDetailsDao.findDetail(cluster_id,
-                                "memoryOvercommitRatio");
-                    Float cpuOvercommitRatio = Float.parseFloat(cluster_detail_cpu.getValue());
-                    Float memoryOvercommitRatio = Float.parseFloat(cluster_detail_ram.getValue());
-                        if (_capacityMgr.checkIfHostHasCapacity(host.getId(), cpu_requested, ram_requested, true,
-                                cpuOvercommitRatio, memoryOvercommitRatio, true)
-                                && _capacityMgr.checkIfHostHasCpuCapability(host.getId(), offering.getCpu(),
-                                        offering.getSpeed())) {
-                        s_logger.debug("The last host of this VM is UP and has enough capacity");
-                            s_logger.debug("Now checking for suitable pools under zone: " + host.getDataCenterId()
-                                    + ", pod: " + host.getPodId() + ", cluster: " + host.getClusterId());
+                   // Exoscale do not check capacity for already allocated VMs
+                   // long cluster_id = host.getClusterId();
+                   //     ClusterDetailsVO cluster_detail_cpu = _clusterDetailsDao.findDetail(cluster_id,
+                   //             "cpuOvercommitRatio");
+                   //     ClusterDetailsVO cluster_detail_ram = _clusterDetailsDao.findDetail(cluster_id,
+                   //             "memoryOvercommitRatio");
+                   // Float cpuOvercommitRatio = Float.parseFloat(cluster_detail_cpu.getValue());
+                   // Float memoryOvercommitRatio = Float.parseFloat(cluster_detail_ram.getValue());
+                        //if (_capacityMgr.checkIfHostHasCapacity(host.getId(), cpu_requested, ram_requested, true,
+                        //        cpuOvercommitRatio, memoryOvercommitRatio, true)
+                        //        && _capacityMgr.checkIfHostHasCpuCapability(host.getId(), offering.getCpu(),
+                        //                offering.getSpeed())) {
+                        //s_logger.debug("The last host of this VM is UP and has enough capacity");
+                        //    s_logger.debug("Now checking for suitable pools under zone: " + host.getDataCenterId()
+                        //            + ", pod: " + host.getPodId() + ", cluster: " + host.getClusterId());
                             // search for storage under the zone, pod, cluster
                             // of
                         // the last host.
@@ -446,9 +448,9 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
                                 return dest;
                             }
                         }
-                    } else {
-                        s_logger.debug("The last host of this VM does not have enough capacity");
-                    }
+                    //} else {
+                    //    s_logger.debug("The last host of this VM does not have enough capacity");
+                    //}
                 } else {
                         s_logger.debug("Service Offering host tag does not match the last host of this VM");
                     }

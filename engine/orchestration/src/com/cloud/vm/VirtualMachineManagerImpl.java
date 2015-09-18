@@ -1970,6 +1970,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 }
             } else {
                 _networkMgr.commitNicForMigration(vmSrc, profile);
+                //exoscale set new host as last host
+                vm.setLastHostId(dstHostId);
             }
 
             work.setStep(Step.Done);
