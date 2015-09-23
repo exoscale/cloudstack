@@ -65,6 +65,7 @@ import com.cloud.capacity.CapacityManager;
 import com.cloud.capacity.dao.CapacityDao;
 import com.cloud.configuration.Config;
 import com.cloud.dc.ClusterDetailsDao;
+import com.cloud.dc.ClusterDetailsVO;
 import com.cloud.dc.ClusterVO;
 import com.cloud.dc.DataCenter;
 import com.cloud.dc.DataCenterVO;
@@ -387,21 +388,22 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
                         }
                     }
                     if (hostTagsMatch) {
-                   // Exoscale do not check capacity for already allocated VMs
-                   // long cluster_id = host.getClusterId();
-                   //     ClusterDetailsVO cluster_detail_cpu = _clusterDetailsDao.findDetail(cluster_id,
-                   //             "cpuOvercommitRatio");
-                   //     ClusterDetailsVO cluster_detail_ram = _clusterDetailsDao.findDetail(cluster_id,
-                   //             "memoryOvercommitRatio");
-                   // Float cpuOvercommitRatio = Float.parseFloat(cluster_detail_cpu.getValue());
-                   // Float memoryOvercommitRatio = Float.parseFloat(cluster_detail_ram.getValue());
-                        //if (_capacityMgr.checkIfHostHasCapacity(host.getId(), cpu_requested, ram_requested, true,
-                        //        cpuOvercommitRatio, memoryOvercommitRatio, true)
-                        //        && _capacityMgr.checkIfHostHasCpuCapability(host.getId(), offering.getCpu(),
-                        //                offering.getSpeed())) {
-                        //s_logger.debug("The last host of this VM is UP and has enough capacity");
-                        //    s_logger.debug("Now checking for suitable pools under zone: " + host.getDataCenterId()
-                        //            + ", pod: " + host.getPodId() + ", cluster: " + host.getClusterId());
+                   // Exoscale do not check CPU capacity for already allocated VMs
+                        long cluster_id = host.getClusterId();
+                        ClusterDetailsVO cluster_detail_cpu = _clusterDetailsDao.findDetail(cluster_id,
+                                "cpuOvercommitRatio");
+                        ClusterDetailsVO cluster_detail_ram = _clusterDetailsDao.findDetail(cluster_id,
+                                "memoryOvercommitRatio");
+                        Float cpuOvercommitRatio = Float.parseFloat(cluster_detail_cpu.getValue());
+                        Float memoryOvercommitRatio = Float.parseFloat(cluster_detail_ram.getValue());
+                        int exoscalepatch_cpu_requested = 0;
+                        if (_capacityMgr.checkIfHostHasCapacity(host.getId(), exoscalepatch_cpu_requested, ram_requested, true,
+                                cpuOvercommitRatio, memoryOvercommitRatio, true)
+                                && _capacityMgr.checkIfHostHasCpuCapability(host.getId(), offering.getCpu(),
+                                        offering.getSpeed())) {
+                        s_logger.debug("The last host of this VM is UP and has enough capacity");
+                            s_logger.debug("Now checking for suitable pools under zone: " + host.getDataCenterId()
+                                    + ", pod: " + host.getPodId() + ", cluster: " + host.getClusterId());
                             // search for storage under the zone, pod, cluster
                             // of
                         // the last host.
@@ -447,9 +449,9 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
                                 return dest;
                             }
                         }
-                    //} else {
-                    //    s_logger.debug("The last host of this VM does not have enough capacity");
-                    //}
+                    } else {
+                        s_logger.debug("The last host of this VM does not have enough capacity");
+                    }
                 } else {
                         s_logger.debug("Service Offering host tag does not match the last host of this VM");
                     }
