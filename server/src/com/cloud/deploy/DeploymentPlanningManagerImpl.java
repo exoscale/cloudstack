@@ -367,8 +367,9 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
             ServiceOfferingDetailsVO offeringDetails = null;
             if (host == null) {
                 s_logger.debug("The last host of this VM cannot be found");
-            } else if (avoids.shouldAvoid(host)) {
-                s_logger.debug("The last host of this VM is in avoid set");
+           // Exoscale do not check capacity for already allocated VMs
+           // } else if (avoids.shouldAvoid(host)) {
+           //     s_logger.debug("The last host of this VM is in avoid set");
             } else if (_capacityMgr.checkIfHostReachMaxGuestLimit(host)) {
                 s_logger.debug("The last Host, hostId: " + host.getId() +
                     " already has max Running VMs(count includes system VMs), skipping this and trying other available hosts");
@@ -387,14 +388,16 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
                         }
                     }
                     if (hostTagsMatch) {
-                    long cluster_id = host.getClusterId();
+                   // Exoscale do not check CPU capacity for already allocated VMs
+                        long cluster_id = host.getClusterId();
                         ClusterDetailsVO cluster_detail_cpu = _clusterDetailsDao.findDetail(cluster_id,
                                 "cpuOvercommitRatio");
                         ClusterDetailsVO cluster_detail_ram = _clusterDetailsDao.findDetail(cluster_id,
                                 "memoryOvercommitRatio");
-                    Float cpuOvercommitRatio = Float.parseFloat(cluster_detail_cpu.getValue());
-                    Float memoryOvercommitRatio = Float.parseFloat(cluster_detail_ram.getValue());
-                        if (_capacityMgr.checkIfHostHasCapacity(host.getId(), cpu_requested, ram_requested, true,
+                        Float cpuOvercommitRatio = Float.parseFloat(cluster_detail_cpu.getValue());
+                        Float memoryOvercommitRatio = Float.parseFloat(cluster_detail_ram.getValue());
+                        int exoscalepatch_cpu_requested = 0;
+                        if (_capacityMgr.checkIfHostHasCapacity(host.getId(), exoscalepatch_cpu_requested, ram_requested, true,
                                 cpuOvercommitRatio, memoryOvercommitRatio, true)
                                 && _capacityMgr.checkIfHostHasCpuCapability(host.getId(), offering.getCpu(),
                                         offering.getSpeed())) {

@@ -25,8 +25,10 @@ def getargs():
     group.add_argument('-c', help='Create Snapshot', required=False, action='store_true', dest='createarg')
     group.add_argument('-d', help='Destroy Snapshot', required=False, action='store_true', dest='destroyarg')
     group.add_argument('-b', help='Backup Snapshot', required=False, action='store_true', dest='backuparg')
+    group.add_argument('-v', help='Revert Snapshot', required=False, action='store_true', dest='revertarg')
     parser.add_argument('-p', help='Destination directory for the snapshot. Mandatory with -b', required=False, type=str, dest='backupdir')
     parser.add_argument('-t', help='Destination file name. Mandatory with -b', required=False, type=str, dest='backup_file_name')
+    parser.add_argument('-s', help='Backuped snapshot file path. Mandatory with -v', required=False, type=str, dest='backupedsnapshot_path')
     parser.add_argument('-diskpath', help='Path of the disk to snapshot', required=True, type=str, dest='disk_path')
     parser.add_argument('-domain', help='The name of the VM', required=True, type=str, dest='domain')
     args = vars(parser.parse_args())
@@ -175,6 +177,21 @@ def backup_snapshot(disk_path, domain, backupdir, backup_file_name, snapshot_fil
         raise
 
 
+def revert_snapshot(disk_path, domain, backupedsnapshot_path):
+    src = backupedsnapshot_path
+    dst = disk_path
+    logging.info('Revert snapshot request for snapshot %s on domain %s', src, domain)
+
+    try:
+        logging.info('Reverting snapshot %s to %s', src, dst)
+        shutil.copyfile(src, dst)
+        logging.info('Snapshot revert completed %s to %s', src, dst)
+    except Exception as e:
+        logging.error('An error occured during snapshot revert')
+        logging.error('%s', e)
+        raise
+
+
 def getdev(dom0, snapshot_file_path):
     xmldesc = dom0.XMLDesc(0)
     root = etree.fromstring(xmldesc)
@@ -225,8 +242,10 @@ if __name__ == "__main__":
     createarg = args['createarg']
     destroyarg = args['destroyarg']
     backuparg = args['backuparg']
+    revertarg = args['revertarg']
     backupdir = args['backupdir']
     backup_file_name = args['backup_file_name']
+    backupedsnapshot_path = args['backupedsnapshot_path']
     disk_path = args['disk_path']
     domain = args['domain']
 
@@ -253,6 +272,8 @@ if __name__ == "__main__":
             destroy_snapshot(disk_path, domain, snapshot_file_path)
         elif backuparg:
             backup_snapshot(disk_path, domain, backupdir, backup_file_name, snapshot_file_path)
+        elif revertarg:
+            revert_snapshot(disk_path, domain, backupedsnapshot_path)
 
         # No error, we send an ok riemann event
         service = "Cloudstack-Snapshot-%s" % (domain)

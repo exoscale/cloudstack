@@ -4919,21 +4919,26 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
+    //Exoscale consider all OS types as PV enabled
     boolean isGuestPVEnabled(String guestOSName) {
-        if (guestOSName == null) {
-            return false;
-        }
-        if (guestOSName.startsWith("Ubuntu") || guestOSName.startsWith("Fedora 13") || guestOSName.startsWith("Fedora 12") || guestOSName.startsWith("Fedora 11") ||
-                guestOSName.startsWith("Fedora 10") || guestOSName.startsWith("Fedora 9") || guestOSName.startsWith("CentOS 5.3") || guestOSName.startsWith("CentOS 5.4") ||
-                guestOSName.startsWith("CentOS 5.5") || guestOSName.startsWith("CentOS") || guestOSName.startsWith("Fedora") ||
-                guestOSName.startsWith("Red Hat Enterprise Linux 5.3") || guestOSName.startsWith("Red Hat Enterprise Linux 5.4") ||
-                guestOSName.startsWith("Red Hat Enterprise Linux 5.5") || guestOSName.startsWith("Red Hat Enterprise Linux 6") || guestOSName.startsWith("Debian GNU/Linux") ||
-                guestOSName.startsWith("FreeBSD 10") || guestOSName.startsWith("Other PV")) {
-            return true;
-        } else {
-            return false;
-        }
+        return true;
     }
+
+    //boolean isGuestPVEnabled(String guestOSName) {
+    //    if (guestOSName == null) {
+    //        return false;
+    //    }
+    //    if (guestOSName.startsWith("Ubuntu") || guestOSName.startsWith("Fedora 13") || guestOSName.startsWith("Fedora 12") || guestOSName.startsWith("Fedora 11") ||
+    //            guestOSName.startsWith("Fedora 10") || guestOSName.startsWith("Fedora 9") || guestOSName.startsWith("CentOS 5.3") || guestOSName.startsWith("CentOS 5.4") ||
+    //            guestOSName.startsWith("CentOS 5.5") || guestOSName.startsWith("CentOS") || guestOSName.startsWith("Fedora") ||
+    //            guestOSName.startsWith("Red Hat Enterprise Linux 5.3") || guestOSName.startsWith("Red Hat Enterprise Linux 5.4") ||
+    //            guestOSName.startsWith("Red Hat Enterprise Linux 5.5") || guestOSName.startsWith("Red Hat Enterprise Linux 6") || guestOSName.startsWith("Debian GNU/Linux") ||
+    //            guestOSName.startsWith("FreeBSD 10") || guestOSName.startsWith("Other PV")) {
+    //        return true;
+    //    } else {
+    //        return false;
+    //    }
+    //}
 
     public boolean isCentosHost() {
         if (_hvVersion <= 9) {

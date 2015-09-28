@@ -166,6 +166,7 @@ import com.cloud.storage.DiskOfferingVO;
 import com.cloud.storage.ScopeType;
 import com.cloud.storage.Storage.ImageFormat;
 import com.cloud.storage.StoragePool;
+import com.cloud.storage.StoragePoolHostVO;
 import com.cloud.storage.Volume;
 import com.cloud.storage.Volume.Type;
 import com.cloud.storage.VolumeVO;
@@ -1733,7 +1734,12 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 }
 
                 //when start the vm next time, don;'t look at last_host_id, only choose the host based on volume/storage pool
-                vm.setLastHostId(null);
+                // exoscale we want to last host id as destination host for ressource alloc as we used it to override capacity
+                List<StoragePoolHostVO> pools = _poolHostDao.listByPoolId(destPool.getId());
+                for (StoragePoolHostVO pool : pools) {
+                    Long dsthostId = pool.getHostId();
+                    vm.setLastHostId(dsthostId);
+                }
                 vm.setPodIdToDeployIn(destPool.getPodId());
             } else {
                 s_logger.debug("Storage migration failed");
@@ -1970,6 +1976,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 }
             } else {
                 _networkMgr.commitNicForMigration(vmSrc, profile);
+                //exoscale set new host as last host
+                vm.setLastHostId(dstHostId);
             }
 
             work.setStep(Step.Done);
