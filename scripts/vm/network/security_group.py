@@ -51,7 +51,7 @@ def lock(name, timeout=20):
 
 def execute(cmd):
     try:
-        with lock("execute"):
+        with lock("iptables"):
             logging.debug(cmd)
             return bash("-c", cmd).stdout
     except BusyError:
