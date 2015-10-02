@@ -81,8 +81,10 @@ import com.ceph.rbd.RbdException;
 import com.ceph.rbd.RbdImage;
 
 import org.apache.cloudstack.storage.command.StorageSubSystemCommand;
+import org.apache.cloudstack.storage.command.RevertSnapshotCommand;
 import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
 import org.apache.cloudstack.storage.to.VolumeObjectTO;
+import org.apache.cloudstack.storage.to.SnapshotObjectTO;
 import org.apache.cloudstack.utils.qemu.QemuImg;
 import org.apache.cloudstack.utils.qemu.QemuImg.PhysicalDiskFormat;
 import org.apache.cloudstack.utils.qemu.QemuImgException;
@@ -1367,6 +1369,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((CheckNetworkCommand)cmd);
             } else if (cmd instanceof NetworkRulesVmSecondaryIpCommand) {
                 return execute((NetworkRulesVmSecondaryIpCommand)cmd);
+            } else if (cmd instanceof RevertSnapshotCommand) {
+                return execute((RevertSnapshotCommand)cmd);
             } else if (cmd instanceof StorageSubSystemCommand) {
                 return storageHandler.handleStorageCommands((StorageSubSystemCommand)cmd);
             } else if (cmd instanceof PvlanSetupCommand) {
@@ -2782,6 +2786,56 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (secondaryPool != null) {
                 _storagePoolMgr.deleteStoragePool(secondaryPool.getType(), secondaryPool.getUuid());
             }
+        }
+    }
+
+    protected Answer execute(RevertSnapshotCommand command) {
+        SnapshotObjectTO snapshot = command.getData();
+        VolumeObjectTO volume = snapshot.getVolume();
+        PrimaryDataStoreTO primaryStore = (PrimaryDataStoreTO) volume.getDataStore();
+        DataStoreTO snapshotImageStore = snapshot.getDataStore();
+        if (!(snapshotImageStore instanceof NfsTO)) {
+            return new Answer(command, false, "revert snapshot on object storage is not implemented yet");
+        }
+        NfsTO nfsImageStore = (NfsTO) snapshotImageStore;
+
+        String secondaryStoragePoolUrl = nfsImageStore.getUrl();
+
+        String vmName = volume.getVmName();
+        String volumePath = volume.getPath();
+        String snapshotPath = null;
+        String snapshotRelPath = null;
+        KVMStoragePool secondaryStoragePool = null;
+        try {
+            secondaryStoragePool = _storagePoolMgr.getStoragePoolByURI(secondaryStoragePoolUrl);
+            String ssPmountPath = secondaryStoragePool.getLocalPath();
+            snapshotRelPath = snapshot.getPath();
+            snapshotPath = ssPmountPath + File.separator + snapshotRelPath;
+
+            KVMPhysicalDisk snapshotDisk = _storagePoolMgr.getPhysicalDisk(primaryStore.getPoolType(),
+                                                                           primaryStore.getUuid(), volumePath);
+            KVMStoragePool primaryPool = snapshotDisk.getPool();
+
+            KVMPhysicalDisk disk = primaryPool.getPhysicalDisk(volumePath);
+
+            if (primaryPool.getType() == StoragePoolType.RBD) {
+                return new Answer(command, false, "revert snapshot to RBD is not implemented yet");
+            } else {
+                Script cmd = new Script(_manageSnapshotPath, _cmdsTimeout, s_logger);
+                cmd.add("-v");
+                cmd.add("-diskpath", disk.getPath());
+                cmd.add("-s", snapshotPath);
+                cmd.add("-domain", vmName);
+                String result = cmd.execute();
+                if (result != null) {
+                    s_logger.debug("Failed to revert snaptshot: " + result);
+                    return new Answer(command, false, result);
+                }
+            }
+
+            return new Answer(command, true, "RevertSnapshotCommand executes successfully");
+        } catch (CloudRuntimeException e) {
+            return new Answer(command, false, e.toString());
         }
     }
 

@@ -54,6 +54,7 @@ public class SnapshotDataStoreDaoImpl extends GenericDaoBase<SnapshotDataStoreVO
     private SearchBuilder<SnapshotDataStoreVO> snapshotSearch;
     private SearchBuilder<SnapshotDataStoreVO> storeSnapshotSearch;
     private SearchBuilder<SnapshotDataStoreVO> snapshotIdSearch;
+    private SearchBuilder<SnapshotDataStoreVO> volumeSearch;
 
     private final String parentSearch = "select store_id, store_role, snapshot_id from cloud.snapshot_store_ref where store_id = ? "
         + " and store_role = ? and volume_id = ? and state = 'Ready'" + " order by created DESC " + " limit 1";
@@ -109,6 +110,11 @@ public class SnapshotDataStoreDaoImpl extends GenericDaoBase<SnapshotDataStoreVO
         snapshotIdSearch = createSearchBuilder();
         snapshotIdSearch.and("snapshot_id", snapshotIdSearch.entity().getSnapshotId(), SearchCriteria.Op.EQ);
         snapshotIdSearch.done();
+
+        volumeSearch = createSearchBuilder();
+        volumeSearch.and("volume_id", volumeSearch.entity().getVolumeId(), SearchCriteria.Op.EQ);
+        volumeSearch.and("store_role", volumeSearch.entity().getRole(), SearchCriteria.Op.EQ);
+        volumeSearch.done();
 
         return true;
     }
@@ -269,6 +275,14 @@ public class SnapshotDataStoreDaoImpl extends GenericDaoBase<SnapshotDataStoreVO
     public SnapshotDataStoreVO findBySnapshot(long snapshotId, DataStoreRole role) {
         SearchCriteria<SnapshotDataStoreVO> sc = snapshotSearch.create();
         sc.setParameters("snapshot_id", snapshotId);
+        sc.setParameters("store_role", role);
+        return findOneBy(sc);
+    }
+
+    @Override
+    public SnapshotDataStoreVO findByVolume(long volumeId, DataStoreRole role) {
+        SearchCriteria<SnapshotDataStoreVO> sc = volumeSearch.create();
+        sc.setParameters("volume_id", volumeId);
         sc.setParameters("store_role", role);
         return findOneBy(sc);
     }

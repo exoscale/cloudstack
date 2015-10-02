@@ -16,9 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.cloudstack.engine.subsystem.api.storage;
+package org.apache.cloudstack.storage.command;
 
-public enum DataStoreCapabilities {
-    VOLUME_SNAPSHOT_QUIESCEVM,
-    STORAGE_SYSTEM_SNAPSHOT // indicates to the StorageSystemSnapshotStrategy that this driver takes snapshots on its own system
+import com.cloud.agent.api.Command;
+import org.apache.cloudstack.storage.to.SnapshotObjectTO;
+
+public final class RevertSnapshotCommand extends Command implements StorageSubSystemCommand {
+    private SnapshotObjectTO data;
+    private boolean _executeInSequence = false;
+
+    public RevertSnapshotCommand(SnapshotObjectTO data) {
+        super();
+        this.data = data;
+    }
+
+    protected RevertSnapshotCommand() {
+        super();
+    }
+
+    public SnapshotObjectTO getData() {
+        return this.data;
+    }
+
+    @Override
+    public void setExecuteInSequence(final boolean executeInSequence) {
+        _executeInSequence = executeInSequence;
+    }
+
+    public boolean executeInSequence() {
+        return _executeInSequence;
+    }
 }

@@ -825,7 +825,7 @@ public class SolidfirePrimaryDataStoreDriver implements PrimaryDataStoreDriver {
     }
 
     @Override
-    public void revertSnapshot(SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {
+    public void revertSnapshot(SnapshotInfo snapshotOnPrimary, SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {
         throw new UnsupportedOperationException();
     }
 
