@@ -67,7 +67,16 @@ public class UsageEventUtils {
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, Long templateId,
         Long size, String entityType, String entityUUID) {
         saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, offeringId, templateId, size);
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        if (offeringId != null) {
+                eventDescription.put("offeringid", offeringId.toString());
+        }
+        if (templateId != null) {
+                eventDescription.put("templateid", templateId.toString());
+        }
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, Long templateId,
@@ -75,32 +84,71 @@ public class UsageEventUtils {
         if(displayResource){
             saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, offeringId, templateId, size);
         }
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        if (offeringId != null) {
+                eventDescription.put("offeringid", offeringId.toString());
+        }
+        if (templateId != null) {
+                eventDescription.put("templateid", templateId.toString());
+        }
+        if (size != null) {
+                eventDescription.put("size", size.toString());
+        }
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
 
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, Long templateId,
         Long size, Long virtualSize, String entityType, String entityUUID) {
         saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, offeringId, templateId, size, virtualSize);
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        if (offeringId != null) {
+                eventDescription.put("offeringid", offeringId.toString());
+        }
+        if (templateId != null) {
+                eventDescription.put("templateid", templateId.toString());
+        }
+        if (size != null) {
+                eventDescription.put("size", size.toString());
+        }
+        if (virtualSize != null) {
+                eventDescription.put("virtualsize", virtualSize.toString());
+        }
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, String entityType, String entityUUID) {
         saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName);
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, String entityType, String entityUUID, boolean diplayResource) {
         if (diplayResource){
             saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName);
-            publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+            Map<String, String> eventDescription = new HashMap<String, String>();
+            eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+            eventDescription.put("resourcename", resourceName);
+            publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
         }
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long ipAddressId, String ipAddress, boolean isSourceNat, String guestType,
         boolean isSystem, String entityType, String entityUUID) {
         saveUsageEvent(usageType, accountId, zoneId, ipAddressId, ipAddress, isSourceNat, guestType, isSystem);
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("ipaddressid", Long.valueOf(ipAddressId).toString());
+        eventDescription.put("ipaddress", ipAddress);
+        eventDescription.put("issourcenat", Boolean.valueOf(isSourceNat).toString());
+        eventDescription.put("guesttype", guestType);
+        eventDescription.put("issystem", Boolean.valueOf(isSystem).toString());
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, Long templateId,
@@ -108,13 +156,26 @@ public class UsageEventUtils {
         if(displayResource){
             saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, offeringId, templateId, resourceType);
         }
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        if (offeringId != null) {
+                eventDescription.put("offeringid", offeringId.toString());
+        }
+        if (templateId != null) {
+                eventDescription.put("templateid", templateId.toString());
+        }
+        eventDescription.put("resourcetype", resourceType);
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
 
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long vmId, long securityGroupId, String entityType, String entityUUID) {
         saveUsageEvent(usageType, accountId, zoneId, vmId, securityGroupId);
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("vmid", Long.valueOf(vmId).toString());
+        eventDescription.put("securitygroupid", Long.valueOf(securityGroupId).toString());
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, Long templateId,
@@ -122,7 +183,18 @@ public class UsageEventUtils {
         if(displayResource){
             saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, offeringId, templateId, resourceType, details);
         }
-        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID);
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.putAll(details);
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        if (offeringId != null) {
+                eventDescription.put("offeringid", offeringId.toString());
+        }
+        if (templateId != null) {
+                eventDescription.put("templateid", templateId.toString());
+        }
+        eventDescription.put("resourcetype", resourceType);
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
 
     }
 
@@ -160,7 +232,8 @@ public class UsageEventUtils {
         s_usageEventDao.persist(new UsageEventVO(usageType, accountId, zoneId, vmId, securityGroupId));
     }
 
-    private static void publishUsageEvent(String usageEventType, Long accountId, Long zoneId, String resourceType, String resourceUUID) {
+    private static void publishUsageEvent(String usageEventType, Long accountId, Long zoneId, String resourceType, String resourceUUID, Map<String, String> eventDescription) {
+        assert(eventDescription != null);
 
         try {
             s_eventBus = ComponentContext.getComponent(EventBus.class);
@@ -182,12 +255,12 @@ public class UsageEventUtils {
 
         Event event = new Event(Name, EventCategory.USAGE_EVENT.getName(), usageEventType, resourceType, resourceUUID);
 
-        Map<String, String> eventDescription = new HashMap<String, String>();
         eventDescription.put("account", account.getUuid());
         eventDescription.put("zone", zoneUuid);
         eventDescription.put("event", usageEventType);
         eventDescription.put("resource", resourceType);
         eventDescription.put("id", resourceUUID);
+        eventDescription.put("version", "1");
 
         String eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(new Date());
         eventDescription.put("eventDateTime", eventDate);

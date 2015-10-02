@@ -36,7 +36,7 @@ import com.cloud.event.EventTypes;
 import com.cloud.storage.Snapshot;
 import com.cloud.user.Account;
 
-@APICommand(name = "revertSnapshot", description = "revert a volume snapshot.", responseObject = SnapshotResponse.class, entityType = {Snapshot.class},
+@APICommand(name = "revertSnapshot", description = "revert a volume snapshot.", responseObject = SuccessResponse.class, entityType = {Snapshot.class},
         requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
 public class RevertSnapshotCmd extends BaseAsyncCmd {
     private static final String s_name = "revertsnapshotresponse";
@@ -91,7 +91,6 @@ public class RevertSnapshotCmd extends BaseAsyncCmd {
         boolean result = _snapshotService.revertSnapshot(getId());
         if (result) {
             SuccessResponse response = new SuccessResponse(getCommandName());
-            response.setResponseName(getCommandName());
             setResponseObject(response);
         } else {
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to revert snapshot");

@@ -245,12 +245,15 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
 
     @Override
     public boolean revertSnapshot(Long snapshotId) {
-        Snapshot snapshot = _snapshotDao.findById(snapshotId);
+        SnapshotVO snapshot = _snapshotDao.findById(snapshotId);
         if (snapshot == null) {
             throw new InvalidParameterValueException("No such snapshot");
         }
 
-        Volume volume = _volsDao.findById(snapshot.getVolumeId());
+        VolumeVO volume = _volsDao.findById(snapshot.getVolumeId());
+        if (volume.getState() != Volume.State.Ready) {
+            throw new InvalidParameterValueException("The volume is not in Ready state.");
+        }
         Long instanceId = volume.getInstanceId();
 
         // If this volume is attached to an VM, then the VM needs to be in the stopped state
@@ -262,6 +265,11 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
             }
         }
 
+        SnapshotInfo snapshotInfo = snapshotFactory.getSnapshot(snapshotId, DataStoreRole.Image);
+        if (snapshotInfo == null) {
+            throw new CloudRuntimeException("snapshot:" + snapshotId + "does not exist in data store");
+        }
+
         SnapshotStrategy snapshotStrategy = _storageStrategyFactory.getSnapshotStrategy(snapshot, SnapshotOperation.REVERT);
 
         if (snapshotStrategy == null) {
@@ -269,7 +277,8 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
             return false;
         }
 
-        return snapshotStrategy.revertSnapshot(snapshotId);
+        boolean result = snapshotStrategy.revertSnapshot(snapshotInfo);
+        return result;
     }
 
     @Override
