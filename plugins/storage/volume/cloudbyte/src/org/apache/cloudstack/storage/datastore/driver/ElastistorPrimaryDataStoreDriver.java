@@ -90,7 +90,7 @@ public class ElastistorPrimaryDataStoreDriver  extends CloudStackPrimaryDataStor
     }
 
     @Override
-    public void revertSnapshot(SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {
+    public void revertSnapshot(SnapshotInfo snapshotOnPrimary, SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {
         throw new UnsupportedOperationException();
     }
 

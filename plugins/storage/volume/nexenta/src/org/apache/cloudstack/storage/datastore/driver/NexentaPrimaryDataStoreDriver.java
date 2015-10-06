@@ -120,7 +120,7 @@ public class NexentaPrimaryDataStoreDriver implements PrimaryDataStoreDriver {
     public void takeSnapshot(SnapshotInfo snapshot, AsyncCompletionCallback<CreateCmdResult> callback) {}
 
     @Override
-    public void revertSnapshot(SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {}
+    public void revertSnapshot(SnapshotInfo snapshotOnPrimary, SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {}
 
     @Override
     public void createAsync(DataStore dataStore, DataObject dataObject, AsyncCompletionCallback<CreateCmdResult> callback) {
