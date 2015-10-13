@@ -3375,6 +3375,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             throw new InvalidParameterValueException("unable to find a virtual machine with id " + vmId);
         }
 
+        // Exoscale do not stop VM if an online snapshot is in progress
+        List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
+        for (VolumeVO volume : volumes) {
+            if (volume.getState() == Volume.State.Snapshotting) {
+                throw new ConcurrentOperationException("Unable to stop " + vm + " as a snapshot is currently being taken on a volume");
+            }
+        }
+
         _userDao.findById(userId);
         boolean status = false;
         try {
@@ -3449,6 +3457,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         if (owner.getState() == Account.State.disabled) {
             throw new PermissionDeniedException("The owner of " + vm + " is disabled: " + vm.getAccountId());
+        }
+
+        // Exoscale do not start VM if an offline snapshot is in progress
+        List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
+        for (VolumeVO volume : volumes) {
+            if (volume.getState() == Volume.State.Snapshotting || volume.getState() == Volume.State.RevertSnapshotting) {
+                throw new ConcurrentOperationException("Unable to start " + vm + " as a snapshot operation is currently in progress");
+            }
         }
 
         Host destinationHost = null;
