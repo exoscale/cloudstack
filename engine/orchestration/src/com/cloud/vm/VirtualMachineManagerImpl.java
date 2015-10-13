@@ -824,7 +824,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
         for (VolumeVO volume : volumes) {
             if (volume.getState() == Volume.State.Snapshotting) {
-                throw new CloudRuntimeException("Unable to start " + vm + " as a snapshot is currently being taken on a volume");
+                throw new ConcurrentOperationException("Unable to start " + vm + " as a snapshot is currently being taken on a volume");
             }
         }
 
@@ -1408,7 +1408,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
         for (VolumeVO volume : volumes) {
             if (volume.getState() == Volume.State.Snapshotting) {
-                throw new CloudRuntimeException("Unable to stop " + vm + " as a snapshot is currently being taken on a volume");
+                throw new ConcurrentOperationException("Unable to stop " + vm + " as a snapshot is currently being taken on a volume");
             }
         }
         State state = vm.getState();
