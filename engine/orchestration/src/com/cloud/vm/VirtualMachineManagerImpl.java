@@ -823,8 +823,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         // Exoscale do not start VM if an offline snapshot is in progress
         List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
         for (VolumeVO volume : volumes) {
-            if (volume.getState() == Volume.State.Snapshotting) {
-                throw new ConcurrentOperationException("Unable to start " + vm + " as a snapshot is currently being taken on a volume");
+            if (volume.getState() == Volume.State.Snapshotting || volume.getState() == Volume.State.RevertSnapshotting) {
+                throw new ConcurrentOperationException("Unable to start " + vm + " as a snapshot operation is currently in progress");
             }
         }
 
