@@ -37,7 +37,7 @@ def getargs():
 
 def create_snapshot(disk_path, domain, snapshot_file_path):
 
-    logging.info('Create snapshot request for disk %s on VM %s', disk_path, domain)
+    logging.info('Create snapshot request with arguments: -c -diskpath %s -domain %s', disk_path, domain)
 
     # Checking if domain already have a snapshot
     if os.path.exists(snapshot_file_path):
@@ -95,7 +95,7 @@ def create_snapshot(disk_path, domain, snapshot_file_path):
 
 def destroy_snapshot(disk_path, domain, snapshot_file_path):
 
-    logging.info('Destroy snapshot request for disk %s on VM %s', snapshot_file_path, domain)
+    logging.info('Destroy snapshot request with arguments: -d -diskpath %s -domain %s', disk_path, domain)
 
     try:
         conn = libvirt.open('qemu:///system')
@@ -161,7 +161,7 @@ def destroy_snapshot(disk_path, domain, snapshot_file_path):
 def backup_snapshot(disk_path, domain, backupdir, backup_file_name, snapshot_file_path):
     src = disk_path
     dst = backupdir + "/" + backup_file_name
-    logging.info('Backup snapshot request for snapshot %s on domain %s', src, domain)
+    logging.info('Backup snapshot request with arguments: -b -diskpath %s -domain %s -p %s -t %s', disk_path, domain, backupdir, backup_file_name)
 
     try:
         logging.info('Backuping snapshot %s to %s', src, dst)
@@ -180,7 +180,7 @@ def backup_snapshot(disk_path, domain, backupdir, backup_file_name, snapshot_fil
 def revert_snapshot(disk_path, domain, backupedsnapshot_path):
     src = backupedsnapshot_path
     dst = disk_path
-    logging.info('Revert snapshot request for snapshot %s on domain %s', src, domain)
+    logging.info('Revert snapshot request with arguments: -v -diskpath %s -domain %s -s %s', disk_path, domain, backupedsnapshot_path)
 
     try:
         logging.info('Reverting snapshot %s to %s', src, dst)
