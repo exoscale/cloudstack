@@ -4390,18 +4390,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         DomainVO domain = _domainDao.findById(cmd.getDomainId());
         _accountMgr.checkAccess(newAccount, domain);
 
-        Nic _defaultNic = _networkModel.getDefaultNic(cmd.getVmId());
-        final String _ipAddress = null;
-        if (_defaultNic != null) {
-            final String _ipAddress = _defaultNic.getIp4Address();
-        }
+        final Nic _defaultNic = _networkModel.getDefaultNic(cmd.getVmId());
 
         Transaction.execute(new TransactionCallbackNoReturn() {
             @Override
             public void doInTransactionWithoutResult(TransactionStatus status) {
         //generate destroy vm event for usage
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_DESTROY, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), vm.getHostName(), vm.getServiceOfferingId(),
-                        vm.getTemplateId(), vm.getHypervisorType().toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm(), _ipAddress);
+                        vm.getTemplateId(), vm.getHypervisorType().toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm(), (_defaultNic != null) ? _defaultNic.getIp4Address() : null);
 
         // update resource counts for old account
                 resourceCountDecrement(oldAccount.getAccountId(), vm.isDisplayVm(), new Long(offering.getCpu()), new Long(offering.getRamSize()));
