@@ -4390,10 +4390,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         DomainVO domain = _domainDao.findById(cmd.getDomainId());
         _accountMgr.checkAccess(newAccount, domain);
 
-        Nic defaultNic = _networkModel.getDefaultNic(cmd.getVmId());
+        Nic _defaultNic = _networkModel.getDefaultNic(cmd.getVmId());
         final String ipAddress = null;
-        if (defaultNic != null) {
-            ipAddress = defaultNic.getIp4Address();
+        if (_defaultNic != null) {
+            final String ipAddress = _defaultNic.getIp4Address();
         }
 
         Transaction.execute(new TransactionCallbackNoReturn() {
