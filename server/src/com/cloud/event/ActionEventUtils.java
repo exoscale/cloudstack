@@ -213,7 +213,7 @@ public class ActionEventUtils {
             }
         }
 
-        Map<String,String> details = context.getContextParameter("details");
+        Map<String,String> details = context.getContextDetails();
 
         org.apache.cloudstack.framework.events.Event event =
             new org.apache.cloudstack.framework.events.Event(ManagementService.Name, eventCategory, eventType, EventTypes.getEntityForEvent(eventType), entityUuid);
