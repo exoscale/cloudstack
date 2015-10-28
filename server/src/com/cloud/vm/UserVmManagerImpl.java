@@ -2134,6 +2134,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         long vmId = cmd.getId();
         boolean expunge = cmd.getExpunge();
 
+        final Nic nic = _networkModel.getDefaultNic(vmId);
+        if (nic != null) {
+            ctx.putContextDetails("ipaddress", nic.getIp4Address());
+        }
+
         if (!_accountMgr.isAdmin(ctx.getCallingAccount().getId()) && expunge) {
             throw new PermissionDeniedException("Parameter " + ApiConstants.EXPUNGE + " can be passed by Admin only");
         }
