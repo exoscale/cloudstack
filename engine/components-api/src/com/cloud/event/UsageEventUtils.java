@@ -280,7 +280,7 @@ public class UsageEventUtils {
         eventDescription.put("event", usageEventType);
         eventDescription.put("resource", resourceType);
         eventDescription.put("id", resourceUUID);
-        eventDescription.put("version", "1");
+        eventDescription.put("version", "2");
 
         String eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(new Date());
         eventDescription.put("eventDateTime", eventDate);
