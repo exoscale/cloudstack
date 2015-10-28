@@ -820,6 +820,14 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
         VMInstanceVO vm = _vmDao.findByUuid(vmUuid);
 
+        // Exoscale do not start VM if an offline snapshot is in progress
+        List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
+        for (VolumeVO volume : volumes) {
+            if (volume.getState() == Volume.State.Snapshotting || volume.getState() == Volume.State.RevertSnapshotting) {
+                throw new ConcurrentOperationException("Unable to start " + vm + " as a snapshot operation is currently in progress");
+            }
+        }
+
         VirtualMachineGuru vmGuru = getVmGuru(vm);
 
         Ternary<VMInstanceVO, ReservationContext, ItWorkVO> start = changeToStartState(vmGuru, vm, caller, account);
@@ -1396,6 +1404,13 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
     private void advanceStop(VMInstanceVO vm, boolean cleanUpEvenIfUnableToStop) throws AgentUnavailableException, OperationTimedoutException,
     ConcurrentOperationException {
+        // Exoscale do not start VM if an online snapshot is in progress
+        List<VolumeVO> volumes = _volsDao.findCreatedByInstance(vm.getId());
+        for (VolumeVO volume : volumes) {
+            if (volume.getState() == Volume.State.Snapshotting) {
+                throw new ConcurrentOperationException("Unable to stop " + vm + " as a snapshot is currently being taken on a volume");
+            }
+        }
         State state = vm.getState();
         if (state == State.Stopped) {
             if (s_logger.isDebugEnabled()) {
