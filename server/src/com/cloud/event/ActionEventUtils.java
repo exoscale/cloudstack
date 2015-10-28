@@ -213,6 +213,8 @@ public class ActionEventUtils {
             }
         }
 
+        Map<String,String> details = context.getContextParameter("details");
+
         org.apache.cloudstack.framework.events.Event event =
             new org.apache.cloudstack.framework.events.Event(ManagementService.Name, eventCategory, eventType, EventTypes.getEntityForEvent(eventType), entityUuid);
 
@@ -236,6 +238,9 @@ public class ActionEventUtils {
         //Put all the first class entities that are touched during the action. For now atleast put in the vmid.
         populateFirstClassEntities(eventDescription);
         eventDescription.put("description", description);
+        if (details != null) {
+            eventDescription.putAll(details);
+        }
 
         String eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(new Date());
         eventDescription.put("eventDateTime", eventDate);
