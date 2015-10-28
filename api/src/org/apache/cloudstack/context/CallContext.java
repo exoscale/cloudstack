@@ -59,6 +59,8 @@ public class CallContext {
     private User user;
     private long userId;
     private final Map<Object, Object> context = new HashMap<Object, Object>();
+    private final Map<String, String> details = new HashMap<String, String>();
+    private boolean hasDetails = false;
 
     static EntityManager s_entityMgr;
 
@@ -81,6 +83,14 @@ public class CallContext {
         this.account = account;
         accountId = account.getId();
         this.contextId = contextId;
+    }
+
+    public void setContextDetails(String key, String value) {
+        if (hasDetails == false) {
+            context.put("details", details);
+            hasDetails = true;
+        }
+        details.put(key, value);
     }
 
     public void putContextParameter(Object key, Object value) {
