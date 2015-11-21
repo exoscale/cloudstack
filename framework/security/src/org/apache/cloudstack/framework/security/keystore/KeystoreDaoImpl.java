@@ -21,8 +21,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.ejb.Local;
-
 import org.springframework.stereotype.Component;
 
 import com.cloud.utils.db.DB;
@@ -34,7 +32,6 @@ import com.cloud.utils.db.TransactionLegacy;
 import com.cloud.utils.exception.CloudRuntimeException;
 
 @Component
-@Local(value = {KeystoreDao.class})
 public class KeystoreDaoImpl extends GenericDaoBase<KeystoreVO, Long> implements KeystoreDao {
     protected final SearchBuilder<KeystoreVO> FindByNameSearch;
     protected final SearchBuilder<KeystoreVO> CertChainSearch;

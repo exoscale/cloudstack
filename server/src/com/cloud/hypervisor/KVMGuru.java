@@ -16,7 +16,6 @@
 // under the License.
 package com.cloud.hypervisor;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 
 import org.apache.cloudstack.storage.command.StorageSubSystemCommand;
@@ -33,7 +32,6 @@ import com.cloud.storage.dao.GuestOSHypervisorDao;
 import com.cloud.utils.Pair;
 import com.cloud.vm.VirtualMachineProfile;
 
-@Local(value = HypervisorGuru.class)
 public class KVMGuru extends HypervisorGuruBase implements HypervisorGuru {
     @Inject
     GuestOSDao _guestOsDao;

@@ -16,24 +16,20 @@
 // under the License.
 package com.cloud.server.auth;
 
+import com.cloud.user.UserAccount;
+import com.cloud.user.dao.UserAccountDao;
+import com.cloud.utils.Pair;
+import com.cloud.utils.exception.CloudRuntimeException;
+import org.apache.log4j.Logger;
+import org.bouncycastle.util.encoders.Base64;
+
+import javax.inject.Inject;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Map;
 
-import javax.ejb.Local;
-import javax.inject.Inject;
-
-import org.apache.log4j.Logger;
-import org.bouncycastle.util.encoders.Base64;
-
-import com.cloud.user.UserAccount;
-import com.cloud.user.dao.UserAccountDao;
-import com.cloud.utils.Pair;
-import com.cloud.utils.exception.CloudRuntimeException;
-
-@Local(value = {UserAuthenticator.class})
 public class SHA256SaltedUserAuthenticator extends DefaultUserAuthenticator {
     public static final Logger s_logger = Logger.getLogger(SHA256SaltedUserAuthenticator.class);
     private static final String s_defaultPassword = "000000000000000000000000000=";

@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.persistence.EntityExistsException;
 
@@ -39,7 +38,6 @@ import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.vm.dao.UserVmDetailsDao;
 
 @Component
-@Local(value = {ServiceOfferingDao.class})
 @DB()
 public class ServiceOfferingDaoImpl extends GenericDaoBase<ServiceOfferingVO, Long> implements ServiceOfferingDao {
     protected static final Logger s_logger = Logger.getLogger(ServiceOfferingDaoImpl.class);

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
-import javax.ejb.Local;
 import javax.naming.ConfigurationException;
 
 import org.apache.log4j.Logger;
@@ -40,7 +39,6 @@ import com.cloud.utils.exception.CloudRuntimeException;
  * into the VHD format.
  *
  */
-@Local(value = Processor.class)
 public class VhdProcessor extends AdapterBase implements Processor {
 
     private static final Logger s_logger = Logger.getLogger(VhdProcessor.class);

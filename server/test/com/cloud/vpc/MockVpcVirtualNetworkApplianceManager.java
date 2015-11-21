@@ -18,6 +18,8 @@
 package com.cloud.vpc;
 
 import com.cloud.deploy.DeployDestination;
+import java.util.List;
+import java.util.Map;
 import com.cloud.exception.AgentUnavailableException;
 import com.cloud.exception.ConcurrentOperationException;
 import com.cloud.exception.InsufficientCapacityException;
@@ -48,13 +50,9 @@ import org.apache.cloudstack.api.command.admin.router.UpgradeRouterCmd;
 import org.apache.cloudstack.api.command.admin.router.UpgradeRouterTemplateCmd;
 import org.springframework.stereotype.Component;
 
-import javax.ejb.Local;
 import javax.naming.ConfigurationException;
-import java.util.List;
-import java.util.Map;
 
 @Component
-@Local(value = {VpcVirtualNetworkApplianceManager.class, VpcVirtualNetworkApplianceService.class})
 public class MockVpcVirtualNetworkApplianceManager extends ManagerBase implements VpcVirtualNetworkApplianceManager, VpcVirtualNetworkApplianceService {
 
     /* (non-Javadoc)
