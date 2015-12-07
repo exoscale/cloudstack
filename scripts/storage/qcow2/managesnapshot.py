@@ -139,6 +139,9 @@ def destroy_snapshot(disk_path, domain, snapshot_file_path):
 
     # We can now pivot to base disk
     try:
+        # sleep to try to workaround this bug: https://gitlab.com/libvirt/libvirt/commit/eae59247c59aa02147b2b4a50177e8e877fdb218
+        # until libvirt get updated to 1.2.18 at least
+        time.sleep(2)
         logging.info('Starting disk pivot from %s to base %s for vm %s', snapshot_file_path, disk_path, domain)
         dom0.blockJobAbort(dev, libvirt.VIR_DOMAIN_BLOCK_JOB_ABORT_PIVOT)
         logging.info('Disk pivot to base successfully completed from %s to %s for vm %s', snapshot_file_path, disk_path, domain)
@@ -232,7 +235,7 @@ def wait_for_block_job(dom0, dev, abort_on_error=False,
         if wait_for_job_clean:
             job_ended = not status
         else:
-            job_ended = cur == end
+            job_ended = cur == end and cur != 0 and end != 0
 
         return not job_ended
 
