@@ -57,11 +57,11 @@ hdd_path=`vboxmanage list hdds | grep "$appliance\/" | grep vdi | cut -c 14- | s
 
 # Remove any shared folder
 shared_folders=`vboxmanage showvminfo $appliance | grep Name | grep Host`
-#while [ "$shared_folders" != "" ]
-#do
-vboxmanage sharedfolder remove $appliance --name "`echo $shared_folders | head -1 | cut -c 8- | cut -d \' -f 1`"
-#  shared_folders=`vboxmanage showvminfo $appliance | grep Name | grep Host`
-#done
+while [ "$shared_folders" != "" ]
+do
+  vboxmanage sharedfolder remove $appliance --name "`echo $shared_folders | head -1 | cut -c 8- | cut -d \' -f 1`"
+  shared_folders=`vboxmanage showvminfo $appliance | grep Name | grep Host`
+done
 
 # Compact the virtual hdd
 vboxmanage modifyhd $hdd_uuid --compact
