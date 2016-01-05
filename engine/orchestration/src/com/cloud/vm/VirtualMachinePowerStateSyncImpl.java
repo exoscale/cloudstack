@@ -77,8 +77,8 @@ public class VirtualMachinePowerStateSyncImpl implements VirtualMachinePowerStat
 
         for (Map.Entry<Long, VirtualMachine.PowerState> entry : translatedInfo.entrySet()) {
 
-            if (s_logger.isDebugEnabled())
-                s_logger.debug("VM state report. host: " + hostId + ", vm id: " + entry.getKey() + ", power state: " + entry.getValue());
+            //if (s_logger.isDebugEnabled())
+            //    s_logger.debug("VM state report. host: " + hostId + ", vm id: " + entry.getKey() + ", power state: " + entry.getValue());
 
             if (_instanceDao.updatePowerState(entry.getKey(), hostId, entry.getValue())) {
                 if (s_logger.isDebugEnabled())
