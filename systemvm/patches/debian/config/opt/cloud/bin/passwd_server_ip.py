@@ -46,17 +46,13 @@ def getTokenFile():
     return '/tmp/passwdsrvrtoken'
 
 def getPasswordFile():
-    return '/var/cache/cloud/passwords-%s' % listeningAddress
+    return '/var/cache/cloud/passwords'
 
 def initToken():
     global secureToken
-    if os.path.exists(getTokenFile()):
-        with open(getTokenFile(), 'r') as f:
-            secureToken = f.read()
-    if not secureToken:
-        secureToken = binascii.hexlify(os.urandom(16))
-        with open(getTokenFile(), 'w') as f:
-            f.write(secureToken)
+    secureToken = binascii.hexlify(os.urandom(16))
+    with open(getTokenFile(), 'w') as f:
+        f.write(secureToken)
 
 def checkToken(token):
     return token == secureToken
@@ -157,7 +153,6 @@ class PasswordRequestHandler(BaseHTTPRequestHandler):
         if not ip or not password:
             syslog.syslog('serve_password: empty ip/password[%s/%s] received from savepassword' % (ip, password))
             return
-        syslog.syslog('serve_password: password saved for VM IP %s' % ip)
         setPassword(ip, password)
         savePasswordFile()
         return
