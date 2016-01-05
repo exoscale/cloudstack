@@ -16,27 +16,48 @@
 # specific language governing permissions and limitations
 # under the License.
 
+
+ 
+
 # Usage
-#   save_password -v <user VM IP> -p <password>
+#	save_password -v <user VM IP> -p <password>
+
+source /root/func.sh
+
+lock="passwdlock"
+#default timeout value is 30 mins as password reset command is not synchronized on agent side any more,
+#and multiple commands can be sent to the same VR at a time
+locked=$(getLockFile $lock 1800)
+if [ "$locked" != "1" ]
+then
+    exit 1
+fi
+
+PASSWD_FILE=/var/cache/cloud/passwords
 
 while getopts 'v:p:' OPTION
 do
   case $OPTION in
-  v)    VM_IP="$OPTARG"
-        ;;
+  v)	VM_IP="$OPTARG"
+		;;
   p)    PASSWORD="$OPTARG"
-        ;;
-  ?)    echo "Incorrect usage"
-        ;;
+		;;
+  ?)	echo "Incorrect usage"
+                unlock_exit 1 $lock $locked
+		;;
   esac
 done
-TOKEN_FILE="/tmp/passwdsrvrtoken"
-TOKEN=""
-if [ -f $TOKEN_FILE ]; then
-    TOKEN=$(cat $TOKEN_FILE)
-fi
-ps aux | grep passwd_server_ip.py |grep -v grep 2>&1 > /dev/null
+
+[ -f $PASSWD_FILE ] ||  touch $PASSWD_FILE
+
+sed -i /$VM_IP=/d $PASSWD_FILE
+
+ps aux | grep serve_password.sh |grep -v grep 2>&1 > /dev/null
 if [ $? -eq 0 ]
 then
-    curl --header "DomU_Request: save_password" http://127.0.0.1:8080/ -F "ip=$VM_IP" -F "password=$PASSWORD" -F "token=$TOKEN"
+    echo "$VM_IP=$PASSWORD" >> $PASSWD_FILE
+else
+    echo "$VM_IP=saved_password" >> $PASSWD_FILE
 fi
+
+unlock_exit $? $lock $locked
