@@ -811,6 +811,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             throw new InvalidParameterValueException("Requested size out of range");
         }
 
+        CallContext.current().putContextDetails("size", newSize.toString());
+
         /* does the caller have the authority to act on this volume? */
         _accountMgr.checkAccess(CallContext.current().getCallingAccount(), null, true, volume);
 
