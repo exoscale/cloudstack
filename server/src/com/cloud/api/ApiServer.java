@@ -754,10 +754,11 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
             String unsignedRequest = null;
 
             final String[] command = (String[])requestParameters.get(ApiConstants.COMMAND);
-            if (command == null) {
-                s_logger.info("missing command, ignoring request...");
-                return false;
-            }
+            // disable noisy logging
+            // if (command == null) {
+            //    s_logger.info("missing command, ignoring request...");
+            //    return false;
+            //}
 
             final String commandName = command[0];
 

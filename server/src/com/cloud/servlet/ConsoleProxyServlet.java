@@ -135,7 +135,8 @@ public class ConsoleProxyServlet extends HttpServlet {
                     account = (String)params.get("account")[0];
                     accountObj = (Account)params.get("accountobj")[0];
                 } else {
-                    s_logger.debug("Invalid web session or API key in request, reject console/thumbnail access");
+                    // disable noisy logging
+                    // s_logger.debug("Invalid web session or API key in request, reject console/thumbnail access");
                     sendResponse(resp, "Access denied. Invalid web session or API key in request");
                     return;
                 }
@@ -618,9 +619,10 @@ public class ConsoleProxyServlet extends HttpServlet {
 
             // if api/secret key are passed to the parameters
             if ((signature == null) || (apiKey == null)) {
-                if (s_logger.isDebugEnabled()) {
-                    s_logger.debug("expired session, missing signature, or missing apiKey -- ignoring request...sig: " + signature + ", apiKey: " + apiKey);
-                }
+                // disable noisy logging
+                // if (s_logger.isDebugEnabled()) {
+                //    s_logger.debug("expired session, missing signature, or missing apiKey -- ignoring request...sig: " + signature + ", apiKey: " + apiKey);
+                // }
                 return false; // no signature, bad request
             }
 
