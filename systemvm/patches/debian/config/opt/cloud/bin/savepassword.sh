@@ -22,7 +22,6 @@
 while getopts 'v:p:' OPTION
 do
   case $OPTION in
-=======
   v)	VM_IP="$OPTARG"
 		;;
   p)	
