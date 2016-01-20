@@ -268,6 +268,13 @@ if __name__ == "__main__":
     bclient = bernhard.Client(host=riemannserver)
     host = socket.gethostname()
 
+    maintenancefilepath = '/etc/cloudstack/agent/snapshot-maintenance'
+
+    # Checking if snapshot is admin disabled
+    if os.path.exists(maintenancefilepath):
+        logging.error('Snapshoting is admin disabled on this hypervisor, you may enable it back by deleting %s', maintenancefilepath)
+        raise Exception('Snapshoting is admin disabled on this hypervisor')
+
     try:
         if createarg:
             create_snapshot(disk_path, domain, snapshot_file_path)
