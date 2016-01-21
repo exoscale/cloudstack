@@ -235,11 +235,12 @@ configure_services() {
   mkdir -p /var/lib/haproxy
 
   # Get config files from master
-  snapshot_url="https://git-wip-us.apache.org/repos/asf?p=cloudstack.git;a=snapshot;h=refs/heads/4.4;sf=tgz"
-  snapshot_dir="/opt/cloudstack*"
+  #snapshot_url="https://git-wip-us.apache.org/repos/asf?p=cloudstack.git;a=snapshot;h=refs/heads/4.4;sf=tgz"
+  snapshot_dir="/opt/workspace*"
   cd /opt
-  wget --no-check-certificate $snapshot_url -O cloudstack.tar.gz
-  tar -zxvf cloudstack.tar.gz --wildcards 'cloudstack-4.4-???????/systemvm'
+  #wget --no-check-certificate $snapshot_url -O cloudstack.tar.gz
+  wget http://download.exoscale.net/downloads/cloudstack.tar.gz
+  tar -zxvf cloudstack.tar.gz --wildcards 'workspace/systemvm'
   cp -rv $snapshot_dir/systemvm/patches/debian/config/* /
   cp -rv $snapshot_dir/systemvm/patches/debian/vpn/* /
   mkdir -p /usr/share/cloud/
