@@ -9,6 +9,8 @@ import time
 import os
 import shutil
 import socket
+import json
+import subprocess
 
 import libvirt
 import facter
@@ -38,6 +40,14 @@ def getargs():
 def create_snapshot(disk_path, domain, snapshot_file_path):
 
     logging.info('Create snapshot request with arguments: -c -diskpath %s -domain %s', disk_path, domain)
+
+    # Check if the running binary is supported
+    logging.info('Checking QEMU version for domain %s', domain)
+    qemuversion = qemu_version_check(domain)
+
+    if qemuversion < 2:
+        logging.error('Running QEMU version is not supported for domain %s', domain)
+        raise Exception('Running QEMU version is not supported for this domain')
 
     # Checking if domain already have a snapshot
     if os.path.exists(snapshot_file_path):
@@ -214,31 +224,51 @@ def getdev(dom0, snapshot_file_path):
 
 def wait_for_block_job(dom0, dev, abort_on_error=False,
                        wait_for_job_clean=False):
-        """Wait for libvirt block job to complete.
-        Libvirt may return either cur==end or an empty dict when
-        the job is complete, depending on whether the job has been
-        cleaned up by libvirt yet, or not.
-        :returns: True if still in progress
-                  False if completed
-        """
+    """Wait for libvirt block job to complete.
+    Libvirt may return either cur==end or an empty dict when
+    the job is complete, depending on whether the job has been
+    cleaned up by libvirt yet, or not.
+    :returns: True if still in progress
+              False if completed
+    """
 
-        status = dom0.blockJobInfo(dev, 0)
-        if status == -1 and abort_on_error:
-            logging.error('libvirt error while requesting blockjob info')
-            raise libvirt.VIR_ERR_OPERATION_FAILED('libvirt error while requesting blockjob info')
-        try:
-            cur = status.get('cur', 0)
-            end = status.get('end', 0)
-        except Exception:
-            return False
+    status = dom0.blockJobInfo(dev, 0)
+    if status == -1 and abort_on_error:
+        logging.error('libvirt error while requesting blockjob info')
+        raise libvirt.VIR_ERR_OPERATION_FAILED('libvirt error while requesting blockjob info')
+    try:
+        cur = status.get('cur', 0)
+        end = status.get('end', 0)
+    except Exception:
+        return False
 
-        if wait_for_job_clean:
-            job_ended = not status
-        else:
-            job_ended = cur == end and cur != 0 and end != 0
+    if wait_for_job_clean:
+        job_ended = not status
+    else:
+        job_ended = cur == end and cur != 0 and end != 0
 
-        return not job_ended
+    return not job_ended
 
+
+def qemu_version_check(domain):
+    virshpath = '/usr/bin/virsh'
+    virsharg1 = 'qemu-monitor-command'
+    virsharg2 = domain
+    virsharg3 = '{"execute":"query-version"}'
+
+    try:
+        execute = subprocess.check_output([virshpath, virsharg1, virsharg2, virsharg3])
+        execute = json.loads(execute)
+        qemuversion = execute["return"]["qemu"]["major"]
+    except Exception as e:
+        logging.error('%s', e)
+        raise
+
+    if qemuversion is not None:
+        return qemuversion
+    else:
+        logging.error('Failed to get running qemu version for domain %s', domain)
+        raise ValueError('Failed to get running qemu version')
 
 if __name__ == "__main__":
     args = getargs()
@@ -270,14 +300,15 @@ if __name__ == "__main__":
 
     maintenancefilepath = '/etc/cloudstack/agent/snapshot-maintenance'
 
-    # Checking if snapshot is admin disabled
-    if os.path.exists(maintenancefilepath):
-        logging.error('Snapshoting is admin disabled on this hypervisor, you may enable it back by deleting %s', maintenancefilepath)
-        raise Exception('Snapshoting is admin disabled on this hypervisor')
-
     try:
         if createarg:
+            # Checking if snapshot is admin disabled
+            if os.path.exists(maintenancefilepath):
+                logging.error('Snapshotting is admin disabled on this hypervisor, you may enable it back by deleting %s', maintenancefilepath)
+                raise Exception('Snapshotting is admin disabled on this hypervisor')
+
             create_snapshot(disk_path, domain, snapshot_file_path)
+
         elif destroyarg:
             destroy_snapshot(disk_path, domain, snapshot_file_path)
         elif backuparg:
