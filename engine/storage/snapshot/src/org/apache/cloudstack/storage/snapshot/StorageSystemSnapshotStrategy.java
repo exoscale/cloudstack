@@ -146,7 +146,7 @@ public class StorageSystemSnapshotStrategy extends SnapshotStrategyBase {
                 storagePoolId = snapshotStore.getDataStoreId();
             }
             else {
-                throw new CloudRuntimeException("Unable to determine the storage pool of the snapshot");
+                s_logger.debug("Unable to determine the storage pool of the snapshot");
             }
         }
         else {
