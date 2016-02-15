@@ -307,15 +307,15 @@ public class XenserverSnapshotStrategy extends SnapshotStrategyBase {
                 SnapshotInfo parent = snapshot.getParent();
                 if (backupedSnapshot != null && parent != null) {
                     Long parentSnapshotId = parent.getId();
-                    while (parentSnapshotId != null && parentSnapshotId != 0L) {
-                        SnapshotDataStoreVO snapshotDataStoreVO = snapshotStoreDao.findByStoreSnapshot(primaryStore.getRole(), primaryStore.getId(), parentSnapshotId);
-                        if (snapshotDataStoreVO != null) {
-                            parentSnapshotId = snapshotDataStoreVO.getParentSnapshotId();
-                            snapshotStoreDao.remove(snapshotDataStoreVO.getId());
-                        } else {
-                            parentSnapshotId = null;
-                        }
-                    }
+                    //while (parentSnapshotId != null && parentSnapshotId != 0L) {
+                    //    SnapshotDataStoreVO snapshotDataStoreVO = snapshotStoreDao.findByStoreSnapshot(primaryStore.getRole(), primaryStore.getId(), parentSnapshotId);
+                    //    if (snapshotDataStoreVO != null) {
+                    //        parentSnapshotId = snapshotDataStoreVO.getParentSnapshotId();
+                    //        snapshotStoreDao.remove(snapshotDataStoreVO.getId());
+                    //    } else {
+                    //       parentSnapshotId = null;
+                    //   }
+                    //}
                     SnapshotDataStoreVO snapshotDataStoreVO = snapshotStoreDao.findByStoreSnapshot(primaryStore.getRole(), primaryStore.getId(), snapshot.getId());
                     if (snapshotDataStoreVO != null) {
                         snapshotDataStoreVO.setParentSnapshotId(0L);
