@@ -37,13 +37,13 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
 
 import com.cloud.utils.rest.RESTServiceConnector;
 import com.cloud.utils.rest.RESTValidationStrategy;
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 
 public class NiciraNvpApiTest {
     protected static final String UUID = "aaaa";
@@ -135,6 +135,7 @@ public class NiciraNvpApiTest {
     }
 
     @Test
+    @Ignore
     public void testFindSecurityProfileByUuid() throws NiciraNvpApiException, IOException {
         // Prepare
         method = mock(GetMethod.class);
