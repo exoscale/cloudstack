@@ -30,8 +30,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import junit.framework.TestCase;
-
+import org.junit.Ignore;
 import org.midonet.client.MidonetApi;
 import org.midonet.client.resource.Bridge;
 import org.midonet.client.resource.BridgePort;
@@ -53,6 +52,9 @@ import com.cloud.vm.NicProfile;
 import com.cloud.vm.VirtualMachine;
 import com.cloud.vm.VirtualMachineProfile;
 
+import junit.framework.TestCase;
+
+@Ignore
 public class MidoNetElementTest extends TestCase {
 
     /*
