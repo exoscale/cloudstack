@@ -305,7 +305,7 @@ public class SnapshotTestWithFakeData {
     }
 
     protected SnapshotPolicyVO createSnapshotPolicy(Long volId) {
-        SnapshotPolicyVO policyVO = new SnapshotPolicyVO(volId, "jfkd", "fdfd", DateUtil.IntervalType.DAILY, 8);
+        SnapshotPolicyVO policyVO = new SnapshotPolicyVO(volId, "jfkd", "fdfd", DateUtil.IntervalType.DAILY, 8, true);
         policyVO = snapshotPolicyDao.persist(policyVO);
         return policyVO;
     }
