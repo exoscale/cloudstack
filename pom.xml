@@ -19,14 +19,14 @@
 
   <groupId>org.apache.cloudstack</groupId>
   <artifactId>cloudstack</artifactId>
-  <version>4.4.2</version>
+  <version>4.4.2-exoscale-1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache CloudStack</name>
   <description>Apache CloudStack is an IaaS (“Infrastracture as a Service”) cloud orchestration platform.</description>
   <url>http://www.cloudstack.org</url>
   <scm>
-    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/cloudstack.git</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/cloudstack.git</developerConnection>
+    <connection>scm:git:https://github.com/exoscale/cloudstack.git</connection>
+    <developerConnection>scm:git:https://github.com/exoscale/cloudstack.git</developerConnection>
   </scm>
   <issueManagement>
     <system>jira</system>
