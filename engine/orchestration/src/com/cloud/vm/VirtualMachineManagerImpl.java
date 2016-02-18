@@ -1667,7 +1667,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         // reload the vm object from db
         vm = _vmDao.findByUuid(vmUuid);
         try {
-            if (!stateTransitTo(vm, VirtualMachine.Event.DestroyRequested, vm.getHostId())) {
+            if (vm.getState() == State.Destroyed || vm.getState() == State.Expunging || vm.getRemoved() != null) {
+                s_logger.debug("State is already in destroyed or expunging or vm has been removed for " + vm);
+            } else if (!stateTransitTo(vm, VirtualMachine.Event.DestroyRequested, vm.getHostId())) {
                 s_logger.debug("Unable to destroy the vm because it is not in the correct state: " + vm);
                 throw new CloudRuntimeException("Unable to destroy " + vm);
             }
