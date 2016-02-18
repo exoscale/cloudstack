@@ -37,7 +37,7 @@
   <url>http://www.cloudstack.org</url>
   <scm>
     <connection>scm:git:https://github.com/exoscale/cloudstack.git</connection>
-    <developerConnection>scm:git:https://github.com/exoscale/cloudstack.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:exoscale/cloudstack.git</developerConnection>
   </scm>
   <issueManagement>
     <system>jira</system>
@@ -1143,6 +1143,24 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>exoscale</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-release-plugin</artifactId>
+            <inherited>false</inherited>
+            <configuration>
+              <goals>install</goals>
+              <arguments>-Dgpg.skip=true</arguments>
+              <useReleaseProfile>false</useReleaseProfile>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <distributionManagement>
+      </distributionManagement>
     </profile>  
   </profiles>
 </project>
