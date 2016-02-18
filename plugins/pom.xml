@@ -52,7 +52,6 @@
     <module>event-bus/kafka</module>
     <module>ha-planners/skip-heurestics</module>
     <module>host-allocators/random</module>
-    <module>hypervisors/xen</module>
     <module>hypervisors/kvm</module>
     <module>hypervisors/baremetal</module>
     <module>hypervisors/ucs</module>
