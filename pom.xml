@@ -35,8 +35,8 @@
   <description>Apache CloudStack is an IaaS (“Infrastructure as a Service”) cloud orchestration platform.</description>
   <url>http://www.cloudstack.org</url>
   <scm>
-    <connection>scm:git:https://github.com/exoscale/cloudstack.git</connection>
-    <developerConnection>scm:git:git@github.com:exoscale/cloudstack.git</developerConnection>
+    <connection>scm:git:https://github.com/exoscale/cloudstack</connection>
+    <developerConnection>scm:git:https://github.com/exoscale/cloudstack</developerConnection>
     <tag>HEAD</tag>
   </scm>
   <issueManagement>
