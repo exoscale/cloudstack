@@ -24,7 +24,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack</artifactId>
-    <version>4.4.2-exoscale-1-SNAPSHOT</version>
+    <version>4.4.2-exoscale-1</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <properties>
@@ -132,19 +132,17 @@
                   </fileset>
                 </copy>
                 <tar destfile="${basedir}/target/patch.tar">
-                  <tarfileset dir="${basedir}/target/build-patch/"
-                    filemode="755">
+                  <tarfileset dir="${basedir}/target/build-patch/" filemode="755">
                     <include name="**/*" />
                     <exclude name="**/.classpath" />
-                    <exclude name="**/log**"/>
-                    <exclude name="**/logrotate.d"/>
+                    <exclude name="**/log**" />
+                    <exclude name="**/logrotate.d" />
                     <exclude name="**/.project" />
                     <exclude name="**/wscript_build" />
                   </tarfileset>
-                  <tarfileset dir="${basedir}/target/build-patch/"
-                   filemode="644">
-                   <include name="**/log**"/>
-                   <include name="**/logrotate.d/**"/>
+                  <tarfileset dir="${basedir}/target/build-patch/" filemode="644">
+                   <include name="**/log**" />
+                   <include name="**/logrotate.d/**" />
                   </tarfileset>
                 </tar>
                 <gzip destfile="${basedir}/dist/cloud-scripts.tgz" src="${basedir}/target/patch.tar" />

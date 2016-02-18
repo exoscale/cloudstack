@@ -16,14 +16,12 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<project
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloud-engine</artifactId>
-    <version>4.4.2-exoscale-1-SNAPSHOT</version>
+    <version>4.4.2-exoscale-1</version>
   </parent>
   <artifactId>cloud-engine-service</artifactId>
   <packaging>war</packaging>
@@ -93,8 +91,7 @@
             <contextPath>/engine</contextPath>
           </webApp>
           <connectors>
-            <connector
-              implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
+            <connector implementation="org.eclipse.jetty.server.nio.SelectChannelConnector">
               <port>1736</port>
               <maxIdleTime>60000</maxIdleTime>
             </connector>

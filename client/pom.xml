@@ -7,9 +7,7 @@
   the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
   OF ANY KIND, either express or implied. See the License for the specific language 
   governing permissions and limitations under the License. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <artifactId>cloud-client-ui</artifactId>
   <name>Apache CloudStack Client UI</name>
@@ -17,7 +15,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack</artifactId>
-    <version>4.4.2-exoscale-1-SNAPSHOT</version>
+    <version>4.4.2-exoscale-1</version>
   </parent> 
   <dependencies>
     <dependency>
@@ -372,92 +370,91 @@
             <configuration>
               <target>
                 <copy todir="${basedir}/target/generated-webapp/WEB-INF/classes/scripts">
-                  <fileset dir="${basedir}/../scripts"/>
+                  <fileset dir="${basedir}/../scripts" />
                 </copy>
                 <!-- CLOUDSTACK-1304 -->
-                <chmod perm="755"
-                  file="${basedir}/target/generated-webapp/WEB-INF/classes/scripts/**" type="both"/>
+                <chmod perm="755" file="${basedir}/target/generated-webapp/WEB-INF/classes/scripts/**" type="both" />
                 <copy todir="${basedir}/target/generated-webapp/WEB-INF/">
                   <fileset dir="${basedir}/WEB-INF/">
-                    <include name="web.xml"/>
+                    <include name="web.xml" />
                   </fileset>
                 </copy>
                 <copy todir="${basedir}/target/generated-webapp/WEB-INF/classes">
                   <fileset dir="${basedir}/WEB-INF/classes">
-                    <include name="resources/**/*"/>
+                    <include name="resources/**/*" />
                   </fileset>
                 </copy>
                 <copy todir="${basedir}/target/generated-webapp">
-                  <fileset dir="${basedir}/../ui"/>
+                  <fileset dir="${basedir}/../ui" />
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/generated-webapp/WEB-INF/classes">
                   <fileset dir="${basedir}/tomcatconf">
-                    <include name="*.in"/>
+                    <include name="*.in" />
                   </fileset>
-                  <globmapper from="*.in" to="*"/>
+                  <globmapper from="*.in" to="*" />
                   <filterchain>
                     <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile" value="${cs.replace.properties}"/>
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/generated-webapp/WEB-INF/classes">
                   <fileset dir="${basedir}/tomcatconf">
-                    <include name="*.in"/>
+                    <include name="*.in" />
                   </fileset>
-                  <globmapper from="*.in" to="*"/>
+                  <globmapper from="*.in" to="*" />
                   <filterchain>
                     <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile" value="${cs.replace.properties}"/>
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/utilities/bin">
                   <fileset dir="${basedir}/../setup/bindir">
-                    <include name="*.in"/>
+                    <include name="*.in" />
                   </fileset>
-                  <globmapper from="*.in" to="*"/>
+                  <globmapper from="*.in" to="*" />
                   <filterchain>
                     <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile" value="${cs.replace.properties}"/>
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/utilities/bin">
                   <fileset dir="${basedir}/bindir">
-                    <include name="*.in"/>
+                    <include name="*.in" />
                   </fileset>
-                  <globmapper from="*.in" to="*"/>
+                  <globmapper from="*.in" to="*" />
                   <filterchain>
                     <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile" value="${cs.replace.properties}"/>
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/utilities/scripts/db">
                   <fileset dir="${basedir}/../setup/db">
-                    <include name="**/*"/>
+                    <include name="**/*" />
                   </fileset>
                   <filterchain>
                     <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile" value="${cs.replace.properties}"/>
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/conf">
                   <fileset dir="${basedir}/tomcatconf">
-                    <include name="*.in"/>
+                    <include name="*.in" />
                   </fileset>
-                  <globmapper from="*.in" to="*"/>
+                  <globmapper from="*.in" to="*" />
                   <filterchain>
                     <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile" value="${cs.replace.properties}"/>
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
                 <copy overwrite="true" todir="${basedir}/target/conf">
                   <fileset dir="${basedir}/tomcatconf">
-                    <exclude name="*.in"/>
+                    <exclude name="*.in" />
                   </fileset>
                 </copy>
               </target>
@@ -472,11 +469,7 @@
             <configuration>
               <target if="${noredist}">
                 <echo>test</echo>
-                <replaceregexp
-                  file="${basedir}/target/generated-webapp/WEB-INF/classes/environment.properties"
-                  match="cloud-stack-components-specification=.*"
-                  replace="cloud-stack-components-specification=components-nonoss.xml" byline="true"
-                />
+                <replaceregexp file="${basedir}/target/generated-webapp/WEB-INF/classes/environment.properties" match="cloud-stack-components-specification=.*" replace="cloud-stack-components-specification=components-nonoss.xml" byline="true" />
               </target>
             </configuration>
           </execution>
@@ -488,13 +481,10 @@
             </goals>
             <configuration>
               <target if="${noredist}">
-                <replaceregexp file="${basedir}/target/generated-webapp/WEB-INF/web.xml"
-                  match="classpath:componentContext.xml"
-                  replace="classpath:nonossComponentContext.xml" byline="true"/>
-                <copy overwrite="true"
-                  todir="${basedir}/target/generated-webapp/WEB-INF/classes/scripts">
+                <replaceregexp file="${basedir}/target/generated-webapp/WEB-INF/web.xml" match="classpath:componentContext.xml" replace="classpath:nonossComponentContext.xml" byline="true" />
+                <copy overwrite="true" todir="${basedir}/target/generated-webapp/WEB-INF/classes/scripts">
                   <fileset dir="${basedir}/../plugins/network-elements/cisco-vnmc/scripts">
-                    <include name="**/*"/>
+                    <include name="**/*" />
                   </fileset>
                 </copy>
               </target>
@@ -581,8 +571,8 @@
                   <target>
                     <copy todir="${basedir}/target/generated-webapp/WEB-INF/classes/vms">
                       <fileset dir="${basedir}/../systemvm/dist">
-                        <include name="systemvm.zip"/>
-                        <include name="systemvm.iso"/>
+                        <include name="systemvm.zip" />
+                        <include name="systemvm.iso" />
                       </fileset>
                     </copy>
                   </target>

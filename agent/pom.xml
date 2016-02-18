@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack</artifactId>
-    <version>4.4.2-exoscale-1-SNAPSHOT</version>
+    <version>4.4.2-exoscale-1</version>
   </parent>
   <dependencies>
     <dependency>
@@ -58,37 +58,30 @@
             </goals>
             <configuration>
               <target>
-                <copy
-                  todir="${basedir}/target/transformed">
+                <copy todir="${basedir}/target/transformed">
                   <fileset dir="${basedir}/conf">
                     <include name="agent.properties" />
                   </fileset>
                 </copy>
-                <copy overwrite="true"
-                  todir="${basedir}/target/transformed">
+                <copy overwrite="true" todir="${basedir}/target/transformed">
                   <fileset dir="${basedir}/conf">
                     <include name="*.in" />
                   </fileset>
                   <globmapper from="*.in" to="*" />
                   <filterchain>
-                    <filterreader
-                      classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile"
-                        value="${cs.replace.properties}" />
+                    <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
-                <copy overwrite="true"
-                  todir="${basedir}/target/transformed">
+                <copy overwrite="true" todir="${basedir}/target/transformed">
                   <fileset dir="${basedir}/bindir">
                     <include name="*.in" />
                   </fileset>
                   <globmapper from="*.in" to="*" />
                   <filterchain>
-                    <filterreader
-                      classname="org.apache.tools.ant.filters.ReplaceTokens">
-                      <param type="propertiesfile"
-                        value="${cs.replace.properties}" />
+                    <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
+                      <param type="propertiesfile" value="${cs.replace.properties}" />
                     </filterreader>
                   </filterchain>
                 </copy>
