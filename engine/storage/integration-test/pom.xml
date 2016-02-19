@@ -99,12 +99,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.cloudstack</groupId>
-      <artifactId>cloud-plugin-storage-image-swift</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <scope>compile</scope>
