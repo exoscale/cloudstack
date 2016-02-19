@@ -53,7 +53,6 @@
     <module>ha-planners/skip-heurestics</module>
     <module>host-allocators/random</module>
     <module>hypervisors/kvm</module>
-    <module>hypervisors/hyperv</module>
     <module>network-elements/internal-loadbalancer</module>
     <module>network-elements/ovs</module>
     <module>storage-allocators/random</module>
