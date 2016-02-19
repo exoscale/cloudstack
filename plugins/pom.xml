@@ -59,7 +59,6 @@
     <module>storage/image/default</module>
     <module>storage/image/s3</module>
     <module>storage/image/swift</module>
-    <module>storage/volume/solidfire</module>
     <module>storage/volume/default</module>
     <module>user-authenticators/ldap</module>
     <module>user-authenticators/md5</module>
