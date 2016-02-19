@@ -29,7 +29,7 @@
 
   <groupId>org.apache.cloudstack</groupId>
   <artifactId>cloudstack</artifactId>
-  <version>4.4.2-exoscale-2-SNAPSHOT</version>
+  <version>4.4.2</version>
   <packaging>pom</packaging>
   <name>Apache CloudStack</name>
   <description>Apache CloudStack is an IaaS (“Infrastructure as a Service”) cloud orchestration platform.</description>
@@ -725,17 +725,17 @@
                   </action>
                 </pluginExecution>
                 <pluginExecution>
-			<pluginExecutionFilter>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<versionRange>[2.11,)</versionRange>
-				<goals>
-					<goal>check</goal>
-				</goals>
-			</pluginExecutionFilter>
-			<action>
-				<ignore />
-			</action>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <versionRange>[2.11,)</versionRange>
+                    <goals>
+                      <goal>check</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
                 </pluginExecution>
               </pluginExecutions>
             </lifecycleMappingMetadata>
