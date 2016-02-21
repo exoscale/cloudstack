@@ -1660,8 +1660,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         advanceStop(vmUuid, VmDestroyForcestop.value());
 
         if (!_vmSnapshotMgr.deleteAllVMSnapshots(vm.getId(), null)) {
-            s_logger.debug("Unable to delete all snapshots for " + vm);
-            throw new CloudRuntimeException("Unable to delete vm snapshots for " + vm);
+            s_logger.debug("Unable to delete all VM snapshots for " + vm);
+            //This is failling from time to time, disabling as not in use at Exoscale
+            //throw new CloudRuntimeException("Unable to delete vm snapshots for " + vm);
         }
 
         // reload the vm object from db
