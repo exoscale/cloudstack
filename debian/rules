@@ -23,7 +23,7 @@ build: build-indep
 build-indep: build-indep-stamp
 
 build-indep-stamp: configure
-	mvn -T C1.5 clean package -DskipTests -Dsystemvm \
+	mvn -T C1.5 package -DskipTests -Dsystemvm \
         -Dcs.replace.properties=replace.properties.tmp \
 		${ACS_BUILD_OPTS}
 	touch $@
