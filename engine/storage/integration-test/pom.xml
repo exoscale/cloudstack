@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloud-engine</artifactId>
-    <version>4.4.2</version>
+    <version>4.4.2-exoscale-1-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
   <dependencies>
@@ -58,21 +58,9 @@
     </dependency>
     <dependency>
       <groupId>org.apache.cloudstack</groupId>
-      <artifactId>cloud-plugin-hypervisor-xen</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cloudstack</groupId>
       <artifactId>cloud-api</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cloudstack</groupId>
-      <artifactId>cloud-plugin-hypervisor-vmware</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -101,18 +89,6 @@
     <dependency>
       <groupId>org.apache.cloudstack</groupId>
       <artifactId>cloud-plugin-storage-image-default</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-      <dependency>
-      <groupId>org.apache.cloudstack</groupId>
-      <artifactId>cloud-plugin-storage-image-s3</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.cloudstack</groupId>
-      <artifactId>cloud-plugin-storage-image-swift</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

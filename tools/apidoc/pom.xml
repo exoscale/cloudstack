@@ -8,8 +8,7 @@
   License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
   OF ANY KIND, either express or implied. See the License for the specific 
   language governing permissions and limitations under the License. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cloud-apidoc</artifactId>
     <name>Apache CloudStack apidocs</name>
@@ -17,11 +16,11 @@
     <parent>
         <groupId>org.apache.cloudstack</groupId>
         <artifactId>cloud-tools</artifactId>
-        <version>4.4.2</version>
+        <version>4.4.2-exoscale-189-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <properties>
-        <client.config.base>../../client/target/cloud-client-ui-4.4.2/WEB-INF/</client.config.base>
+        <client.config.base>../../client/target/cloud-client-ui-${project.version}/WEB-INF/</client.config.base>
         <client.config.jars>${client.config.base}/lib</client.config.jars>
         <client.config.conf>${client.config.base}/classes</client.config.conf>
     </properties>

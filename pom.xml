@@ -1,14 +1,24 @@
-<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
-  license agreements. See the NOTICE file distributed with this work for additional 
-  information regarding copyright ownership. The ASF licenses this file to you under 
-  the Apache License, Version 2.0 (the "License"); you may not use this file except 
-  in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
-  Unless required by applicable law or agreed to in writing, software distributed under 
-  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
-  OF ANY KIND, either express or implied. See the License for the specific language 
-  governing permissions and limitations under the License. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -19,33 +29,38 @@
 
   <groupId>org.apache.cloudstack</groupId>
   <artifactId>cloudstack</artifactId>
-  <version>4.4.2</version>
+  <version>4.4.2-exoscale-189-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache CloudStack</name>
-  <description>Apache CloudStack is an IaaS (“Infrastracture as a Service”) cloud orchestration platform.</description>
+  <description>Apache CloudStack is an IaaS (“Infrastructure as a Service”) cloud orchestration platform.</description>
   <url>http://www.cloudstack.org</url>
   <scm>
-    <connection>scm:git:https://git-wip-us.apache.org/repos/asf/cloudstack.git</connection>
-    <developerConnection>scm:git:https://git-wip-us.apache.org/repos/asf/cloudstack.git</developerConnection>
+    <connection>scm:git:https://github.com/exoscale/cloudstack</connection>
+    <developerConnection>scm:git:https://github.com/exoscale/cloudstack</developerConnection>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>jira</system>
     <url>https://issues.apache.org/jira/browse/CLOUDSTACK</url>
   </issueManagement>
 
+  <prerequisites>
+    <maven>3.0.4</maven>
+  </prerequisites>
+
   <properties>
     <cs.jdk.version>1.7</cs.jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <cs.log4j.version>1.2.16</cs.log4j.version>
-    <cs.log4j.extras.version>1.1</cs.log4j.extras.version>
-    <cs.cglib.version>2.2.2</cs.cglib.version>
+    <cs.log4j.version>1.2.17</cs.log4j.version>
+    <cs.log4j.extras.version>1.2.17</cs.log4j.extras.version>
+    <cs.cglib.version>3.1</cs.cglib.version>
     <cs.dbcp.version>1.4</cs.dbcp.version>
     <cs.pool.version>1.6</cs.pool.version>
-    <cs.codec.version>1.6</cs.codec.version>
-    <cs.configuration.version>1.8</cs.configuration.version>
-    <cs.collections.version>3.2.1</cs.collections.version>
+    <cs.codec.version>1.10</cs.codec.version>
+    <cs.configuration.version>1.10</cs.configuration.version>
+    <cs.collections.version>3.2.2</cs.collections.version>
     <cs.logging.version>1.1.1</cs.logging.version>
     <cs.discovery.version>0.5</cs.discovery.version>
     <cs.ejb.version>3.0</cs.ejb.version>
@@ -53,47 +68,58 @@
     <cs.junit.version>4.11</cs.junit.version>
     <cs.hamcrest.version>1.3</cs.hamcrest.version>
     <cs.bcprov.version>1.46</cs.bcprov.version>
-    <cs.jsch.version>0.1.42</cs.jsch.version>
-    <cs.jpa.version>2.0.0</cs.jpa.version>
-    <cs.jasypt.version>1.9.0</cs.jasypt.version>
-    <cs.trilead.version>build213-svnkit-1.3-patch</cs.trilead.version>
-    <cs.ehcache.version>2.6.6</cs.ehcache.version>
+    <cs.jsch.version>0.1.51</cs.jsch.version>
+    <cs.jpa.version>2.1.0</cs.jpa.version>
+    <cs.jasypt.version>1.9.2</cs.jasypt.version>
+    <cs.trilead.version>1.0.0-build217</cs.trilead.version>
+    <cs.ehcache.version>2.6.9</cs.ehcache.version>
     <cs.gson.version>1.7.2</cs.gson.version>
-    <cs.guava.version>14.0-rc1</cs.guava.version>
-    <cs.xapi.version>6.2.0-1</cs.xapi.version>
-    <cs.httpclient.version>3.1</cs.httpclient.version>
-    <cs.httpcore.version>4.2.1</cs.httpcore.version>
-    <cs.mysql.version>5.1.21</cs.mysql.version>
-    <cs.xstream.version>1.3.1</cs.xstream.version>
+    <cs.guava-testlib.version>18.0</cs.guava-testlib.version>
+    <cs.guava.version>18.0</cs.guava.version>
+    <cs.xapi.version>6.2.0-3</cs.xapi.version>
+    <!--<cs.xapi.version>6.2.0-3.1</cs.xapi.version>-->
+    <cs.httpclient.version>4.5</cs.httpclient.version>
+    <cs.httpcore.version>4.4</cs.httpcore.version>
+    <cs.commons-httpclient.version>3.1</cs.commons-httpclient.version>
+    <cs.mysql.version>5.1.34</cs.mysql.version>
+    <cs.xstream.version>1.4.7</cs.xstream.version>
     <cs.xmlrpc.version>3.1.3</cs.xmlrpc.version>
-    <cs.mail.version>1.4</cs.mail.version>
+    <cs.mail.version>1.4.7</cs.mail.version>
     <cs.axis.version>1.4</cs.axis.version>
     <cs.axis2.version>1.5.6</cs.axis2.version>
     <cs.rampart.version>1.5.1</cs.rampart.version>
     <cs.axiom.version>1.2.8</cs.axiom.version>
     <cs.neethi.version>2.0.4</cs.neethi.version>
-    <cs.servlet.version>2.4</cs.servlet.version>
+    <cs.servlet.version>2.5</cs.servlet.version>
     <cs.jstl.version>1.2</cs.jstl.version>
     <cs.selenium.server.version>1.0-20081010.060147</cs.selenium.server.version>
-    <cs.vmware.api.version>5.1</cs.vmware.api.version>
-    <org.springframework.version>3.2.4.RELEASE</org.springframework.version>
+    <cs.vmware.api.version>5.5</cs.vmware.api.version>
+    <org.springframework.version>3.2.12.RELEASE</org.springframework.version>
     <cs.mockito.version>1.9.5</cs.mockito.version>
     <cs.powermock.version>1.5.3</cs.powermock.version>
-    <cs.aws.sdk.version>1.3.22</cs.aws.sdk.version>
+    <cs.aws.sdk.version>1.10.34</cs.aws.sdk.version>
+    <cs.jackson.version>2.6.3</cs.jackson.version>
     <cs.lang.version>2.6</cs.lang.version>
-    <cs.commons-io.version>1.4</cs.commons-io.version>
-    <cs.reflections.version>0.9.8</cs.reflections.version>
+    <cs.commons-lang3.version>3.4</cs.commons-lang3.version>
+    <cs.commons-io.version>2.4</cs.commons-io.version>
+    <cs.commons-validator.version>1.4.0</cs.commons-validator.version>
+    <cs.reflections.version>0.9.9</cs.reflections.version>
     <cs.java-ipv6.version>0.10</cs.java-ipv6.version>
+    <!--<cs.java-ipv6.version>0.15</cs.java-ipv6.version>-->
     <cs.replace.properties>build/replace.properties</cs.replace.properties>
     <cs.libvirt-java.version>0.5.1</cs.libvirt-java.version>
     <cs.rados-java.version>0.1.4</cs.rados-java.version>
+    <!--<cs.rados-java.version>0.2.0</cs.rados-java.version>-->
     <cs.target.dir>target</cs.target.dir>
-    <cs.daemon.version>1.0.10</cs.daemon.version>
+    <cs.daemon.version>1.0.15</cs.daemon.version>
     <cs.jna.version>4.0.0</cs.jna.version>
     <cs.checkstyle.version>2.11</cs.checkstyle.version>
-    <cs.mycila.license.version>2.5</cs.mycila.license.version>
-    <cs.findbugs.version>2.5.3</cs.findbugs.version>
-    <cs.javadoc.version>2.9.1</cs.javadoc.version>
+    <cs.mycila.license.version>2.7</cs.mycila.license.version>
+    <cs.findbugs.version>3.0.1</cs.findbugs.version>
+    <cs.javadoc.version>2.10.1</cs.javadoc.version>
+    <cs.opensaml.version>2.6.1</cs.opensaml.version>
+    <cs.xml-apis.version>1.4.01</cs.xml-apis.version>
+    <cs.joda-time.version>2.8.1</cs.joda-time.version>
   </properties>
 
   <distributionManagement>
@@ -174,7 +200,6 @@
     <module>server</module>
     <module>usage</module>
     <module>utils</module>
-    <module>deps/XenServerJava</module>
     <module>engine</module>
     <module>plugins</module>
     <module>framework</module>
@@ -232,6 +257,11 @@
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
         <version>${cs.codec.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-validator</groupId>
+        <artifactId>commons-validator</artifactId>
+        <version>${cs.commons-validator.version}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -298,7 +328,7 @@
       <dependency>
         <groupId>org.owasp.esapi</groupId>
         <artifactId>esapi</artifactId>
-        <version>2.0.1</version>
+        <version>2.1.0</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.persistence</groupId>
@@ -323,7 +353,7 @@
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
-        <version>${cs.httpcore.version}</version>
+        <version>${cs.httpclient.version}</version>
       </dependency>
       <dependency>
         <groupId>com.thoughtworks.xstream</groupId>
@@ -363,17 +393,17 @@
       <dependency>
         <groupId>org.apache.servicemix.bundles</groupId>
         <artifactId>org.apache.servicemix.bundles.snmp4j</artifactId>
-        <version>2.1.0_1</version>
+        <version>2.3.1_1</version>
       </dependency>
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjtools</artifactId>
-        <version>1.7.0</version>
+        <version>1.8.4</version>
       </dependency>
       <dependency>
         <groupId>org.aspectj</groupId>
         <artifactId>aspectjweaver</artifactId>
-        <version>1.7.0</version>
+        <version>1.8.4</version>
       </dependency>
       <dependency>
         <groupId>org.apache.axis</groupId>
@@ -393,50 +423,62 @@
       <dependency>
         <groupId>wsdl4j</groupId>
         <artifactId>wsdl4j</artifactId>
-        <version>1.4</version>
+        <version>1.6.3</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.5</version>
+        <version>1.7.7</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-log4j12</artifactId>
-        <version>1.7.5</version>
+        <version>1.7.7</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${cs.junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-library</artifactId>
+      <artifactId>hamcrest-all</artifactId>
       <version>${cs.hamcrest.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
-      <version>1.9.5</version>
+      <version>${cs.mockito.version}</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>hamcrest-core</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-	  <groupId>org.powermock</groupId>
-	  <artifactId>powermock-module-junit4</artifactId>
-	  <version>${cs.powermock.version}</version>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${cs.junit.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>hamcrest-core</artifactId>
+          <groupId>org.hamcrest</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-	  <groupId>org.powermock</groupId>
-	  <artifactId>powermock-api-mockito</artifactId>
-	  <version>${cs.powermock.version}</version>
-	  <scope>test</scope>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+      <version>${cs.powermock.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>${cs.powermock.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -448,6 +490,11 @@
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
       <version>1</version>
+    </dependency>
+    <dependency>
+        <groupId>net.java.dev.vcc.thirdparty</groupId>
+        <artifactId>xen-api</artifactId>
+        <version>${cs.xapi.version}</version>
     </dependency>
   </dependencies>
 
@@ -471,13 +518,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-          <executions>
-            <execution>
-              <id>cloudstack-checkstyle</id>
-              <phase>none</phase>
-              <inherited>false</inherited>
-            </execution>
-          </executions>
+        <executions>
+          <execution>
+            <id>cloudstack-checkstyle</id>
+            <phase>none</phase>
+            <inherited>false</inherited>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>com.mycila</groupId>
@@ -510,11 +557,6 @@
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>3.3</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${cs.checkstyle.version}</version>
           <dependencies>
@@ -540,7 +582,7 @@
             <includeTestSourceDirectory>true</includeTestSourceDirectory>
             <sourceDirectory>${project.basedir}</sourceDirectory>
             <includes>**\/*.java</includes>
-            <excludes>**\/deps\/,**\/test\/,**\/target\/,**\/bin\/,**\/*.xml,**\/*.ini,**\/*.sh,**\/*.bat</excludes>
+            <excludes>**\/deps\/,**\/test\/,**\/target\/,**\/bin\/,**\/*.xml,**\/*.ini,**\/*.sh,**\/*.bat,**\/apidoc\/</excludes>
           </configuration>
         </plugin>
         <plugin>
@@ -561,9 +603,9 @@
             <aggregate>true</aggregate>
             <header>LICENSE.header</header>
             <mapping>
-                  <xml>XML_STYLE</xml>
-                  <java>DOUBLESLASH_STYLE</java>
-                  <clj>SEMICOLON_STYLE</clj>
+              <xml>XML_STYLE</xml>
+              <java>DOUBLESLASH_STYLE</java>
+              <clj>SEMICOLON_STYLE</clj>
             </mapping>
             <useDefaultExcludes>false</useDefaultExcludes>
             <excludes>
@@ -572,6 +614,7 @@
               <exclude>.checkstyle</exclude>
               <exclude>.project</exclude>
               <exclude>.classpath</exclude>
+              <exclude>.pmd*</exclude>
             </excludes>
           </configuration>
         </plugin>
@@ -605,7 +648,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.2.1</version>
+          <version>2.5.1</version>
           <executions>
             <execution>
               <id>default</id>
@@ -618,8 +661,8 @@
             </execution>
           </executions>
         </plugin>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. 
-          It has no influence on the Maven build itself. -->
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build
+          itself. -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -664,7 +707,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore></ignore>
+                    <ignore />
                   </action>
                 </pluginExecution>
                 <pluginExecution>
@@ -673,12 +716,25 @@
                     <artifactId>gmaven-plugin</artifactId>
                     <versionRange>[1.3,)</versionRange>
                     <goals>
-                        <goal>compile</goal>
-                        <goal>testCompile</goal>
+                      <goal>compile</goal>
+                      <goal>testCompile</goal>
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                      <ignore></ignore>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <versionRange>[2.11,)</versionRange>
+                    <goals>
+                      <goal>check</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -688,12 +744,12 @@
         <plugin>
           <groupId>org.apache.tomcat.maven</groupId>
           <artifactId>tomcat7-maven-plugin</artifactId>
-          <version>2.0</version>
+          <version>2.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-antrun-plugin</artifactId>
-          <version>1.7</version>
+          <version>1.8</version>
         </plugin>
         <plugin>
           <groupId>org.apache.rat</groupId>
@@ -705,6 +761,9 @@
               <exclude>CHANGES.md</exclude>
               <exclude>README.md</exclude>
               <exclude>INSTALL.md</exclude>
+              <exclude>CONTRIBUTING.md</exclude>
+              <exclude>tools/docker/Dockerfile</exclude>
+              <exclude>tools/docker/supervisord.conf</exclude>
               <exclude>.idea/</exclude>
               <exclude>**/*.log</exclude>
               <exclude>**/*.patch</exclude>
@@ -728,15 +787,14 @@
               <exclude>**/*.zip</exclude>
               <exclude>**/target/**</exclude>
               <exclude>**/.vagrant</exclude>
+              <exclude>**/*.json</exclude>
               <exclude>build/build.number</exclude>
               <exclude>services/console-proxy/server/js/jquery.js</exclude>
               <exclude>debian/compat</exclude>
               <exclude>debian/control</exclude>
               <exclude>debian/dirs</exclude>
               <exclude>debian/rules</exclude>
-              <exclude>deps/XenServerJava/src/com/xensource/xenapi/*.java</exclude>
-              <exclude>deps/XenServerJava/BSD</exclude>
-              <exclude>deps/XenServerJava/Makefile</exclude>
+              <exclude>debian/source/format</exclude>
               <exclude>dist/console-proxy/js/jquery.js</exclude>
               <exclude>plugins/hypervisors/hyperv/DotNet/ServerResource/ServerResource.sln</exclude>
               <exclude>plugins/hypervisors/hyperv/DotNet/ServerResource/packages/**</exclude>
@@ -753,6 +811,10 @@
               <exclude>services/console-proxy/server/conf/environment.properties</exclude>
               <exclude>services/secondary-storage/conf/agent.properties</exclude>
               <exclude>services/secondary-storage/conf/environment.properties</exclude>
+              <exclude>test/systemvm/README.md</exclude>
+              <exclude>tools/appliance/.ruby-version</exclude>
+              <exclude>tools/vagrant/systemvm/vagrant.pub</exclude>
+              <exclude>tools/vagrant/systemvm/.ruby-version</exclude>
               <exclude>tools/devcloud/basebuild/puppet-devcloudinitial/files/network.conf</exclude>
               <exclude>tools/appliance/definitions/devcloud/*</exclude>
               <exclude>tools/appliance/definitions/systemvmtemplate/*</exclude>
@@ -762,6 +824,7 @@
               <exclude>tools/devcloud/src/deps/boxes/basebox-build/definition.rb</exclude>
               <exclude>tools/devcloud/src/deps/boxes/basebox-build/preseed.cfg</exclude>
               <exclude>tools/marvin/Marvin.egg-info/*</exclude>
+              <exclude>ui/css/token-input-facebook.css</exclude>
               <exclude>ui/lib/flot/jquery.colorhelpers.js</exclude>
               <exclude>ui/lib/flot/jquery.flot.crosshair.js</exclude>
               <exclude>ui/lib/flot/jquery.flot.fillbetween.js</exclude>
@@ -782,6 +845,7 @@
               <exclude>ui/lib/jquery.js</exclude>
               <exclude>ui/lib/jquery.md5.js</exclude>
               <exclude>ui/lib/jquery.validate.js</exclude>
+              <exclude>ui/lib/jquery.tokeninput.js</exclude>
               <exclude>ui/lib/qunit/qunit.css</exclude>
               <exclude>ui/lib/qunit/qunit.js</exclude>
               <exclude>ui/lib/reset.css</exclude>
@@ -823,13 +887,15 @@
               <exclude>tools/ngui/static/bootstrap/*</exclude>
               <exclude>tools/ngui/static/js/lib/*</exclude>
               <exclude>**/.checkstyle</exclude>
+              <exclude>scripts/installer/windows/acs_license.rtf</exclude>
+              <exclude>**/*.md</exclude>
             </excludes>
           </configuration>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.5.1</version>
+          <version>3.2</version>
           <configuration>
             <source>${cs.jdk.version}</source>
             <target>${cs.jdk.version}</target>
@@ -842,7 +908,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>2.4</version>
+          <version>2.5</version>
           <configuration>
             <archive>
               <manifest>
@@ -855,7 +921,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>build-helper-maven-plugin</artifactId>
-          <version>1.7</version>
+          <version>1.9.1</version>
           <executions>
             <execution>
               <id>remove-old-installers</id>
@@ -871,7 +937,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.5.1</version>
+          <version>2.9</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -887,12 +953,20 @@
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
           <version>${cs.findbugs.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.cloudstack</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+          </dependencies>
           <configuration>
             <effort>Max</effort>
             <threshold>High</threshold>
             <xmlOutput>true</xmlOutput>
             <failOnError>false</failOnError>
             <maxHeap>2048</maxHeap>
+            <excludeFilterFile>findbugsExcludeFilter.xml</excludeFilterFile>
           </configuration>
           <executions>
             <execution>
@@ -902,6 +976,46 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-pmd-plugin</artifactId>
+          <version>3.3</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.cloudstack</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <failOnViolation>false</failOnViolation>
+            <rulesets>
+              <ruleset>cloud-pmd.xml</ruleset>
+            </rulesets>
+          </configuration>
+          <executions>
+            <execution>
+              <id>cloudstack-pmd</id>
+              <goals>
+                <goal>check</goal>
+                <goal>cpd-check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.18.1</version>
+          <configuration>
+            <argLine>-Djava.security.egd=file:/dev/./urandom -noverify</argLine>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>2.18.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -915,21 +1029,22 @@
         <configuration>
           <threshold>Low</threshold><!-- High|Normal|Low|Exp|Ignore -->
           <effort>Default</effort><!-- Min|Default|Max -->
+          <excludeFilterFile>${basedir}/findbugsExcludeFilter.xml</excludeFilterFile>
         </configuration>
       </plugin>
       <plugin>
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-javadoc-plugin</artifactId>
-         <version>${cs.javadoc.version}</version>
-         <configuration>
-           <minmemory>128m</minmemory>
-           <maxmemory>1g</maxmemory>
-         </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>${cs.javadoc.version}</version>
+        <configuration>
+          <minmemory>128m</minmemory>
+          <maxmemory>1g</maxmemory>
+        </configuration>
       </plugin>
       <plugin>
-         <groupId>org.apache.maven.plugins</groupId>
-         <artifactId>maven-project-info-reports-plugin</artifactId>
-         <version>2.7</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.7</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -940,6 +1055,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
         <version>3.3</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
       </plugin>
     </plugins>
   </reporting>
@@ -999,17 +1119,17 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-checkstyle-plugin</artifactId>
-              <executions>
-                <execution>
-                  <id>cloudstack-checkstyle</id>
-                  <phase>none</phase>
-                  <inherited>true</inherited>
-                </execution>
-              </executions>
+            <executions>
+              <execution>
+                <id>cloudstack-checkstyle</id>
+                <phase>none</phase>
+                <inherited>true</inherited>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
-    </profile>  
+    </profile>
     <profile>
       <id>enablefindbugs</id>
       <build>
@@ -1017,16 +1137,34 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
-              <executions>
-                <execution>
-                  <id>cloudstack-findbugs</id>
-                  <phase>process-classes</phase>
-                  <inherited>true</inherited>
-                </execution>
-              </executions>
+            <executions>
+              <execution>
+                <id>cloudstack-findbugs</id>
+                <phase>process-classes</phase>
+                <inherited>true</inherited>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>exoscale</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-release-plugin</artifactId>
+            <inherited>false</inherited>
+            <configuration>
+              <goals>install</goals>
+              <arguments>-Dgpg.skip=true</arguments>
+              <useReleaseProfile>false</useReleaseProfile>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      <distributionManagement>
+      </distributionManagement>
     </profile>  
   </profiles>
 </project>

@@ -79,8 +79,9 @@ public class FakePrimaryDataStoreDriver implements PrimaryDataStoreDriver {
         snapshotResult = success;
     }
 
-    @Override
-    public void revertSnapshot(SnapshotInfo snapshot, AsyncCompletionCallback<CommandResult> callback) {
+	@Override
+	public void revertSnapshot(SnapshotInfo snapshotOnImageStore, SnapshotInfo snapshotOnPrimaryStore,
+			AsyncCompletionCallback<CommandResult> callback) {
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -127,4 +128,5 @@ public class FakePrimaryDataStoreDriver implements PrimaryDataStoreDriver {
         // TODO Auto-generated method stub
         return null;
     }
+
 }

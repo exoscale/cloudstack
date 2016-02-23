@@ -1,18 +1,6 @@
 #!/usr/bin/make -f
 # -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-#
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
-#
-# Modified to make a template file for a multi-binary package with separated
-# build-arch and build-indep targets  by Bill Allombert 2001
-
-DEBVERS := $(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
-VERSION := $(shell echo '$(DEBVERS)' | sed -e 's/^[[:digit:]]*://' -e 's/[~-].*//')
-MVNADD := $(shell if echo '$(DEBVERS)' | grep -q snapshot; then echo ; fi )
+VERSION := $(shell grep '^  <version>' pom.xml| cut -d'>' -f2 |cut -d'<' -f1)
 PACKAGE = $(shell dh_listpackages|head -n 1|cut -d '-' -f 1)
 SYSCONFDIR = "/etc"
 DESTDIR = "debian/tmp"
@@ -35,7 +23,7 @@ build: build-indep
 build-indep: build-indep-stamp
 
 build-indep-stamp: configure
-	mvn -T C1.5 clean package -DskipTests -Dsystemvm \
+	mvn -T C1.5 package -DskipTests -Dsystemvm \
         -Dcs.replace.properties=replace.properties.tmp \
 		${ACS_BUILD_OPTS}
 	touch $@
@@ -66,8 +54,8 @@ install:
 	mkdir $(DESTDIR)/var/log/$(PACKAGE)/agent
 	mkdir $(DESTDIR)/usr/share/$(PACKAGE)-agent
 	mkdir $(DESTDIR)/usr/share/$(PACKAGE)-agent/plugins
-	install -D agent/target/cloud-agent-$(VERSION)$(MVNADD).jar $(DESTDIR)/usr/share/$(PACKAGE)-agent/lib/$(PACKAGE)-agent.jar
-	install -D plugins/hypervisors/kvm/target/cloud-plugin-hypervisor-kvm-$(VERSION)$(MVNADD).jar $(DESTDIR)/usr/share/$(PACKAGE)-agent/lib/
+	install -D agent/target/cloud-agent-$(VERSION).jar $(DESTDIR)/usr/share/$(PACKAGE)-agent/lib/$(PACKAGE)-agent.jar
+	install -D plugins/hypervisors/kvm/target/cloud-plugin-hypervisor-kvm-$(VERSION).jar $(DESTDIR)/usr/share/$(PACKAGE)-agent/lib/
 	install -D plugins/hypervisors/kvm/target/dependencies/* $(DESTDIR)/usr/share/$(PACKAGE)-agent/lib/
 	install -D packaging/debian/init/cloud-agent $(DESTDIR)/$(SYSCONFDIR)/init.d/$(PACKAGE)-agent
 	install -D agent/target/transformed/cloud-setup-agent $(DESTDIR)/usr/bin/cloudstack-setup-agent
@@ -83,7 +71,6 @@ install:
 	mkdir -p $(DESTDIR)/$(SYSCONFDIR)/sudoers.d/
 	mkdir -p $(DESTDIR)/usr/share/$(PACKAGE)-management
 	mkdir -p $(DESTDIR)/usr/share/$(PACKAGE)-management/webapps/client
-	mkdir -p $(DESTDIR)/usr/share/$(PACKAGE)-management/webapps7080
 	mkdir $(DESTDIR)/usr/share/$(PACKAGE)-management/setup
 	mkdir $(DESTDIR)/var/log/$(PACKAGE)/management
 	mkdir $(DESTDIR)/var/cache/$(PACKAGE)/management
@@ -93,7 +80,7 @@ install:
 	mkdir $(DESTDIR)/var/lib/$(PACKAGE)/management
 	mkdir $(DESTDIR)/var/lib/$(PACKAGE)/mnt
 	cp -r client/target/utilities/scripts/db/* $(DESTDIR)/usr/share/$(PACKAGE)-management/setup/
-	cp -r client/target/cloud-client-ui-$(VERSION)$(MVNADD)/* $(DESTDIR)/usr/share/$(PACKAGE)-management/webapps/client/
+	cp -r client/target/cloud-client-ui-$(VERSION)/* $(DESTDIR)/usr/share/$(PACKAGE)-management/webapps/client/
 	cp server/target/conf/* $(DESTDIR)/$(SYSCONFDIR)/$(PACKAGE)/server/
 	cp client/target/conf/* $(DESTDIR)/$(SYSCONFDIR)/$(PACKAGE)/management/
 
@@ -135,7 +122,7 @@ install:
 	install -D client/target/utilities/bin/cloud-sysvmadm $(DESTDIR)/usr/bin/cloudstack-sysvmadm
 	install -D systemvm/dist/systemvm.iso $(DESTDIR)/usr/share/$(PACKAGE)-common/vms/systemvm.iso
 	# We need jasypt for cloud-install-sys-tmplt, so this is a nasty hack to get it into the right place
-	install -D agent/target/dependencies/jasypt-1.9.0.jar $(DESTDIR)/usr/share/$(PACKAGE)-common/lib
+	install -D agent/target/dependencies/jasypt-1.9.2.jar $(DESTDIR)/usr/share/$(PACKAGE)-common/lib
 
 	# cloudstack-python
 	mkdir -p $(DESTDIR)/usr/lib/python2.7/dist-packages
@@ -146,7 +133,7 @@ install:
 	mkdir $(DESTDIR)/var/log/$(PACKAGE)/usage
 	mkdir $(DESTDIR)/usr/share/$(PACKAGE)-usage
 	mkdir $(DESTDIR)/usr/share/$(PACKAGE)-usage/plugins
-	install -D usage/target/cloud-usage-$(VERSION)$(MVNADD).jar $(DESTDIR)/usr/share/$(PACKAGE)-usage/lib/$(PACKAGE)-usage.jar
+	install -D usage/target/cloud-usage-$(VERSION).jar $(DESTDIR)/usr/share/$(PACKAGE)-usage/lib/$(PACKAGE)-usage.jar
 	install -D usage/target/dependencies/* $(DESTDIR)/usr/share/$(PACKAGE)-usage/lib/
 	cp usage/target/transformed/db.properties $(DESTDIR)/$(SYSCONFDIR)/$(PACKAGE)/usage/
 	cp usage/target/transformed/log4j-cloud_usage.xml $(DESTDIR)/$(SYSCONFDIR)/$(PACKAGE)/usage/log4j-cloud.xml
