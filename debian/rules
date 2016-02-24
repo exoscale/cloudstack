@@ -11,6 +11,9 @@ export DH_VERBOSE=1
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+# From Jenkins
+export BUILD_NUMBER
+
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
@@ -154,6 +157,6 @@ binary: install
 	dh_fixperms
 	dh_makeshlibs
 	dh_installdeb
-	dh_gencontrol
+	dh_gencontrol -- -v$(VERSION)-${BUILD_NUMBER:-0}
 	dh_md5sums
 	dh_builddeb
