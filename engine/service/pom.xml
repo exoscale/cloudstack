@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloud-engine</artifactId>
-    <version>4.4.2-exoscale-20160225-1204</version>
+    <version>4.4.2-exoscale-SNAPSHOT</version>
   </parent>
   <artifactId>cloud-engine-service</artifactId>
   <packaging>war</packaging>
