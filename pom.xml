@@ -1150,6 +1150,10 @@
     </profile>
     <profile>
       <id>exoscale</id>
+      <properties>
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
+      </properties>
       <build>
         <plugins>
           <plugin>
@@ -1159,6 +1163,10 @@
               <goals>install</goals>
               <arguments>-Dgpg.skip=true</arguments>
               <useReleaseProfile>false</useReleaseProfile>
+              <tagNameFormat>@{project.version}</tagNameFormat>
+              <developmentVersion>${project.version}</developmentVersion>
+              <autoVersionSubmodules>true</autoVersionSubmodules>
+              <releaseVersion>4.4.2-exoscale-${timestamp}</releaseVersion>
             </configuration>
           </plugin>
         </plugins>
