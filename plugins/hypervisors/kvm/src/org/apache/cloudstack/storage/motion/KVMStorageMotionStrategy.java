@@ -1,4 +1,4 @@
-package com.cloud.hypervisor.kvm.storage.motion;
+package org.apache.cloudstack.storage.motion;
 
 
 import com.cloud.agent.AgentManager;
