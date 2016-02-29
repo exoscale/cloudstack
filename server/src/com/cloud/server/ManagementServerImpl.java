@@ -1195,7 +1195,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
                     }
                 }
             }
-            plan = new DataCenterDeployment(srcHost.getDataCenterId(), null, null, null, null, null);
+            plan = new DataCenterDeployment(srcHost.getDataCenterId(), srcHost.getPodId(), srcHost.getClusterId(), null, null, null);
         } else {
             Long cluster = srcHost.getClusterId();
             if (s_logger.isDebugEnabled()) {
