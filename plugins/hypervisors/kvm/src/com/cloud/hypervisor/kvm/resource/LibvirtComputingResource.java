@@ -132,6 +132,8 @@ import com.cloud.agent.api.ManageSnapshotAnswer;
 import com.cloud.agent.api.ManageSnapshotCommand;
 import com.cloud.agent.api.MigrateAnswer;
 import com.cloud.agent.api.MigrateCommand;
+import com.cloud.agent.api.MigrateWithStorageAnswer;
+import com.cloud.agent.api.MigrateWithStorageCommand;
 import com.cloud.agent.api.ModifySshKeysCommand;
 import com.cloud.agent.api.ModifyStoragePoolAnswer;
 import com.cloud.agent.api.ModifyStoragePoolCommand;
@@ -1391,6 +1393,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((OvsVpcPhysicalTopologyConfigCommand) cmd);
             } else if (cmd instanceof OvsVpcRoutingPolicyConfigCommand) {
                 return execute((OvsVpcRoutingPolicyConfigCommand) cmd);
+            } else if (cmd instanceof MigrateWithStorageCommand) {
+                return execute((MigrateWithStorageCommand) cmd);
             } else {
                 s_logger.warn("Unsupported command ");
                 return Answer.createUnsupportedCommandAnswer(cmd);
@@ -3071,9 +3075,34 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return command.execute();
     }
 
-    private Answer execute(MigrateCommand cmd) {
-        String vmName = cmd.getVmName();
+    private Answer execute(MigrateWithStorageCommand cmd) {
+        List<VolumeObjectTO> volumes = new ArrayList<>();
+        VirtualMachineTO vm = cmd.getVirtualMachine();
+        List<DiskTO> disks = Arrays.asList(vm.getDisks());
+        for (DiskTO disk : disks) {
+            DataTO data = disk.getData();
+            if (data instanceof VolumeObjectTO) {
+                volumes.add((VolumeObjectTO) data);
+                s_logger.debug("Adding volume TO object: " + ((VolumeObjectTO) data).getUuid());
+            }
+        }
 
+        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), (1 << 0)|(1 << 1)|(1 << 6)|(1 << 8)|(1 << 12)|(1 << 13));
+
+        s_logger.debug("executeMigrationWithFlags result is: " + result);
+
+        return new MigrateWithStorageAnswer(cmd, volumes);
+    }
+
+    private Answer execute(MigrateCommand cmd) {
+        String result = executeMigrationWithFlags(cmd.getVmName(), cmd.getDestinationIp(), 1L);
+
+        s_logger.debug("executeMigrationWithFlags result is: " + result);
+
+        return new MigrateAnswer(cmd, result == null, result, null);
+    }
+
+    private String executeMigrationWithFlags(String vmName, String destHost, long flags) {
         State state = null;
         String result = null;
         synchronized (_vms) {
@@ -3107,14 +3136,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
                 This is supported by libvirt-java from version 0.50.0
              */
-            xmlDesc = dm.getXMLDesc(0).replace(_privateIp, cmd.getDestinationIp());
+            xmlDesc = dm.getXMLDesc(0).replace(_privateIp, destHost);
 
-            dconn = new Connect("qemu+tcp://" + cmd.getDestinationIp() + "/system");
+            dconn = new Connect("qemu+tcp://" + destHost + "/system");
 
             //run migration in thread so we can monitor it
             s_logger.info("Live migration of instance " + vmName + " initiated");
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, cmd.getDestinationIp());
+            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, destHost, flags);
             Future<Domain> migrateThread = executor.submit(worker);
             executor.shutdown();
             long sleeptime = 0;
@@ -3202,8 +3231,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             }
         }
-
-        return new MigrateAnswer(cmd, result == null, result, null);
+        return result;
     }
 
     private class MigrateKVMAsync implements Callable<Domain> {
@@ -3212,23 +3240,24 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String dxml = "";
         String vmName = "";
         String destIp = "";
+        long flags = 0L;
 
-        MigrateKVMAsync(Domain dm, Connect dconn, String dxml, String vmName, String destIp) {
+        MigrateKVMAsync(Domain dm, Connect dconn, String dxml, String vmName, String destIp, long flags) {
             this.dm = dm;
             this.dconn = dconn;
             this.dxml = dxml;
             this.vmName = vmName;
             this.destIp = destIp;
+            this.flags = flags;
         }
 
         @Override
         public Domain call() throws LibvirtException {
             // set compression flag for migration if libvirt version supports it
             if (dconn.getLibVirVersion() < 1003000) {
-                return dm.migrate(dconn, (1 << 0), dxml, vmName, "tcp:" + destIp, _migrateSpeed);
-            } else {
-                return dm.migrate(dconn, (1 << 0)|(1 << 11), dxml, vmName, "tcp:" + destIp, _migrateSpeed);
+                flags = flags | (1 << 11);
             }
+            return dm.migrate(dconn, flags, dxml, vmName, "tcp:" + destIp, _migrateSpeed);
         }
     }
 
