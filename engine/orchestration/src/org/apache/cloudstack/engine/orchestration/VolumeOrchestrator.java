@@ -30,6 +30,9 @@ import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.storage.StorageManager;
+import com.cloud.storage.VMTemplateVO;
+import com.cloud.storage.dao.VMTemplateDao;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.engine.orchestration.service.VolumeOrchestrationService;
@@ -132,7 +135,9 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Inject
     protected TemplateDataStoreDao _vmTemplateStoreDao = null;
     @Inject
-    protected VolumeDao _volumeDao;
+    protected UserVmDao _userVmDao;
+    @Inject
+    private VMTemplateDao _tmpltDao;
     @Inject
     protected ResourceLimitService _resourceLimitMgr;
     @Inject
@@ -154,7 +159,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Inject
     SnapshotService _snapshotSrv;
     @Inject
-    protected UserVmDao _userVmDao;
+    StorageManager storageManager;
 
     private final StateMachine2<Volume.State, Volume.Event, Volume> _volStateMachine;
     protected List<StoragePoolAllocator> _storagePoolAllocators;
@@ -1001,6 +1006,13 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             disk.setDetails(getDetails(volumeInfo, dataStore));
 
             vm.addDisk(disk);
+
+            // Ensure that the template is available on the destination host
+            if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
+                VMTemplateVO vmTemplate = _tmpltDao.findById(vol.getTemplateId());
+                StoragePool destStoragePool = storageManager.findLocalStorageOnHost(dest.getHost().getId());
+                _tmpltMgr.prepareTemplateForCreate(vmTemplate, destStoragePool);
+            }
         }
 
         //if (vm.getType() == VirtualMachine.Type.User && vm.getTemplate().getFormat() == ImageFormat.ISO) {
