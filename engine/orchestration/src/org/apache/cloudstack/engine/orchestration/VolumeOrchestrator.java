@@ -997,6 +997,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             s_logger.debug("Preparing " + vols.size() + " volumes for " + vm);
         }
 
+
+
         for (VolumeVO vol : vols) {
             DataTO volTO = volFactory.getVolume(vol.getId()).getTO();
             DiskTO disk = new DiskTO(volTO, vol.getDeviceId(), vol.getPath(), vol.getVolumeType());
@@ -1011,7 +1013,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
                 VMTemplateVO vmTemplate = _tmpltDao.findById(vol.getTemplateId());
                 StoragePool destStoragePool = storageManager.findLocalStorageOnHost(dest.getHost().getId());
-                _tmpltMgr.prepareTemplateForCreate(vmTemplate, destStoragePool);
+                StoragePool destDataStore = (StoragePool)dataStoreMgr.getDataStore(destStoragePool.getId(), DataStoreRole.Primary);
+                _tmpltMgr.prepareTemplateForCreate(vmTemplate, destDataStore);
             }
         }
 
