@@ -5,6 +5,9 @@ import com.cloud.agent.AgentManager;
 import com.cloud.agent.api.Answer;
 import com.cloud.agent.api.MigrateWithStorageAnswer;
 import com.cloud.agent.api.MigrateWithStorageCommand;
+import com.cloud.agent.api.storage.CreateAnswer;
+import com.cloud.agent.api.storage.CreateCommand;
+import com.cloud.agent.api.to.DataObjectType;
 import com.cloud.agent.api.to.StorageFilerTO;
 import com.cloud.agent.api.to.VirtualMachineTO;
 import com.cloud.agent.api.to.VolumeTO;
@@ -12,11 +15,17 @@ import com.cloud.exception.AgentUnavailableException;
 import com.cloud.exception.OperationTimedoutException;
 import com.cloud.host.Host;
 import com.cloud.hypervisor.Hypervisor;
+import com.cloud.storage.DataStoreRole;
+import com.cloud.storage.DiskOfferingVO;
+import com.cloud.storage.StorageManager;
 import com.cloud.storage.StoragePool;
+import com.cloud.storage.Volume;
 import com.cloud.storage.VolumeVO;
+import com.cloud.storage.dao.DiskOfferingDao;
 import com.cloud.storage.dao.VolumeDao;
 import com.cloud.utils.Pair;
 import com.cloud.utils.exception.CloudRuntimeException;
+import com.cloud.vm.DiskProfile;
 import com.cloud.vm.VMInstanceVO;
 import com.cloud.vm.dao.VMInstanceDao;
 import org.apache.cloudstack.engine.subsystem.api.storage.CopyCommandResult;
@@ -24,6 +33,8 @@ import org.apache.cloudstack.engine.subsystem.api.storage.DataMotionStrategy;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataObject;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
 import org.apache.cloudstack.engine.subsystem.api.storage.StrategyPriority;
+import org.apache.cloudstack.engine.subsystem.api.storage.TemplateDataFactory;
+import org.apache.cloudstack.engine.subsystem.api.storage.TemplateInfo;
 import org.apache.cloudstack.engine.subsystem.api.storage.VolumeDataFactory;
 import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
 import org.apache.cloudstack.framework.async.AsyncCompletionCallback;
@@ -50,6 +61,12 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
     PrimaryDataStoreDao storagePoolDao;
     @Inject
     VMInstanceDao instanceDao;
+    @Inject
+    DiskOfferingDao diskOfferingDao;
+    @Inject
+    TemplateDataFactory tmplFactory;
+    @Inject
+    StorageManager storageManager;
 
     @Override
     public StrategyPriority canHandle(DataObject srcData, DataObject destData) {
@@ -96,13 +113,33 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
         // Initiate migration of a virtual machine with it's volumes.
         try {
             List<Pair<VolumeTO, StorageFilerTO>> volumeToFilerTo = new ArrayList<Pair<VolumeTO, StorageFilerTO>>();
+            VolumeVO rootVolume = null;
             for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
                 VolumeInfo volume = entry.getKey();
                 VolumeTO volumeTo = new VolumeTO(volume, storagePoolDao.findById(volume.getPoolId()));
                 StorageFilerTO filerTo = new StorageFilerTO((StoragePool)entry.getValue());
                 volumeToFilerTo.add(new Pair<VolumeTO, StorageFilerTO>(volumeTo, filerTo));
+                if (volume.getType().equals(DataObjectType.VOLUME) && volume.getVolumeType().equals(Volume.Type.ROOT)) {
+                    rootVolume = volDao.findById(volume.getId());
+                }
             }
 
+            DiskOfferingVO diskOffering = diskOfferingDao.findById(rootVolume.getDiskOfferingId());
+            DiskProfile diskProfile = new DiskProfile(rootVolume, diskOffering, vm.getHypervisorType());
+            StoragePool destStoragePool = storageManager.findLocalStorageOnHost(destHost.getId());
+            TemplateInfo templateImage = tmplFactory.getTemplate(rootVolume.getTemplateId(), DataStoreRole.Image);
+            CreateCommand provisioningCommand = new CreateCommand(diskProfile, templateImage.getUuid(), destStoragePool, true);
+            CreateAnswer provisioningAnwer = (CreateAnswer) agentMgr.send(destHost.getId(), provisioningCommand);
+            if (provisioningAnwer == null) {
+                s_logger.error("Migration with storage of vm " + vm + " failed while provisioning root image");
+                throw new CloudRuntimeException("Error while provisioning root image for the vm " + vm + " during migration to host " + destHost);
+            } else if (!provisioningAnwer.getResult()) {
+                s_logger.error("Migration with storage of vm " + vm + " failed. Details: " + provisioningAnwer.getDetails());
+                throw new CloudRuntimeException("Error while provisioning root image for the vm " + vm + " during migration to host " + destHost +
+                        ". " + provisioningAnwer.getDetails());
+            }
+
+            // TODO clean up of provisioned disk in case of failure during the next step
             MigrateWithStorageCommand command = new MigrateWithStorageCommand(to, volumeToFilerTo, destHost.getPrivateIpAddress());
             MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer) agentMgr.send(srcHost.getId(), command);
             if (answer == null) {
@@ -137,15 +174,7 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                     volumeVO.setPodId(pool.getPodId());
                     volumeVO.setPoolId(pool.getId());
                     volumeVO.setLastPoolId(oldPoolId);
-                    // For SMB, pool credentials are also stored in the uri query string.  We trim the query string
-                    // part  here to make sure the credentials do not get stored in the db unencrypted.
-                    String folder = pool.getPath();
-                    // TODO to remove
-                    s_logger.debug("MARCO: folder path to check for credentials unencrypted: " + folder);
-//                    if (pool.getPoolType() == Storage.StoragePoolType.SMB && folder != null && folder.contains("?")) {
-//                        folder = folder.substring(0, folder.indexOf("?"));
-//                    }
-                    volumeVO.setFolder(folder);
+                    volumeVO.setFolder(pool.getPath());
 
                     volDao.update(volume.getId(), volumeVO);
                     updated = true;

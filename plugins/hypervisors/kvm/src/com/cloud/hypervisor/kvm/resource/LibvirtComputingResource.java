@@ -3087,7 +3087,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
 
-        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), (1 << 0)|(1 << 1)|(1 << 6)|(1 << 8)|(1 << 12)|(1 << 13));
+        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), (1 << 0)|(1 << 2)|(1 << 7)|(1 << 8)|(1 << 12)|(1 << 13));
 
         s_logger.debug("executeMigrationWithFlags result is: " + result);
 
