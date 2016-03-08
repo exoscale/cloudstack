@@ -1027,6 +1027,24 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         }
     }
 
+    @Override
+    public void confirmMigration(VirtualMachineProfile vm, final long srcHostId, final long destHostId, boolean migrationSucessful) {
+        List<VolumeVO> vols = _volsDao.findUsableVolumesForInstance(vm.getId());
+        Volume volume = null;
+        for (VolumeVO vol : vols) {
+            if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
+                volume = vol;
+                break;
+            }
+        }
+        StoragePool poolToCleanup = storageManager.findLocalStorageOnHost((migrationSucessful ? srcHostId : destHostId));
+        DataStore dataStoreToCleanup = dataStoreMgr.getDataStore(poolToCleanup.getId(), DataStoreRole.Primary);
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Will delete the volume " + volume.getName() + " on host " + dataStoreToCleanup.getName());
+        }
+        volService.deleteVolumeOnDataStore(dataStoreToCleanup, volume.getId());
+    }
+
     private Map<String, String> getDetails(VolumeInfo volumeInfo, DataStore dataStore) {
         Map<String, String> details = new HashMap<String, String>();
 

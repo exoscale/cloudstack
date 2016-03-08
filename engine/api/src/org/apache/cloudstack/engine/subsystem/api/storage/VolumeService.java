@@ -100,4 +100,6 @@ public interface VolumeService {
 
     SnapshotInfo takeSnapshot(VolumeInfo volume);
 
+    boolean deleteVolumeOnDataStore(DataStore store, long volumeId);
+
 }

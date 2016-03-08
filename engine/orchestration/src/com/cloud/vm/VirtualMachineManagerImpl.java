@@ -2154,6 +2154,11 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         Cluster cluster = _clusterDao.findById(destHost.getClusterId());
         DeployDestination destination = new DeployDestination(dc, pod, cluster, destHost);
 
+        VirtualMachineProfile vmSrc = new VirtualMachineProfileImpl(vm);
+        for (NicProfile nic : _networkMgr.getNicProfiles(vm)) {
+            vmSrc.addNic(nic);
+        }
+
         // Create a map of which volume should go in which storage pool.
         VirtualMachineProfile profile = new VirtualMachineProfileImpl(vm);
         Map<Volume, StoragePool> volumeToPoolMap = getPoolListForVolumesForMigration(profile, destHost, volumeToPool);
@@ -2218,14 +2223,17 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                         "Unable to migrate vm " + vm.getInstanceName() + " from host " + srcHost.getName() + " in zone " + dc.getName() + " and pod " + dc.getName(),
                         "Migrate Command failed.  Please check logs.");
                 try {
-                    _agentMgr.send(destHostId, new Commands(cleanup(vm.getInstanceName())), null);
+                    _networkMgr.rollbackNicForMigration(vmSrc, profile);
+//                    _agentMgr.send(destHostId, new Commands(cleanup(vm.getInstanceName())), null);
                     stateTransitTo(vm, Event.OperationFailed, srcHostId);
-                } catch (AgentUnavailableException e) {
-                    s_logger.warn("Looks like the destination Host is unavailable for cleanup.", e);
+//                } catch (AgentUnavailableException e) {
+//                    s_logger.warn("Looks like the destination Host is unavailable for cleanup.", e);
                 } catch (NoTransitionException e) {
                     s_logger.error("Error while transitioning vm from migrating to running state.", e);
                 }
             }
+
+            volumeMgr.confirmMigration(profile, srcHostId, destHostId, migrated);
 
             work.setStep(Step.Done);
             _workDao.update(work.getId(), work);
