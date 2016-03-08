@@ -328,6 +328,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private String _mountPoint = "/mnt";
     StorageLayer _storage;
     private KVMStoragePoolManager _storagePoolMgr;
+    private String _libvirtConnectionProtocol = "qemu://";
 
     private VifDriver _defaultVifDriver;
     private Map<TrafficType, VifDriver> _trafficTypeVifDrivers;
@@ -919,6 +920,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         _mountPoint = (String)params.get("mount.path");
         if (_mountPoint == null) {
             _mountPoint = "/mnt";
+        }
+
+        _libvirtConnectionProtocol = (String) params.get("libvirt.connection.protocol");
+        if (_libvirtConnectionProtocol == null) {
+            _libvirtConnectionProtocol = "qemu://";
         }
 
         value = (String) params.get("vm.migrate.downtime");
@@ -3087,7 +3093,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
 
-        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), (1 << 0)|(1 << 2)|(1 << 7)|(1 << 8)|(1 << 12)|(1 << 13));
+        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), (1 << 0)|(1 << 1)|(1 << 2)|(1 << 7)|(1 << 8)|(1 << 12)|(1 << 13));
 
         s_logger.debug("executeMigrationWithFlags result is: " + result);
 
@@ -3138,12 +3144,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
              */
             xmlDesc = dm.getXMLDesc(0).replace(_privateIp, destHost);
 
-            dconn = new Connect("qemu+tcp://" + destHost + "/system");
+            dconn = new Connect(_libvirtConnectionProtocol + destHost + "/system");
 
             //run migration in thread so we can monitor it
             s_logger.info("Live migration of instance " + vmName + " initiated");
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, destHost, flags);
+            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, destHost, flags, _migrateSpeed);
             Future<Domain> migrateThread = executor.submit(worker);
             executor.shutdown();
             long sleeptime = 0;
@@ -3232,33 +3238,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
         return result;
-    }
-
-    private class MigrateKVMAsync implements Callable<Domain> {
-        Domain dm = null;
-        Connect dconn = null;
-        String dxml = "";
-        String vmName = "";
-        String destIp = "";
-        long flags = 0L;
-
-        MigrateKVMAsync(Domain dm, Connect dconn, String dxml, String vmName, String destIp, long flags) {
-            this.dm = dm;
-            this.dconn = dconn;
-            this.dxml = dxml;
-            this.vmName = vmName;
-            this.destIp = destIp;
-            this.flags = flags;
-        }
-
-        @Override
-        public Domain call() throws LibvirtException {
-            // set compression flag for migration if libvirt version supports it
-            if (dconn.getLibVirVersion() < 1003000) {
-                flags = flags | (1 << 11);
-            }
-            return dm.migrate(dconn, flags, dxml, vmName, "tcp:" + destIp, _migrateSpeed);
-        }
     }
 
     private synchronized Answer execute(PrepareForMigrationCommand cmd) {
