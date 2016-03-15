@@ -1030,14 +1030,20 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Override
     public void confirmMigration(VirtualMachineProfile vm, final long srcHostId, final long destHostId, boolean migrationSucessful) {
         List<VolumeVO> vols = _volsDao.findUsableVolumesForInstance(vm.getId());
+        StoragePool poolToCleanup = storageManager.findLocalStorageOnHost((migrationSucessful ? srcHostId : destHostId));
+        StoragePool pool = storageManager.findLocalStorageOnHost((migrationSucessful ? destHostId : srcHostId));
         Volume volume = null;
         for (VolumeVO vol : vols) {
             if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
                 volume = vol;
-                break;
+            }
+            if (vol.getPoolId() == poolToCleanup.getId()) {
+                s_logger.info("Volume " + volume.getName() + " is listed on the wrong pool [" + vol.getPoolId() + "] but should be on ["
+                        + pool.getId() + "] which should also be the last pool id[" + vol.getLastPoolId() + "]. Fixing it now.");
+                vol.setPoolId(pool.getId());
+                _volsDao.update(vol.getId(), vol);
             }
         }
-        StoragePool poolToCleanup = storageManager.findLocalStorageOnHost((migrationSucessful ? srcHostId : destHostId));
         DataStore dataStoreToCleanup = dataStoreMgr.getDataStore(poolToCleanup.getId(), DataStoreRole.Primary);
         if (s_logger.isDebugEnabled()) {
             s_logger.debug("Will delete the volume " + volume.getName() + " on host " + dataStoreToCleanup.getName());
