@@ -3089,21 +3089,16 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             DataTO data = disk.getData();
             if (data instanceof VolumeObjectTO) {
                 volumes.add((VolumeObjectTO) data);
-                s_logger.debug("Adding volume TO object: " + ((VolumeObjectTO) data).getUuid());
             }
         }
 
         String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), (1 << 0)|(1 << 1)|(1 << 2)|(1 << 7)|(1 << 8)|(1 << 12)|(1 << 13));
-
-        s_logger.debug("executeMigrationWithFlags result is: " + result);
 
         return new MigrateWithStorageAnswer(cmd, volumes);
     }
 
     private Answer execute(MigrateCommand cmd) {
         String result = executeMigrationWithFlags(cmd.getVmName(), cmd.getDestinationIp(), 1L);
-
-        s_logger.debug("executeMigrationWithFlags result is: " + result);
 
         return new MigrateAnswer(cmd, result == null, result, null);
     }

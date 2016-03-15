@@ -2203,19 +2203,13 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             try {
                 if (!checkVmOnHost(vm, destHostId)) {
                     s_logger.error("Vm not found on destination host. Unable to complete migration for " + vm);
-                    try {
-                        _agentMgr.send(srcHostId, new Commands(cleanup(vm.getInstanceName())), null);
-                    } catch (AgentUnavailableException e) {
-                        s_logger.error("AgentUnavailableException while cleanup on source host: " + srcHostId);
-                    }
-                    cleanup(vmGuru, new VirtualMachineProfileImpl(vm), work, Event.AgentReportStopped, true);
-                    throw new CloudRuntimeException("VM not found on desintation host. Unable to complete migration for " + vm);
+                } else {
+                    migrated = true;
                 }
             } catch (OperationTimedoutException e) {
                 s_logger.warn("Error while checking the vm " + vm + " is on host " + destHost, e);
             }
 
-            migrated = true;
         } finally {
             if (!migrated) {
                 s_logger.info("Migration was unsuccessful.  Cleaning up: " + vm);
@@ -2224,10 +2218,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                         "Migrate Command failed.  Please check logs.");
                 try {
                     _networkMgr.rollbackNicForMigration(vmSrc, profile);
-//                    _agentMgr.send(destHostId, new Commands(cleanup(vm.getInstanceName())), null);
                     stateTransitTo(vm, Event.OperationFailed, srcHostId);
-//                } catch (AgentUnavailableException e) {
-//                    s_logger.warn("Looks like the destination Host is unavailable for cleanup.", e);
                 } catch (NoTransitionException e) {
                     s_logger.error("Error while transitioning vm from migrating to running state.", e);
                 }

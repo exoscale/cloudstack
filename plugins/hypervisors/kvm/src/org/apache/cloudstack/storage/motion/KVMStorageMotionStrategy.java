@@ -139,7 +139,6 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                         ". " + provisioningAnwer.getDetails());
             }
 
-            // TODO clean up of provisioned disk in case of failure during the next step
             MigrateWithStorageCommand command = new MigrateWithStorageCommand(to, volumeToFilerTo, destHost.getPrivateIpAddress());
             MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer) agentMgr.send(srcHost.getId(), command);
             if (answer == null) {
