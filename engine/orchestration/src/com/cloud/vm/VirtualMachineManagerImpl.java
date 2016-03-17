@@ -2216,6 +2216,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 _alertMgr.sendAlert(alertType, srcHost.getDataCenterId(), srcHost.getPodId(),
                         "Unable to migrate vm " + vm.getInstanceName() + " from host " + srcHost.getName() + " in zone " + dc.getName() + " and pod " + dc.getName(),
                         "Migrate Command failed.  Please check logs.");
+                vm.setHostId(srcHostId);
+                _vmDao.update(vm.getId(), vm);
                 try {
                     _networkMgr.rollbackNicForMigration(vmSrc, profile);
                     stateTransitTo(vm, Event.OperationFailed, srcHostId);
