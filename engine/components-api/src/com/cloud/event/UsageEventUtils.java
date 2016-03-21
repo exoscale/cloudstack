@@ -139,6 +139,15 @@ public class UsageEventUtils {
         }
     }
 
+    public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, Long volumeSize, String resourceName, String status,  String entityType, String entityUUID) {
+        Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
+        eventDescription.put("resourcename", resourceName);
+        eventDescription.put("status", status);
+        eventDescription.put("size", volumeSize.toString());
+        publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
+    }
+
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long ipAddressId, String ipAddress, boolean isSourceNat, String guestType,
         boolean isSystem, String entityType, String entityUUID) {
         saveUsageEvent(usageType, accountId, zoneId, ipAddressId, ipAddress, isSourceNat, guestType, isSystem);
