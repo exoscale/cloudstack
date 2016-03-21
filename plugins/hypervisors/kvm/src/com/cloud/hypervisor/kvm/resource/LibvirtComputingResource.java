@@ -241,6 +241,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -316,6 +317,20 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private int _migratePauseAfter;
     private long _migrateWithStorageFlags;
     private long _migrateFlags;
+    private MigrationBy _migrateBy;
+
+    private enum MigrationBy {
+        IP, HOSTNAME;
+
+        public static MigrationBy fromString(String value) {
+            for(MigrationBy mig : MigrationBy.values()) {
+                if (mig.name().equalsIgnoreCase(value)) {
+                    return mig;
+                }
+            }
+            return null;
+        }
+    }
 
     private long _hvVersion;
     private long _kernelVersion;
@@ -956,6 +971,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
         value = (String)params.get("vm.migrate.flags");
         _migrateFlags = NumbersUtil.parseInt(value, 1);
+
+        _migrateBy = MigrationBy.fromString((String) params.get("vm.migrate.by"));
+        if (_migrateBy == null) {
+            _migrateBy = MigrationBy.IP;
+        }
 
         Map<String, String> bridges = new HashMap<String, String>();
         bridges.put("linklocal", _linkLocalBridgeName);
@@ -3123,6 +3143,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         Domain destDomain = null;
         Connect conn = null;
         String xmlDesc = null;
+        String migrationDestinationHost = null;
         try {
             conn = LibvirtConnection.getConnectionByVmName(vmName);
             ifaces = getInterfaces(conn, vmName);
@@ -3143,12 +3164,24 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
              */
             xmlDesc = dm.getXMLDesc(0).replace(_privateIp, destHost);
 
-            dconn = new Connect(_libvirtConnectionProtocol + destHost + "/system");
+            if(_migrateBy == MigrationBy.HOSTNAME) {
+                InetAddress destAddress = null;
+                try {
+                    destAddress = InetAddress.getByName(destHost);
+                    migrationDestinationHost = destAddress.getCanonicalHostName();
+                } catch (UnknownHostException e) {
+                    s_logger.warn("Could not find host", e);
+                }
+            } else {
+                migrationDestinationHost = destHost;
+            }
+
+            dconn = new Connect(_libvirtConnectionProtocol + migrationDestinationHost + "/system");
 
             //run migration in thread so we can monitor it
-            s_logger.info("Live migration of instance " + vmName + " initiated");
+            s_logger.info("Live migration of instance " + vmName + " initiated to destination host " + migrationDestinationHost);
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, destHost, flags, _migrateSpeed);
+            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, migrationDestinationHost, flags, _migrateSpeed);
             Future<Domain> migrateThread = executor.submit(worker);
             executor.shutdown();
             long sleeptime = 0;
