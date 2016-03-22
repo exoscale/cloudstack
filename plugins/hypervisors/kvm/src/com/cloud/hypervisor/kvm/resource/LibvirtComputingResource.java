@@ -3176,10 +3176,10 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 migrationDestinationHost = destHost;
             }
 
+            s_logger.info("Initiating live migration of instance " + vmName + " to destination host " + migrationDestinationHost);
             dconn = new Connect(_libvirtConnectionProtocol + migrationDestinationHost + "/system");
 
             //run migration in thread so we can monitor it
-            s_logger.info("Live migration of instance " + vmName + " initiated to destination host " + migrationDestinationHost);
             ExecutorService executor = Executors.newFixedThreadPool(1);
             Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, migrationDestinationHost, flags, _migrateSpeed);
             Future<Domain> migrateThread = executor.submit(worker);
