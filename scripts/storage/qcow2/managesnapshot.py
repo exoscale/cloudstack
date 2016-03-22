@@ -301,14 +301,12 @@ if __name__ == "__main__":
     maintenancefilepath = '/etc/cloudstack/agent/snapshot-maintenance'
 
     try:
+        # Checking if snapshot is admin disabled
+        if os.path.exists(maintenancefilepath):
+            logging.error('Snapshotting is admin disabled on this hypervisor, you may enable it back by deleting %s', maintenancefilepath)
+            raise Exception('Snapshotting is admin disabled on this hypervisor')
         if createarg:
-            # Checking if snapshot is admin disabled
-            if os.path.exists(maintenancefilepath):
-                logging.error('Snapshotting is admin disabled on this hypervisor, you may enable it back by deleting %s', maintenancefilepath)
-                raise Exception('Snapshotting is admin disabled on this hypervisor')
-
             create_snapshot(disk_path, domain, snapshot_file_path)
-
         elif destroyarg:
             destroy_snapshot(disk_path, domain, snapshot_file_path)
         elif backuparg:
