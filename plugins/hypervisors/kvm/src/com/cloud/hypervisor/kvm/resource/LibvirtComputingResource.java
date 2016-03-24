@@ -3181,7 +3181,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
             //run migration in thread so we can monitor it
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, migrationDestinationHost, flags, _migrateSpeed);
+            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, flags, _migrateSpeed);
             Future<Domain> migrateThread = executor.submit(worker);
             executor.shutdown();
             long sleeptime = 0;
