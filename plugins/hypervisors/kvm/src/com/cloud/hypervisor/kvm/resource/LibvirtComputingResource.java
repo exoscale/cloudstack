@@ -3176,7 +3176,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 migrationDestinationHost = destHost;
             }
 
-            s_logger.info("Initiating live migration of instance " + vmName + " to destination host " + migrationDestinationHost);
+            s_logger.info("Initiating live migration of instance " + vmName + " to destination host " + migrationDestinationHost + " with flags " + flags);
             dconn = new Connect(_libvirtConnectionProtocol + migrationDestinationHost + "/system");
 
             //run migration in thread so we can monitor it

@@ -25,10 +25,6 @@ public class MigrateKVMAsync implements Callable<Domain> {
 
     @Override
     public Domain call() throws LibvirtException {
-        // For version of libvirt that don't support compression, remove the flag
-        if (dconn.getLibVirVersion() < 1003000) {
-            flags = flags & (0 << 11);
-        }
         return dm.migrate(dconn, flags, dxml, vmName, null, migrationSpeed);
     }
 }
