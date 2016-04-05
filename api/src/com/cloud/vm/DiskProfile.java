@@ -70,6 +70,7 @@ public class DiskProfile {
             offering.isCustomized(),
             null);
         this.hyperType = hyperType;
+        this.path = vol.getPath();
     }
 
     public DiskProfile(DiskProfile dp) {

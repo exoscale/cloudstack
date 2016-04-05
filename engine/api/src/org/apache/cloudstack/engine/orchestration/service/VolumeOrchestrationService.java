@@ -105,6 +105,8 @@ public interface VolumeOrchestrationService {
 
     void prepareForMigration(VirtualMachineProfile vm, DeployDestination dest);
 
+    void confirmMigration(VirtualMachineProfile vm, long srcHostId, long destHostId, boolean migrationSuccess);
+
     void prepare(VirtualMachineProfile vm, DeployDestination dest) throws StorageUnavailableException, InsufficientStorageCapacityException, ConcurrentOperationException;
 
     boolean canVmRestartOnAnotherServer(long vmId);

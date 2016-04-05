@@ -764,6 +764,31 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
+    public boolean deleteVolumeOnDataStore(DataStore store, long volumeId) {
+        VolumeInfo vol = volFactory.getVolume(volumeId);
+        VolumeObjectTO volTO = new VolumeObjectTO(vol);
+        volTO.setDataStore(store.getTO());
+        DeleteCommand dtCommand = new DeleteCommand(volTO);
+        EndPoint ep = _epSelector.select(store);
+        Answer answer = null;
+        if (ep == null) {
+            String errMsg = "No remote endpoint to send command, check if host or ssvm is down?";
+            s_logger.error(errMsg);
+            answer = new Answer(dtCommand, false, errMsg);
+        } else {
+            answer = ep.sendMessage(dtCommand);
+        }
+        if (answer == null || !answer.getResult()) {
+            s_logger.info("Failed to deleted volume at store: " + store.getName());
+        } else {
+            String description = "Deleted volume " + vol.getName() + " on storage " + store.getName();
+            s_logger.info(description);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public AsyncCallFuture<VolumeApiResult> createVolumeFromSnapshot(VolumeInfo volume, DataStore store, SnapshotInfo snapshot) {
         AsyncCallFuture<VolumeApiResult> future = new AsyncCallFuture<VolumeApiResult>();
 

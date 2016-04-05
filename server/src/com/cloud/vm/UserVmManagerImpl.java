@@ -4213,7 +4213,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         }
 
         // Check if the source and destination hosts are of the same type and support storage motion.
-        if (!(srcHost.getHypervisorType().equals(destinationHost.getHypervisorType()) && srcHost.getHypervisorVersion().equals(destinationHost.getHypervisorVersion()))) {
+        if (!(srcHost.getHypervisorType().equals(destinationHost.getHypervisorType()) &&
+                ((srcHost.getHypervisorVersion() == null && destinationHost.getHypervisorVersion() == null) || (srcHost.getHypervisorVersion().equals(destinationHost.getHypervisorVersion()))))) {
             throw new CloudRuntimeException("The source and destination hosts are not of the same type and version. " + "Source hypervisor type and version: "
                     + srcHost.getHypervisorType().toString() + " " + srcHost.getHypervisorVersion() + ", Destination hypervisor type and version: "
                     + destinationHost.getHypervisorType().toString() + " " + destinationHost.getHypervisorVersion());
@@ -4271,7 +4272,13 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         HostVO destinationHostVO = _hostDao.findById(destinationHost.getId());
         if (_capacityMgr.checkIfHostReachMaxGuestLimit(destinationHostVO)) {
             throw new VirtualMachineMigrationException("Host name: " + destinationHost.getName() + ", hostId: " + destinationHost.getId()
-                    + " already has max running vms (count includes system VMs). Cannot" + " migrate to this host");
+                    + " already has max running vms (count includes system VMs). Cannot migrate to this host");
+        }
+
+        // Check if the destination host has enough space
+        if (!_storageMgr.storagePoolHasEnoughSpace(new ArrayList<Volume>(vmVolumes), (StoragePool)_dataStoreMgr.getDataStore(_storageMgr.findLocalStorageOnHost(destinationHost.getId()).getId(), DataStoreRole.Primary))) {
+            throw new VirtualMachineMigrationException("Host name: " + destinationHost.getName() + ", hostId: " + destinationHost.getId()
+                    + " does not have enough space on its storage pool. Cannot migrate to this host");
         }
 
         checkHostsDedication(vm, srcHostId, destinationHost.getId());

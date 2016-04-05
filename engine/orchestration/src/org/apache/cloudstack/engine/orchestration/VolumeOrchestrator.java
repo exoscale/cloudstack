@@ -30,6 +30,9 @@ import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.storage.StorageManager;
+import com.cloud.storage.VMTemplateVO;
+import com.cloud.storage.dao.VMTemplateDao;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.engine.orchestration.service.VolumeOrchestrationService;
@@ -132,7 +135,9 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Inject
     protected TemplateDataStoreDao _vmTemplateStoreDao = null;
     @Inject
-    protected VolumeDao _volumeDao;
+    protected UserVmDao _userVmDao;
+    @Inject
+    private VMTemplateDao _tmpltDao;
     @Inject
     protected ResourceLimitService _resourceLimitMgr;
     @Inject
@@ -154,7 +159,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     @Inject
     SnapshotService _snapshotSrv;
     @Inject
-    protected UserVmDao _userVmDao;
+    StorageManager storageManager;
 
     private final StateMachine2<Volume.State, Volume.Event, Volume> _volStateMachine;
     protected List<StoragePoolAllocator> _storagePoolAllocators;
@@ -992,6 +997,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             s_logger.debug("Preparing " + vols.size() + " volumes for " + vm);
         }
 
+
+
         for (VolumeVO vol : vols) {
             DataTO volTO = volFactory.getVolume(vol.getId()).getTO();
             DiskTO disk = new DiskTO(volTO, vol.getDeviceId(), vol.getPath(), vol.getVolumeType());
@@ -1001,6 +1008,14 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             disk.setDetails(getDetails(volumeInfo, dataStore));
 
             vm.addDisk(disk);
+
+            // Ensure that the template is available on the destination host
+            if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
+                VMTemplateVO vmTemplate = _tmpltDao.findById(vol.getTemplateId());
+                StoragePool destStoragePool = storageManager.findLocalStorageOnHost(dest.getHost().getId());
+                StoragePool destDataStore = (StoragePool)dataStoreMgr.getDataStore(destStoragePool.getId(), DataStoreRole.Primary);
+                _tmpltMgr.prepareTemplateForCreate(vmTemplate, destDataStore);
+            }
         }
 
         //if (vm.getType() == VirtualMachine.Type.User && vm.getTemplate().getFormat() == ImageFormat.ISO) {
@@ -1010,6 +1025,30 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             //DiskTO iso = new DiskTO(dataTO, 3L, null, Volume.Type.ISO);
             //vm.addDisk(iso);
         }
+    }
+
+    @Override
+    public void confirmMigration(VirtualMachineProfile vm, final long srcHostId, final long destHostId, boolean migrationSucessful) {
+        List<VolumeVO> vols = _volsDao.findUsableVolumesForInstance(vm.getId());
+        StoragePool poolToCleanup = storageManager.findLocalStorageOnHost((migrationSucessful ? srcHostId : destHostId));
+        StoragePool pool = storageManager.findLocalStorageOnHost((migrationSucessful ? destHostId : srcHostId));
+        Volume volume = null;
+        for (VolumeVO vol : vols) {
+            if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
+                volume = vol;
+            }
+            if (vol.getPoolId() == poolToCleanup.getId()) {
+                s_logger.info("Volume " + volume.getName() + " is listed on the wrong pool [" + vol.getPoolId() + "] but should be on ["
+                        + pool.getId() + "] which should also be the last pool id[" + vol.getLastPoolId() + "]. Fixing it now.");
+                vol.setPoolId(pool.getId());
+                _volsDao.update(vol.getId(), vol);
+            }
+        }
+        DataStore dataStoreToCleanup = dataStoreMgr.getDataStore(poolToCleanup.getId(), DataStoreRole.Primary);
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Will delete the volume " + volume.getName() + " on host " + dataStoreToCleanup.getName());
+        }
+        volService.deleteVolumeOnDataStore(dataStoreToCleanup, volume.getId());
     }
 
     private Map<String, String> getDetails(VolumeInfo volumeInfo, DataStore dataStore) {

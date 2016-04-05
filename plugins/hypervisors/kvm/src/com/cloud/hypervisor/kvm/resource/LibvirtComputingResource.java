@@ -16,80 +16,12 @@
 // under the License.
 package com.cloud.hypervisor.kvm.resource;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.text.DateFormat;
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.ejb.Local;
-import javax.naming.ConfigurationException;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
-import org.libvirt.Connect;
-import org.libvirt.Domain;
-import org.libvirt.DomainBlockStats;
-import org.libvirt.DomainInfo;
-import org.libvirt.DomainInterfaceStats;
-import org.libvirt.LibvirtException;
-import org.libvirt.NodeInfo;
-import org.libvirt.StorageVol;
-
 import com.ceph.rados.IoCTX;
 import com.ceph.rados.Rados;
 import com.ceph.rados.RadosException;
 import com.ceph.rbd.Rbd;
 import com.ceph.rbd.RbdException;
 import com.ceph.rbd.RbdImage;
-
-import org.apache.cloudstack.storage.command.StorageSubSystemCommand;
-import org.apache.cloudstack.storage.command.RevertSnapshotCommand;
-import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
-import org.apache.cloudstack.storage.to.VolumeObjectTO;
-import org.apache.cloudstack.storage.to.SnapshotObjectTO;
-import org.apache.cloudstack.utils.qemu.QemuImg;
-import org.apache.cloudstack.utils.qemu.QemuImg.PhysicalDiskFormat;
-import org.apache.cloudstack.utils.qemu.QemuImgException;
-import org.apache.cloudstack.utils.qemu.QemuImgFile;
-
 import com.cloud.agent.api.Answer;
 import com.cloud.agent.api.AttachIsoCommand;
 import com.cloud.agent.api.AttachVolumeAnswer;
@@ -132,6 +64,8 @@ import com.cloud.agent.api.ManageSnapshotAnswer;
 import com.cloud.agent.api.ManageSnapshotCommand;
 import com.cloud.agent.api.MigrateAnswer;
 import com.cloud.agent.api.MigrateCommand;
+import com.cloud.agent.api.MigrateWithStorageAnswer;
+import com.cloud.agent.api.MigrateWithStorageCommand;
 import com.cloud.agent.api.ModifySshKeysCommand;
 import com.cloud.agent.api.ModifyStoragePoolAnswer;
 import com.cloud.agent.api.ModifyStoragePoolCommand;
@@ -269,6 +203,71 @@ import com.cloud.vm.DiskProfile;
 import com.cloud.vm.VirtualMachine;
 import com.cloud.vm.VirtualMachine.PowerState;
 import com.cloud.vm.VirtualMachine.State;
+import org.apache.cloudstack.storage.command.RevertSnapshotCommand;
+import org.apache.cloudstack.storage.command.StorageSubSystemCommand;
+import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
+import org.apache.cloudstack.storage.to.SnapshotObjectTO;
+import org.apache.cloudstack.storage.to.VolumeObjectTO;
+import org.apache.cloudstack.utils.qemu.QemuImg;
+import org.apache.cloudstack.utils.qemu.QemuImg.PhysicalDiskFormat;
+import org.apache.cloudstack.utils.qemu.QemuImgException;
+import org.apache.cloudstack.utils.qemu.QemuImgFile;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
+import org.libvirt.Connect;
+import org.libvirt.Domain;
+import org.libvirt.DomainBlockStats;
+import org.libvirt.DomainInfo;
+import org.libvirt.DomainInterfaceStats;
+import org.libvirt.LibvirtException;
+import org.libvirt.NodeInfo;
+import org.libvirt.StorageVol;
+
+import javax.ejb.Local;
+import javax.naming.ConfigurationException;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * LibvirtComputingResource execute requests on the computing/routing host using
@@ -316,6 +315,22 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private int _migrateSpeed;
     private int _migrateDowntime;
     private int _migratePauseAfter;
+    private long _migrateWithStorageFlags;
+    private long _migrateFlags;
+    private MigrationBy _migrateBy;
+
+    private enum MigrationBy {
+        IP, HOSTNAME;
+
+        public static MigrationBy fromString(String value) {
+            for(MigrationBy mig : MigrationBy.values()) {
+                if (mig.name().equalsIgnoreCase(value)) {
+                    return mig;
+                }
+            }
+            return null;
+        }
+    }
 
     private long _hvVersion;
     private long _kernelVersion;
@@ -326,6 +341,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private String _mountPoint = "/mnt";
     StorageLayer _storage;
     private KVMStoragePoolManager _storagePoolMgr;
+    private String _libvirtConnectionProtocol = "qemu://";
 
     private VifDriver _defaultVifDriver;
     private Map<TrafficType, VifDriver> _trafficTypeVifDrivers;
@@ -919,6 +935,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             _mountPoint = "/mnt";
         }
 
+        _libvirtConnectionProtocol = (String) params.get("libvirt.connection.protocol");
+        if (_libvirtConnectionProtocol == null) {
+            _libvirtConnectionProtocol = "qemu://";
+        }
+
         value = (String) params.get("vm.migrate.downtime");
         _migrateDowntime = NumbersUtil.parseInt(value, -1);
 
@@ -943,6 +964,17 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             }
             params.put("vm.migrate.speed", String.valueOf(_migrateSpeed));
+        }
+
+        value = (String)params.get("vm.migratewithstorage.flags");
+        _migrateWithStorageFlags = NumbersUtil.parseLong(value, 4481);
+
+        value = (String)params.get("vm.migrate.flags");
+        _migrateFlags = NumbersUtil.parseInt(value, 1);
+
+        _migrateBy = MigrationBy.fromString((String) params.get("vm.migrate.by"));
+        if (_migrateBy == null) {
+            _migrateBy = MigrationBy.IP;
         }
 
         Map<String, String> bridges = new HashMap<String, String>();
@@ -1391,6 +1423,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((OvsVpcPhysicalTopologyConfigCommand) cmd);
             } else if (cmd instanceof OvsVpcRoutingPolicyConfigCommand) {
                 return execute((OvsVpcRoutingPolicyConfigCommand) cmd);
+            } else if (cmd instanceof MigrateWithStorageCommand) {
+                return execute((MigrateWithStorageCommand) cmd);
             } else {
                 s_logger.warn("Unsupported command ");
                 return Answer.createUnsupportedCommandAnswer(cmd);
@@ -3071,9 +3105,29 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return command.execute();
     }
 
-    private Answer execute(MigrateCommand cmd) {
-        String vmName = cmd.getVmName();
+    private Answer execute(MigrateWithStorageCommand cmd) {
+        List<VolumeObjectTO> volumes = new ArrayList<>();
+        VirtualMachineTO vm = cmd.getVirtualMachine();
+        List<DiskTO> disks = Arrays.asList(vm.getDisks());
+        for (DiskTO disk : disks) {
+            DataTO data = disk.getData();
+            if (data instanceof VolumeObjectTO) {
+                volumes.add((VolumeObjectTO) data);
+            }
+        }
 
+        executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), _migrateWithStorageFlags);
+
+        return new MigrateWithStorageAnswer(cmd, volumes);
+    }
+
+    private Answer execute(MigrateCommand cmd) {
+        String result = executeMigrationWithFlags(cmd.getVmName(), cmd.getDestinationIp(), _migrateFlags);
+
+        return new MigrateAnswer(cmd, result == null, result, null);
+    }
+
+    private String executeMigrationWithFlags(String vmName, String destHost, long flags) {
         State state = null;
         String result = null;
         synchronized (_vms) {
@@ -3089,6 +3143,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         Domain destDomain = null;
         Connect conn = null;
         String xmlDesc = null;
+        String migrationDestinationHost = null;
         try {
             conn = LibvirtConnection.getConnectionByVmName(vmName);
             ifaces = getInterfaces(conn, vmName);
@@ -3107,14 +3162,26 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
                 This is supported by libvirt-java from version 0.50.0
              */
-            xmlDesc = dm.getXMLDesc(0).replace(_privateIp, cmd.getDestinationIp());
+            xmlDesc = dm.getXMLDesc(0).replace(_privateIp, destHost);
 
-            dconn = new Connect("qemu+tcp://" + cmd.getDestinationIp() + "/system");
+            if(_migrateBy == MigrationBy.HOSTNAME) {
+                InetAddress destAddress = null;
+                try {
+                    destAddress = InetAddress.getByName(destHost);
+                    migrationDestinationHost = destAddress.getCanonicalHostName();
+                } catch (UnknownHostException e) {
+                    s_logger.warn("Could not find host", e);
+                }
+            } else {
+                migrationDestinationHost = destHost;
+            }
+
+            s_logger.info("Initiating live migration of instance " + vmName + " to destination host " + migrationDestinationHost + " with flags " + flags);
+            dconn = new Connect(_libvirtConnectionProtocol + migrationDestinationHost + "/system");
 
             //run migration in thread so we can monitor it
-            s_logger.info("Live migration of instance " + vmName + " initiated");
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, cmd.getDestinationIp());
+            Callable<Domain> worker = new MigrateKVMAsync(dm, dconn, xmlDesc, vmName, flags, _migrateSpeed);
             Future<Domain> migrateThread = executor.submit(worker);
             executor.shutdown();
             long sleeptime = 0;
@@ -3202,34 +3269,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             }
         }
-
-        return new MigrateAnswer(cmd, result == null, result, null);
-    }
-
-    private class MigrateKVMAsync implements Callable<Domain> {
-        Domain dm = null;
-        Connect dconn = null;
-        String dxml = "";
-        String vmName = "";
-        String destIp = "";
-
-        MigrateKVMAsync(Domain dm, Connect dconn, String dxml, String vmName, String destIp) {
-            this.dm = dm;
-            this.dconn = dconn;
-            this.dxml = dxml;
-            this.vmName = vmName;
-            this.destIp = destIp;
-        }
-
-        @Override
-        public Domain call() throws LibvirtException {
-            // set compression flag for migration if libvirt version supports it
-            if (dconn.getLibVirVersion() < 1003000) {
-                return dm.migrate(dconn, (1 << 0), dxml, vmName, "tcp:" + destIp, _migrateSpeed);
-            } else {
-                return dm.migrate(dconn, (1 << 0)|(1 << 11), dxml, vmName, "tcp:" + destIp, _migrateSpeed);
-            }
-        }
+        return result;
     }
 
     private synchronized Answer execute(PrepareForMigrationCommand cmd) {

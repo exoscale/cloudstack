@@ -28,4 +28,6 @@
                       >
     <bean id="ancientDataMotionStrategy"
         class="org.apache.cloudstack.storage.motion.AncientDataMotionStrategy" />
+    <bean id="kvmStorageMotionStrategy"
+          class="org.apache.cloudstack.storage.motion.KVMStorageMotionStrategy" />
 </beans>
