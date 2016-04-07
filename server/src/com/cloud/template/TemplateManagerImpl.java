@@ -814,10 +814,10 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
                         s_logger.debug("Successfully evicted template: " + template.getName() + " from storage pool: " + pool.getName());
                     }
                 } else {
-                    s_logger.info("Will retry evicte template: " + template.getName() + " from storage pool: " + pool.getName());
+                    s_logger.info("Will retry evict template: " + template.getName() + " from storage pool: " + pool.getName());
                 }
             } catch (StorageUnavailableException e) {
-                s_logger.info("Storage is unavailable currently.  Will retry evicte template: " + template.getName() + " from storage pool: " + pool.getName());
+                s_logger.info("Storage is unavailable currently.  Will retry evict template: " + template.getName() + " from storage pool: " + pool.getName());
             }
         } finally {
             _tmpltPoolDao.releaseFromLockTable(templatePoolRef.getId());
