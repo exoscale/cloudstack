@@ -687,15 +687,32 @@ public class LibvirtStorageAdaptor implements StorageAdaptor {
 
             LibvirtStorageVolumeDef volDef = new LibvirtStorageVolumeDef(name, size, libvirtformat, null, null);
             s_logger.debug(volDef.toString());
-            try {
-                StorageVol vol = virtPool.storageVolCreateXML(volDef.toString(), 0);
-                volPath = vol.getPath();
-                volName = vol.getName();
-                volAllocation = vol.getInfo().allocation;
-                volCapacity = vol.getInfo().capacity;
-            } catch (LibvirtException e) {
-                throw new CloudRuntimeException(e.toString());
+
+            int retryCount = 3;
+            while (retryCount > 0) {
+                try {
+                    StorageVol vol = virtPool.storageVolCreateXML(volDef.toString(), 0);
+                    volPath = vol.getPath();
+                    volName = vol.getName();
+                    volAllocation = vol.getInfo().allocation;
+                    volCapacity = vol.getInfo().capacity;
+                    retryCount = 0;
+                } catch (LibvirtException e) {
+                    retryCount--;
+                    if (retryCount == 0) {
+                        throw new CloudRuntimeException(e.toString());
+                    } else {
+                        s_logger.debug("Will try again to create storage volume, got an exception from libvirt: " + e.toString());
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e1) {
+                            s_logger.warn("Could not sleep for 500ms: " + e1.getMessage());
+                            throw new CloudRuntimeException(e.toString());
+                        }
+                    }
+                }
             }
+
         }
 
         KVMPhysicalDisk disk = new KVMPhysicalDisk(volPath, volName, pool);
