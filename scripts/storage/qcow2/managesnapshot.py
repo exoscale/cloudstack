@@ -16,6 +16,11 @@ import libvirt
 import facter
 import bernhard
 
+try:
+    from configparser import ConfigParser
+except ImportError:  # python 2
+    from ConfigParser import ConfigParser
+
 from lxml import etree
 from raven import Client
 
@@ -292,10 +297,17 @@ if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s %(pathname)s %(levelname)s:%(message)s', level=logging.DEBUG, filename=logfile)
 
     facts = facter.Facter(facter_path="/usr/local/bin/facter")
-    riemannserver = facts["riemannserver"]
     sentryapikey = facts["snapshotsentrykey"]
 
-    bclient = bernhard.Client(host=riemannserver)
+    conf = ConfigParser()
+    conf.read(("/etc/bernhard.conf",))
+
+    bclient = bernhard.SSLClient(host=conf.get('default', 'riemann_server'),
+                                 port=int(conf.get('default', 'riemann_port')),
+                                 keyfile=conf.get('default', 'tls_cert_key'),
+                                 certfile=conf.get('default', 'tls_cert'),
+                                 ca_certs=conf.get('default', 'tls_ca_cert'))
+
     host = socket.gethostname()
 
     maintenancefilepath = '/etc/cloudstack/agent/snapshot-maintenance'
