@@ -280,6 +280,7 @@ public class ApiServer extends ManagerBase implements HttpRequestHandler, ApiSer
         eventDescription.put("command", job.getCmd());
         eventDescription.put("user", userJobOwner.getUuid());
         eventDescription.put("account", jobOwner.getUuid());
+        eventDescription.put("accountName", jobOwner.getAccountName());
         eventDescription.put("processStatus", "" + job.getProcessStatus());
         eventDescription.put("resultCode", "" + job.getResultCode());
         eventDescription.put("instanceUuid", ApiDBUtils.findJobInstanceUuid(job));

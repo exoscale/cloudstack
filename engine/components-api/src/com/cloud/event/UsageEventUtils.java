@@ -285,6 +285,7 @@ public class UsageEventUtils {
         Event event = new Event(Name, EventCategory.USAGE_EVENT.getName(), usageEventType, resourceType, resourceUUID);
 
         eventDescription.put("account", account.getUuid());
+        eventDescription.put("accountName", account.getAccountName());
         eventDescription.put("zone", zoneUuid);
         eventDescription.put("event", usageEventType);
         eventDescription.put("resource", resourceType);
