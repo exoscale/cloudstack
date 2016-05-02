@@ -972,24 +972,14 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
             sc.setParameters("displayVm", 1);
         }
         // search vm details by ids
-        List<UserVmJoinVO> uniqueVms = null;
-        Long[] vmIds = null;
-        Integer count = 0;
-        // If we run as admin, skip the count
-        if (isAdmin) {
-            uniqueVms = _userVmJoinDao.search(sc, searchFilter);
-            vmIds = new Long[uniqueVms.size()];
-            count = uniqueVms.size();
-        } else {
-            Pair<List<UserVmJoinVO>, Integer> uniqueVmPair = _userVmJoinDao.searchAndDistinctCount(sc, searchFilter);
-            count = uniqueVmPair.second();
-            if (count.intValue() == 0) {
-                // handle empty result cases
-                return uniqueVmPair;
-            }
-            uniqueVms = uniqueVmPair.first();
-            vmIds = new Long[uniqueVms.size()];
+        Pair<List<UserVmJoinVO>, Integer> uniqueVmPair = _userVmJoinDao.searchAndDistinctCount(sc, searchFilter);
+        Integer count = uniqueVmPair.second();
+        if (count.intValue() == 0) {
+            // handle empty result cases
+            return uniqueVmPair;
         }
+        List<UserVmJoinVO> uniqueVms = uniqueVmPair.first();
+        Long[] vmIds = new Long[uniqueVms.size()];
         int i = 0;
         for (UserVmJoinVO v : uniqueVms) {
             vmIds[i++] = v.getId();
