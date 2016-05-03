@@ -231,6 +231,7 @@ public class ActionEventUtils {
             eventDescription.put("project", project.getUuid());
         eventDescription.put("user", user.getUuid());
         eventDescription.put("account", account.getUuid());
+        eventDescription.put("accountName", account.getAccountName());
         eventDescription.put("event", eventType);
         eventDescription.put("status", state.toString());
         eventDescription.put("entity", entityType);
