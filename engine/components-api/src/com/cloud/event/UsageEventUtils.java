@@ -25,6 +25,10 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import com.cloud.offering.ServiceOffering;
+import com.cloud.service.dao.ServiceOfferingDao;
+import com.cloud.storage.dao.VMTemplateDao;
+import com.cloud.template.VirtualMachineTemplate;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 
@@ -44,6 +48,8 @@ public class UsageEventUtils {
     private static UsageEventDao s_usageEventDao;
     private static AccountDao s_accountDao;
     private static DataCenterDao s_dcDao;
+    private static ServiceOfferingDao s_serviceOfferingDao;
+    private static VMTemplateDao s_vmTemplateDao;
     private static final Logger s_logger = Logger.getLogger(UsageEventUtils.class);
     protected static EventBus s_eventBus = null;
 
@@ -53,6 +59,10 @@ public class UsageEventUtils {
     AccountDao accountDao;
     @Inject
     DataCenterDao dcDao;
+    @Inject
+    ServiceOfferingDao serviceOfferingDao;
+    @Inject
+    VMTemplateDao vmTemplateDao;
 
     public UsageEventUtils() {
     }
@@ -62,6 +72,8 @@ public class UsageEventUtils {
         s_usageEventDao = usageEventDao;
         s_accountDao = accountDao;
         s_dcDao = dcDao;
+        s_serviceOfferingDao = serviceOfferingDao;
+        s_vmTemplateDao = vmTemplateDao;
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, Long templateId,
@@ -295,6 +307,18 @@ public class UsageEventUtils {
 
         String eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z").format(new Date());
         eventDescription.put("eventDateTime", eventDate);
+
+        // Rewrite templateId and offeringId to send uuid
+        if(eventDescription.containsKey("offeringid")) {
+            Long offeringId = Long.parseLong(eventDescription.get("offeringid"));
+            ServiceOffering so = s_serviceOfferingDao.findById(offeringId);
+            eventDescription.put("offeringid", so.getUuid());
+        }
+        if(eventDescription.containsKey("templateid")) {
+            Long templateId = Long.parseLong(eventDescription.get("templateid"));
+            VirtualMachineTemplate vmt = s_vmTemplateDao.findById(templateId);
+            eventDescription.put("templateid", vmt.getUuid());
+        }
 
         event.setDescription(eventDescription);
 
