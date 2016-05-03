@@ -798,6 +798,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         Object vpcId = cmd.getVpcId();
         Object affinityGroupId = cmd.getAffinityGroupId();
         Object serviceOffId = cmd.getServiceOfferingId();
+        Object ipAddress = cmd.getIpAddress();
         Object pod = null;
         Object hostId = null;
         Object storageId = null;
@@ -818,6 +819,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         sb.and("podId", sb.entity().getPodId(), SearchCriteria.Op.EQ);
         sb.and("hypervisorType", sb.entity().getHypervisorType(), SearchCriteria.Op.EQ);
         sb.and("hostIdEQ", sb.entity().getHostId(), SearchCriteria.Op.EQ);
+        sb.and("ipAddressEQ", sb.entity().getIpAddress(), SearchCriteria.Op.EQ);
         sb.and("templateId", sb.entity().getTemplateId(), SearchCriteria.Op.EQ);
         sb.and("isoId", sb.entity().getIsoId(), SearchCriteria.Op.EQ);
         sb.and("instanceGroupId", sb.entity().getInstanceGroupId(), SearchCriteria.Op.EQ);
@@ -920,6 +922,10 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
 
         if (state != null) {
             sc.setParameters("stateEQ", state);
+        }
+
+        if (ipAddress != null) {
+            sc.setParameters("ipAddressEQ", ipAddress);
         }
 
         if (hypervisor != null) {

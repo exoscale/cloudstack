@@ -126,6 +126,9 @@ public class ListVMsCmd extends BaseListTaggedResourcesCmd {
     @Parameter(name = ApiConstants.DISPLAY_VM, type = CommandType.BOOLEAN, description = "list resources by display flag; only ROOT admin is eligible to pass this parameter", since = "4.4", authorized = {RoleType.Admin})
     private Boolean display;
 
+    @Parameter(name = ApiConstants.IP_ADDRESS, type = CommandType.STRING, description = "an IP address to filter the result")
+    private String ipAddress;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -182,6 +185,10 @@ public class ListVMsCmd extends BaseListTaggedResourcesCmd {
 
     public Long getAffinityGroupId() {
         return affinityGroupId;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
     }
 
     public EnumSet<VMDetails> getDetails() throws InvalidParameterValueException {
