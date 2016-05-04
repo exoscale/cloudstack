@@ -330,7 +330,7 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
             SnapshotVO freshSnapshot = _snapshotDao.findById(snapshot.getId());
             if ((freshSnapshot != null) && backedUp) {
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_SNAPSHOT_CREATE, snapshot.getAccountId(), snapshot.getDataCenterId(), snapshotId, snapshot.getName(),
-                    null, null, volume.getSize(), snapshot.getClass().getName(), snapshot.getUuid());
+                    null, null, null, null, volume.getSize(), snapshot.getClass().getName(), snapshot.getUuid());
             }
             _resourceLimitMgr.incrementResourceCount(snapshotOwner.getId(), ResourceType.snapshot);
 
@@ -438,7 +438,7 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
             if (result) {
                 if (snapshotCheck.getState() == Snapshot.State.BackedUp) {
                     UsageEventUtils.publishUsageEvent(EventTypes.EVENT_SNAPSHOT_DELETE, snapshotCheck.getAccountId(), snapshotCheck.getDataCenterId(), snapshotId,
-                        snapshotCheck.getName(), null, null, 0L, snapshotCheck.getClass().getName(), snapshotCheck.getUuid());
+                        snapshotCheck.getName(), null, null, null, null, 0L, snapshotCheck.getClass().getName(), snapshotCheck.getUuid());
                 }
                 if (snapshotCheck.getState() != Snapshot.State.Error && snapshotCheck.getState() != Snapshot.State.Destroyed)
                 _resourceLimitMgr.decrementResourceCount(snapshotCheck.getAccountId(), ResourceType.snapshot);
@@ -637,7 +637,7 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
 
                     // Log event after successful deletion
                     UsageEventUtils.publishUsageEvent(EventTypes.EVENT_SNAPSHOT_DELETE, snapshot.getAccountId(), volume.getDataCenterId(), snapshot.getId(),
-                        snapshot.getName(), null, null, volume.getSize(), snapshot.getClass().getName(), snapshot.getUuid());
+                        snapshot.getName(), null, null, null, null, volume.getSize(), snapshot.getClass().getName(), snapshot.getUuid());
                 }
             }
         }

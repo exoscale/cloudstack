@@ -35,6 +35,7 @@ import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.offering.DiskOffering;
 import com.cloud.server.ManagementService;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
@@ -1179,9 +1180,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         oldDefaultNetwork = _networkModel.getDefaultNetworkForVm(vmId);
         String oldNicIdString = Long.toString(_networkModel.getDefaultNic(vmId).getId());
         long oldNetworkOfferingId = -1L;
+        String oldNetworkOfferingUuid = null;
 
         if (oldDefaultNetwork != null) {
             oldNetworkOfferingId = oldDefaultNetwork.getNetworkOfferingId();
+            final NetworkOffering networkOffering = _networkOfferingDao.findByIdIncludingRemoved(oldNetworkOfferingId);
+            if (networkOffering != null) {
+                oldNetworkOfferingUuid = networkOffering.getUuid();
+            }
         }
         NicVO existingVO = _nicDao.findById(existing.id);
         Integer chosenID = nic.getDeviceId();
@@ -1216,14 +1222,19 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             s_logger.debug("successfully set default network to " + network + " for " + vmInstance);
             String nicIdString = Long.toString(nic.getId());
             long newNetworkOfferingId = network.getNetworkOfferingId();
+            final NetworkOffering networkOffering = _networkOfferingDao.findByIdIncludingRemoved(newNetworkOfferingId);
+            String newNetworkOfferingUuid = null;
+            if (networkOffering != null) {
+                newNetworkOfferingUuid = networkOffering.getUuid();
+            }
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_REMOVE, vmInstance.getAccountId(), vmInstance.getDataCenterId(), vmInstance.getId(),
-                    oldNicIdString, oldNetworkOfferingId, null, 1L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
+                    oldNicIdString, oldNetworkOfferingId, oldNetworkOfferingUuid, null, null, 1L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_ASSIGN, vmInstance.getAccountId(), vmInstance.getDataCenterId(), vmInstance.getId(), nicIdString,
-                    newNetworkOfferingId, null, 1L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
+                    newNetworkOfferingId, newNetworkOfferingUuid, null, null, 1L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_REMOVE, vmInstance.getAccountId(), vmInstance.getDataCenterId(), vmInstance.getId(), nicIdString,
-                    newNetworkOfferingId, null, 0L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
+                    newNetworkOfferingId, newNetworkOfferingUuid, null, null, 0L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_ASSIGN, vmInstance.getAccountId(), vmInstance.getDataCenterId(), vmInstance.getId(),
-                    oldNicIdString, oldNetworkOfferingId, null, 0L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
+                    oldNicIdString, oldNetworkOfferingId, oldNetworkOfferingUuid, null, null, 0L, VirtualMachine.class.getName(), vmInstance.getUuid(), vmInstance.isDisplay());
             return _vmDao.findById(vmInstance.getId());
         }
 
@@ -1582,16 +1593,23 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
                 // Create an event
                 Long templateId = volume.getTemplateId();
+                final VirtualMachineTemplate vmTemplate = _templateDao.findByIdIncludingRemoved(templateId);
+                String templateUuid = null;
+                if (vmTemplate != null) {
+                    templateUuid = vmTemplate.getUuid();
+                }
                 Long diskOfferingId = volume.getDiskOfferingId();
                 Long offeringId = null;
+                String offeringUuid = null;
                 if (diskOfferingId != null) {
-                            DiskOfferingVO offering = _diskOfferingDao.findById(diskOfferingId);
-                            if (offering != null && (offering.getType() == DiskOfferingVO.Type.Disk)) {
+                    DiskOfferingVO offering = _diskOfferingDao.findById(diskOfferingId);
+                    if (offering != null && (offering.getType() == DiskOfferingVO.Type.Disk)) {
                         offeringId = offering.getId();
+                        offeringUuid = offering.getUuid();
                     }
                 }
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
-                        offeringId, templateId, volume.getSize(), Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
+                        offeringId, offeringUuid, templateId, templateUuid, volume.getSize(), Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
             }
         }
 
@@ -1643,7 +1661,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         _itMgr.registerGuru(VirtualMachine.Type.User, this);
 
-        VirtualMachine.State.getStateMachine().registerListener(new UserVmStateListener(_usageEventDao, _networkDao, _nicDao, _offeringDao, _vmDao, this));
+        VirtualMachine.State.getStateMachine().registerListener(new UserVmStateListener(_usageEventDao, _networkDao, _networkOfferingDao, _nicDao, _offeringDao, _vmDao, this));
 
         String value = _configDao.getValue(Config.SetVmInternalNameUsingDisplayName.key());
         _instanceNameFlag = (value == null) ? false : Boolean.parseBoolean(value);
@@ -1951,7 +1969,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             NetworkVO network = _networkDao.findById(nic.getNetworkId());
             long isDefault = (nic.isDefaultNic()) ? 1 : 0;
             UsageEventUtils.publishUsageEvent(eventType, vm.getAccountId(), vm.getDataCenterId(), vm.getId(),
-                    Long.toString(nic.getId()), network.getNetworkOfferingId(), null, isDefault, vm.getClass().getName(), vm.getUuid(), isDisplay);
+                    Long.toString(nic.getId()), network.getNetworkOfferingId(), network.getUuid(), null, null, isDefault, vm.getClass().getName(), vm.getUuid(), isDisplay);
         }
 
     }
@@ -3100,10 +3118,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 CallContext.current().setEventDetails("Vm Id: " + vm.getId());
 
                 if (!offering.isDynamic()) {
-                    UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, accountId, zone.getId(), vm.getId(), vm.getHostName(), offering.getId(), template.getId(),
+                    UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, accountId, zone.getId(), vm.getId(), vm.getHostName(), offering.getId(), offering.getUuid(), template.getId(), template.getUuid(),
                             hypervisorType.toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm());
                 } else {
-                    UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, accountId, zone.getId(), vm.getId(), vm.getHostName(), offering.getId(), template.getId(),
+                    UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, accountId, zone.getId(), vm.getId(), vm.getHostName(), offering.getId(), offering.getUuid(), template.getId(), template.getUuid(),
                             hypervisorType.toString(), VirtualMachine.class.getName(), vm.getUuid(), customParameters, vm.isDisplayVm());
                 }
 
@@ -3117,9 +3135,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     @Override
     public void generateUsageEvent(VirtualMachine vm, boolean isDisplay, String eventType){
         ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
+        VirtualMachineTemplate vmTemplate = _templateDao.findById(vm.getTemplateId());
         if (!serviceOffering.isDynamic()) {
             UsageEventUtils.publishUsageEvent(eventType, vm.getAccountId(), vm.getDataCenterId(), vm.getId(),
-                    vm.getHostName(), serviceOffering.getId(), vm.getTemplateId(), vm.getHypervisorType().toString(),
+                    vm.getHostName(), serviceOffering.getId(), serviceOffering.getUuid(), vm.getTemplateId(), vmTemplate.getUuid(), vm.getHypervisorType().toString(),
                     VirtualMachine.class.getName(), vm.getUuid(), isDisplay);
         }
         else {
@@ -3128,7 +3147,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             customParameters.put(UsageEventVO.DynamicParameters.cpuSpeed.name(), serviceOffering.getSpeed().toString());
             customParameters.put(UsageEventVO.DynamicParameters.memory.name(), serviceOffering.getRamSize().toString());
             UsageEventUtils.publishUsageEvent(eventType, vm.getAccountId(), vm.getDataCenterId(), vm.getId(),
-                    vm.getHostName(), serviceOffering.getId(), vm.getTemplateId(), vm.getHypervisorType().toString(),
+                    vm.getHostName(), serviceOffering.getId(), serviceOffering.getUuid(), vm.getTemplateId(), vmTemplate.getUuid(), vm.getHypervisorType().toString(),
                     VirtualMachine.class.getName(), vm.getUuid(), customParameters, isDisplay);
         }
     }
@@ -3306,7 +3325,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             NetworkVO network = _networkDao.findById(nic.getNetworkId());
             long isDefault = (nic.isDefaultNic()) ? 1 : 0;
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_ASSIGN, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), Long.toString(nic.getId()),
-                    network.getNetworkOfferingId(), null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
+                    network.getNetworkOfferingId(), network.getUuid(), null, null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
             if (network.getTrafficType() == TrafficType.Guest) {
                 originalIp = nic.getIp4Address();
                 guestNic = nic;
@@ -4375,6 +4394,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         final ServiceOfferingVO offering = _serviceOfferingDao.findByIdIncludingRemoved(vm.getId(), vm.getServiceOfferingId());
         final List<VolumeVO> volumes = _volsDao.findByInstance(cmd.getVmId());
 
+        // Get template
+        final VirtualMachineTemplate vmTemplate = _templateDao.findById(vm.getTemplateId());
+
         //Remove vm from instance group
         removeInstanceFromInstanceGroup(cmd.getVmId());
 
@@ -4403,13 +4425,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _accountMgr.checkAccess(newAccount, domain);
 
         final Nic nic = _networkModel.getDefaultNic(cmd.getVmId());
+        final Map<Long, DiskOffering> diskOfferings = new HashMap<>();
 
         Transaction.execute(new TransactionCallbackNoReturn() {
             @Override
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 //generate destroy vm event for usage
-                UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_DESTROY, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), vm.getHostName(), vm.getServiceOfferingId(),
-                        vm.getTemplateId(), vm.getHypervisorType().toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm(), (nic != null) ? nic.getIp4Address() : null);
+                UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_DESTROY, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), vm.getHostName(), vm.getServiceOfferingId(), offering.getUuid(),
+                        vm.getTemplateId(), vmTemplate.getUuid(), vm.getHypervisorType().toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm(), (nic != null) ? nic.getIp4Address() : null);
 
                 // update resource counts for old account
                 resourceCountDecrement(oldAccount.getAccountId(), vm.isDisplayVm(), new Long(offering.getCpu()), new Long(offering.getRamSize()));
@@ -4430,8 +4453,16 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     _volsDao.persist(volume);
                     _resourceLimitMgr.incrementResourceCount(newAccount.getAccountId(), ResourceType.volume);
                     _resourceLimitMgr.incrementResourceCount(newAccount.getAccountId(), ResourceType.primary_storage, new Long(volume.getSize()));
+                    String diskOfferingUuid = null;
+                    if (diskOfferings.containsKey(volume.getDiskOfferingId())) {
+                        diskOfferingUuid = diskOfferings.get(volume.getDiskOfferingId()).getUuid();
+                    } else {
+                        DiskOffering dOffer = _diskOfferingDao.findById(volume.getDiskOfferingId());
+                        diskOfferingUuid = dOffer.getUuid();
+                        diskOfferings.put(volume.getDiskOfferingId(), dOffer);
+                    }
                     UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
-                            volume.getDiskOfferingId(), volume.getTemplateId(), volume.getSize(), Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
+                            volume.getDiskOfferingId(), diskOfferingUuid, volume.getTemplateId(), vmTemplate.getUuid(), volume.getSize(), Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
                     //snapshots: mark these removed in db
                     List<SnapshotVO> snapshots = _snapshotDao.listByVolumeIdIncludingRemoved(volume.getId());
                     for (SnapshotVO snapshot : snapshots) {
@@ -4443,8 +4474,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 resourceCountIncrement(newAccount.getAccountId(), vm.isDisplayVm(), new Long(offering.getCpu()), new Long(offering.getRamSize()));
 
                 //generate usage events to account for this change
-                UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), vm.getHostName(), vm.getServiceOfferingId(),
-                        vm.getTemplateId(), vm.getHypervisorType().toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm());
+                UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), vm.getHostName(), vm.getServiceOfferingId(), offering.getUuid(),
+                        vm.getTemplateId(), vmTemplate.getUuid(), vm.getHypervisorType().toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm());
             }
         });
 

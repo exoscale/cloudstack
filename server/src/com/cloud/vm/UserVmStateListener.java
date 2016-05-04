@@ -24,6 +24,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.cloud.offering.NetworkOffering;
+import com.cloud.offerings.dao.NetworkOfferingDao;
 import com.cloud.server.ManagementService;
 import com.cloud.vm.dao.UserVmDao;
 import org.apache.log4j.Logger;
@@ -49,6 +51,7 @@ public class UserVmStateListener implements StateListener<State, VirtualMachine.
     @Inject protected UsageEventDao _usageEventDao;
     @Inject protected NetworkDao _networkDao;
     @Inject protected NicDao _nicDao;
+    @Inject protected NetworkOfferingDao _networkOfferingDao;
     @Inject protected ServiceOfferingDao _offeringDao;
     @Inject protected UserVmDao _userVmDao;
     @Inject protected UserVmManager _userVmMgr;
@@ -56,9 +59,10 @@ public class UserVmStateListener implements StateListener<State, VirtualMachine.
 
     protected static EventBus s_eventBus = null;
 
-    public UserVmStateListener(UsageEventDao usageEventDao, NetworkDao networkDao, NicDao nicDao, ServiceOfferingDao offeringDao, UserVmDao userVmDao, UserVmManager userVmMgr) {
+    public UserVmStateListener(UsageEventDao usageEventDao, NetworkDao networkDao, NetworkOfferingDao networkOfferingDao, NicDao nicDao, ServiceOfferingDao offeringDao, UserVmDao userVmDao, UserVmManager userVmMgr) {
         this._usageEventDao = usageEventDao;
         this._networkDao = networkDao;
+        this._networkOfferingDao = networkOfferingDao;
         this._nicDao = nicDao;
         this._offeringDao = offeringDao;
         this._userVmDao = userVmDao;
@@ -92,8 +96,9 @@ public class UserVmStateListener implements StateListener<State, VirtualMachine.
             List<NicVO> nics = _nicDao.listByVmId(vo.getId());
             for (NicVO nic : nics) {
                 NetworkVO network = _networkDao.findById(nic.getNetworkId());
+                NetworkOffering offering = _networkOfferingDao.findByIdIncludingRemoved(network.getNetworkOfferingId());
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_REMOVE, vo.getAccountId(), vo.getDataCenterId(), vo.getId(),
-                    Long.toString(nic.getId()), network.getNetworkOfferingId(), null, 0L, vo.getClass().getName(), vo.getUuid(), vo.isDisplay());
+                    Long.toString(nic.getId()), network.getNetworkOfferingId(), (offering == null ? null : offering.getUuid()), null, null, 0L, vo.getClass().getName(), vo.getUuid(), vo.isDisplay());
             }
         } else if (VirtualMachine.State.isVmDestroyed(oldState, event, newState)) {
             generateUsageEvent(vo.getServiceOfferingId(), vo, EventTypes.EVENT_VM_DESTROY);
