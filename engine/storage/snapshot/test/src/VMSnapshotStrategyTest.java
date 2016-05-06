@@ -25,6 +25,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import com.cloud.storage.dao.VMTemplateDao;
 import junit.framework.TestCase;
 
 import org.junit.Before;
@@ -306,6 +307,11 @@ public class VMSnapshotStrategyTest extends TestCase {
         @Bean
         public HostDao hostDao() {
             return Mockito.mock(HostDao.class);
+        }
+
+        @Bean
+        public VMTemplateDao vmTemplateDao() {
+            return Mockito.mock(VMTemplateDao.class);
         }
     }
 }
