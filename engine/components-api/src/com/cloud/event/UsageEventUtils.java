@@ -76,6 +76,9 @@ public class UsageEventUtils {
         if (templateUuid != null) {
                 eventDescription.put("templateid", templateUuid);
         }
+        if (size != null) {
+            eventDescription.put("size", size.toString());
+        }
         publishUsageEvent(usageType, accountId, zoneId, entityType, entityUUID, eventDescription);
     }
 
