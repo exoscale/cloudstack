@@ -953,6 +953,7 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
             final DiskOffering diskOffering = _diskOfferingDao.findByIdIncludingRemoved(volume.getDiskOfferingId());
             final VirtualMachineTemplate vmTemplate = _templateDao.findByIdIncludingRemoved(volume.getTemplateId());
             // Log usage event for volumes belonging user VM's only
+            s_logger.debug("publish usage events for EVENT_VOLUME_RESIZE with size: " + (volume.getSize() == null ? "null" : volume.getSize()));
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_RESIZE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
                     volume.getDiskOfferingId(), (diskOffering == null ? null : diskOffering.getUuid()), volume.getTemplateId(), (vmTemplate == null ? null : vmTemplate.getUuid()),
                     volume.getSize(), Volume.class.getName(), volume.getUuid());
