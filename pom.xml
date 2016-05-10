@@ -120,7 +120,7 @@
     <cs.opensaml.version>2.6.1</cs.opensaml.version>
     <cs.xml-apis.version>1.4.01</cs.xml-apis.version>
     <cs.joda-time.version>2.8.1</cs.joda-time.version>
-    <cs.snakeyaml.version>1.15</cs.snakeyaml.version>
+    <cs.snakeyaml.version>1.17</cs.snakeyaml.version>
   </properties>
 
   <inceptionYear>2012</inceptionYear>
