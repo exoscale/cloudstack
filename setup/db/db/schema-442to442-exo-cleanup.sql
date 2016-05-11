@@ -1,7 +1,7 @@
 -- DB cleanup
 -- https://github.com/apache/cloudstack/pull/1466
 
------ Duplicate PRIMARY KEY
+-- --- Duplicate PRIMARY KEY
 ALTER TABLE `cloud`.`user_vm` DROP INDEX `id` ;
 ALTER TABLE `cloud`.`domain_router` DROP INDEX `id` ;
 ALTER TABLE `cloud`.`vm_instance` DROP INDEX `id` ;
@@ -57,6 +57,6 @@ ALTER TABLE `cloud`.`vpc_gateways` DROP INDEX `id` ;
 ALTER TABLE `cloud`.`vpn_users` DROP INDEX `id` ;
 
 
------ Missing indexes (Add indexes to avoid full table scans)
+-- --- Missing indexes (Add indexes to avoid full table scans)
 ALTER TABLE `cloud`.`vm_network_map` ADD INDEX `i_vm_id` (`vm_id` ASC);
 ALTER TABLE `cloud`.`user_vm_details` ADD INDEX `i_name_vm_id` (`vm_id` ASC, `name` ASC);
