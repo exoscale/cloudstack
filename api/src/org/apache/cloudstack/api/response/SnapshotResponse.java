@@ -58,6 +58,10 @@ public class SnapshotResponse extends BaseResponse implements ControlledEntityRe
     @Param(description = "the type of the snapshot")
     private String snapshotType;
 
+    @SerializedName(ApiConstants.SIZE)
+    @Param(description = "the size of the snapshot")
+    private Long size;
+
     @SerializedName(ApiConstants.VOLUME_ID)
     @Param(description = "ID of the disk volume")
     private String volumeId;
@@ -136,6 +140,10 @@ public class SnapshotResponse extends BaseResponse implements ControlledEntityRe
 
     public void setSnapshotType(String snapshotType) {
         this.snapshotType = snapshotType;
+    }
+
+    public void setSize(long size) {
+        this.size = new Long(size);
     }
 
     public void setVolumeId(String volumeId) {
