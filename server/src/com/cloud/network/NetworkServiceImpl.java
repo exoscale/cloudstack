@@ -2056,8 +2056,8 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
         boolean networkOfferingChanged = false;
 
         final long oldNetworkOfferingId = network.getNetworkOfferingId();
-        NetworkOffering oldNtwkOff = _networkOfferingDao.findByIdIncludingRemoved(oldNetworkOfferingId);
-        NetworkOfferingVO networkOffering = _networkOfferingDao.findById(networkOfferingId);
+        final NetworkOffering oldNtwkOff = _networkOfferingDao.findByIdIncludingRemoved(oldNetworkOfferingId);
+        final NetworkOfferingVO networkOffering = _networkOfferingDao.findById(networkOfferingId);
         if (networkOfferingId != null) {
             if (networkOffering == null || networkOffering.isSystemOnly()) {
                 InvalidParameterValueException ex = new InvalidParameterValueException("Unable to find network offering with specified id");
@@ -2305,9 +2305,9 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                     long isDefault = (nic.isDefaultNic()) ? 1 : 0;
                     String nicIdString = Long.toString(nic.getId());
                             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_REMOVE, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), nicIdString,
-                                    oldNetworkOfferingId, null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
+                                    oldNetworkOfferingId, oldNtwkOff.getUuid(), null, null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
                             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_ASSIGN, vm.getAccountId(), vm.getDataCenterId(), vm.getId(), nicIdString,
-                                    networkOfferingId, null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
+                                    networkOfferingId, networkOffering.getUuid(), null, null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
                 }
                     }
                 });

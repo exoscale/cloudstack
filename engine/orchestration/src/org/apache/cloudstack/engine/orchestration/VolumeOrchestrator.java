@@ -614,7 +614,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
         // Save usage event and update resource count for user vm volumes
         if (vm.getType() == VirtualMachine.Type.User) {
-            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, vol.getAccountId(), vol.getDataCenterId(), vol.getId(), vol.getName(), offering.getId(), null, size,
+            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, vol.getAccountId(), vol.getDataCenterId(), vol.getId(), vol.getName(), offering.getId(), offering.getUuid(), null, null, size,
                     Volume.class.getName(), vol.getUuid(), vol.isDisplayVolume());
 
             _resourceLimitMgr.incrementResourceCount(vm.getAccountId(), ResourceType.volume, vol.isDisplayVolume());
@@ -673,7 +673,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
 
             offeringId = offering.getId();
 
-            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, vol.getAccountId(), vol.getDataCenterId(), vol.getId(), vol.getName(), offeringId, vol.getTemplateId(), size,
+            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, vol.getAccountId(), vol.getDataCenterId(), vol.getId(), vol.getName(), offeringId, offering.getUuid(), vol.getTemplateId(), template.getUuid(), size,
                     Volume.class.getName(), vol.getUuid(), vol.isDisplayVolume());
 
             _resourceLimitMgr.incrementResourceCount(vm.getAccountId(), ResourceType.volume, vol.isDisplayVolume());

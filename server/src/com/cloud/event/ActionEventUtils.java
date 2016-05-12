@@ -219,6 +219,7 @@ public class ActionEventUtils {
             new org.apache.cloudstack.framework.events.Event(ManagementService.Name, eventCategory, eventType, EventTypes.getEntityForEvent(eventType), entityUuid);
 
         Map<String, String> eventDescription = new HashMap<String, String>();
+        eventDescription.put("type", "action");
         Project project = s_projectDao.findByProjectAccountId(accountId);
         Account account = s_accountDao.findById(accountId);
         User user = s_userDao.findById(userId);

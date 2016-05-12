@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 
+import com.cloud.offering.DiskOffering;
+import com.cloud.template.VirtualMachineTemplate;
 import com.cloud.utils.DateUtil;
 import org.apache.log4j.Logger;
 
@@ -627,9 +629,10 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         volume = _volsDao.persist(volume);
         if (cmd.getSnapshotId() == null && displayVolume) {
+            final DiskOffering diskOffering = _diskOfferingDao.findByIdIncludingRemoved(diskOfferingId);
             // for volume created from snapshot, create usage event after volume creation
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
-                    diskOfferingId, null, size, Volume.class.getName(), volume.getUuid(), displayVolume);
+                    diskOfferingId, (diskOffering == null ? null : diskOffering.getUuid()), null, null, size, Volume.class.getName(), volume.getUuid(), displayVolume);
         }
 
         CallContext.current().setEventDetails("Volume Id: " + volume.getId());
@@ -713,8 +716,10 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         createdVolume = _volumeMgr.createVolumeFromSnapshot(volume, snapshot, vm);
         VolumeVO volumeVo = _volsDao.findById(createdVolume.getId());
+        final DiskOffering diskOffering = _diskOfferingDao.findByIdIncludingRemoved(createdVolume.getDiskOfferingId());
+
         UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, createdVolume.getAccountId(), createdVolume.getDataCenterId(), createdVolume.getId(),
-                createdVolume.getName(), createdVolume.getDiskOfferingId(), null, createdVolume.getSize(), Volume.class.getName(), createdVolume.getUuid(), volumeVo.isDisplayVolume());
+                createdVolume.getName(), createdVolume.getDiskOfferingId(), diskOffering.getUuid(), null, null, createdVolume.getSize(), Volume.class.getName(), createdVolume.getUuid(), volumeVo.isDisplayVolume());
 
         return volumeVo;
     }
@@ -945,9 +950,12 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
                 volume.setDiskOfferingId(newDiskOfferingId);
             }
             _volsDao.update(volume.getId(), volume);
+            final DiskOffering diskOffering = _diskOfferingDao.findByIdIncludingRemoved(volume.getDiskOfferingId());
+            final VirtualMachineTemplate vmTemplate = _templateDao.findByIdIncludingRemoved(volume.getTemplateId());
             // Log usage event for volumes belonging user VM's only
             UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_RESIZE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
-                    volume.getDiskOfferingId(), volume.getTemplateId(), volume.getSize(), Volume.class.getName(), volume.getUuid());
+                    volume.getDiskOfferingId(), (diskOffering == null ? null : diskOffering.getUuid()), volume.getTemplateId(), (vmTemplate == null ? null : vmTemplate.getUuid()),
+                    volume.getSize(), Volume.class.getName(), volume.getUuid());
 
             /* Update resource count for the account on primary storage resource */
             if (!shrinkOk) {
@@ -1338,9 +1346,12 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
         // Update only when the flag has changed  &&  only when volume in a non-destroyed state.
         if ((displayVolume != null && displayVolume != volume.isDisplayVolume()) && !isVolumeDestroyed(volume)){
             if (displayVolume){
+                final DiskOffering diskOffering = _diskOfferingDao.findByIdIncludingRemoved(volume.getDiskOfferingId());
+                final VirtualMachineTemplate vmTemplate = _templateDao.findByIdIncludingRemoved(volume.getTemplateId());
                 // flag turned 1 equivalent to freshly created volume
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_CREATE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
-                        volume.getDiskOfferingId(), volume.getTemplateId(), volume.getSize(), Volume.class.getName(), volume.getUuid());
+                        volume.getDiskOfferingId(), (diskOffering == null ? null : diskOffering.getUuid()), volume.getTemplateId(), (vmTemplate == null ? null : vmTemplate.getUuid()),
+                        volume.getSize(), Volume.class.getName(), volume.getUuid());
             }else {
                 // flag turned 0 equivalent to deleting a volume
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_DELETE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),

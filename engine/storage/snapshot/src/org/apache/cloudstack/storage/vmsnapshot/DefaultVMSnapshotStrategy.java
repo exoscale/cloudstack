@@ -24,6 +24,8 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.storage.dao.VMTemplateDao;
+import com.cloud.template.VirtualMachineTemplate;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.engine.subsystem.api.storage.StrategyPriority;
@@ -93,6 +95,8 @@ public class DefaultVMSnapshotStrategy extends ManagerBase implements VMSnapshot
     DiskOfferingDao diskOfferingDao;
     @Inject
     HostDao hostDao;
+    @Inject
+    VMTemplateDao templateDao;
 
     @Override
     public boolean configure(String name, Map<String, Object> params) throws ConfigurationException {
@@ -316,14 +320,17 @@ public class DefaultVMSnapshotStrategy extends ManagerBase implements VMSnapshot
         VolumeVO volume = volumeDao.findById(volumeTo.getId());
         Long diskOfferingId = volume.getDiskOfferingId();
         Long offeringId = null;
+        String offeringUuid = null;
         if (diskOfferingId != null) {
             DiskOfferingVO offering = diskOfferingDao.findById(diskOfferingId);
             if (offering != null && (offering.getType() == DiskOfferingVO.Type.Disk)) {
                 offeringId = offering.getId();
+                offeringUuid = offering.getUuid();
             }
         }
-        UsageEventUtils.publishUsageEvent(type, vmSnapshot.getAccountId(), userVm.getDataCenterId(), userVm.getId(), vmSnapshot.getName(), offeringId, volume.getId(), // save volume's id into templateId field
-            volumeTo.getSize(), VMSnapshot.class.getName(), vmSnapshot.getUuid());
+        VirtualMachineTemplate vmTemplate = templateDao.findByIdIncludingRemoved(userVm.getTemplateId());
+        UsageEventUtils.publishUsageEvent(type, vmSnapshot.getAccountId(), userVm.getDataCenterId(), userVm.getId(), vmSnapshot.getName(), offeringId, offeringUuid, volume.getId(), // save volume's id into templateId field
+                (vmTemplate == null ? null : vmTemplate.getUuid()), volumeTo.getSize(), VMSnapshot.class.getName(), vmSnapshot.getUuid());
     }
 
     @Override

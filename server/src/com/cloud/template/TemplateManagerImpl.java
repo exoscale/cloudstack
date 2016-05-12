@@ -662,7 +662,7 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
                 _tmpltDao.addTemplateToZone(template, dstZoneId);
 
                 if (account.getId() != Account.ACCOUNT_ID_SYSTEM) {
-                    UsageEventUtils.publishUsageEvent(copyEventType, account.getId(), dstZoneId, tmpltId, null, null, null, srcTmpltStore.getPhysicalSize(),
+                    UsageEventUtils.publishUsageEvent(copyEventType, account.getId(), dstZoneId, tmpltId, srcTemplate.getUuid(), null, null, null, null, srcTmpltStore.getPhysicalSize(),
                             srcTmpltStore.getSize(), template.getClass().getName(), template.getUuid());
                 }
                 return true;

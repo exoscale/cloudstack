@@ -41,6 +41,8 @@ import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.offering.NetworkOffering;
+import com.cloud.offerings.dao.NetworkOfferingDao;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.affinity.dao.AffinityGroupVMMapDao;
@@ -235,6 +237,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
     protected ServiceOfferingDao _offeringDao;
     @Inject
     protected DiskOfferingDao _diskOfferingDao;
+    @Inject
+    protected NetworkOfferingDao _networkOfferingDao;
     @Inject
     protected VMTemplateDao _templateDao;
     @Inject
@@ -3503,8 +3507,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                     s_logger.debug("Nic is plugged successfully for vm " + vm + " in network " + network + ". Vm  is a part of network now");
                     long isDefault = (nic.isDefaultNic()) ? 1 : 0;
                     // insert nic's Id into DB as resource_name
+                    NetworkOffering networkOffering = _networkOfferingDao.findByIdIncludingRemoved(network.getNetworkOfferingId());
                     UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_ASSIGN, vmVO.getAccountId(), vmVO.getDataCenterId(), vmVO.getId(),
-                            Long.toString(nic.getId()), network.getNetworkOfferingId(), null, isDefault, VirtualMachine.class.getName(), vmVO.getUuid(), vm.isDisplay());
+                            Long.toString(nic.getId()), network.getNetworkOfferingId(), (networkOffering == null ? null : networkOffering.getUuid()), null, null, isDefault, VirtualMachine.class.getName(), vmVO.getUuid(), vm.isDisplay());
                     return nic;
                 } else {
                     s_logger.warn("Failed to plug nic to the vm " + vm + " in network " + network);
@@ -3619,8 +3624,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             if (result) {
                 s_logger.debug("Nic is unplugged successfully for vm " + vm + " in network " + network);
                 long isDefault = (nic.isDefaultNic()) ? 1 : 0;
+                NetworkOffering networkOffering = _networkOfferingDao.findByIdIncludingRemoved(network.getNetworkOfferingId());
                 UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NETWORK_OFFERING_REMOVE, vm.getAccountId(), vm.getDataCenterId(), vm.getId(),
-                        Long.toString(nic.getId()), network.getNetworkOfferingId(), null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
+                        Long.toString(nic.getId()), network.getNetworkOfferingId(), (networkOffering == null ? null : networkOffering.getUuid()), null, null, isDefault, VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplay());
             } else {
                 s_logger.warn("Failed to unplug nic for the vm " + vm + " from network " + network);
                 return false;
