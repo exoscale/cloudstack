@@ -59,8 +59,12 @@ public class SnapshotResponse extends BaseResponse implements ControlledEntityRe
     private String snapshotType;
 
     @SerializedName(ApiConstants.SIZE)
-    @Param(description = "the size of the snapshot")
+    @Param(description = "the size of original volume")
     private Long size;
+
+    @SerializedName(ApiConstants.PHYSICAL_SIZE)
+    @Param(description = "physical size of the snapshot on image store")
+    private long physicalSize;
 
     @SerializedName(ApiConstants.VOLUME_ID)
     @Param(description = "ID of the disk volume")
@@ -172,6 +176,10 @@ public class SnapshotResponse extends BaseResponse implements ControlledEntityRe
 
     public void setState(Snapshot.State state) {
         this.state = state;
+    }
+
+    public void setPhysicaSize(long physicalSize) {
+        this.physicalSize = physicalSize;
     }
 
     @Override

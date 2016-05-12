@@ -458,7 +458,7 @@ public class ApiResponseHelper implements ResponseGenerator {
         snapshotResponse.setName(snapshot.getName());
         snapshotResponse.setIntervalType(ApiDBUtils.getSnapshotIntervalTypes(snapshot.getId()));
         snapshotResponse.setState(snapshot.getState());
-
+        snapshotResponse.setSize(snapshot.getSize());
         SnapshotInfo snapshotInfo = null;
         if (!(snapshot instanceof SnapshotInfo)) {
             snapshotInfo = snapshotfactory.getSnapshot(snapshot.getId(), DataStoreRole.Image);
@@ -470,7 +470,8 @@ public class ApiResponseHelper implements ResponseGenerator {
             s_logger.debug("Unable to find info for image store snapshot with uuid " + snapshot.getUuid());
             snapshotResponse.setRevertable(false);
         } else {
-        snapshotResponse.setRevertable(snapshotInfo.isRevertable());
+            snapshotResponse.setRevertable(snapshotInfo.isRevertable());
+            snapshotResponse.setPhysicaSize(snapshotInfo.getPhysicalSize());
         }
 
         // set tag information

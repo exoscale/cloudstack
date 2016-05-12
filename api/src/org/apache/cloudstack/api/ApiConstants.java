@@ -607,6 +607,7 @@ public class ApiConstants {
     public static final String READ_ONLY = "readonly";
     public static final String STRECHED_L2_SUBNET = "strechedl2subnet";
     public static final String NETWORK_SPANNED_ZONES = "zonesnetworkspans";
+    public static final String PHYSICAL_SIZE = "physicalsize";
 
     public enum HostDetails {
         all, capacity, events, stats, min;
