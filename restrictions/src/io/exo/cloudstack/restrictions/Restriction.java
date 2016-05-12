@@ -1,4 +1,4 @@
-package io.exo.csrestrictions;
+package io.exo.cloudstack.restrictions;
 
 import java.util.regex.Pattern;
 
