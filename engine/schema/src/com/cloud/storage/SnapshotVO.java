@@ -73,7 +73,7 @@ public class SnapshotVO implements Snapshot {
     String typeDescription;
 
     @Column(name = "size")
-    long size;
+    Long size;
 
     @Column(name = GenericDao.CREATED_COLUMN)
     Date created;
@@ -180,7 +180,8 @@ public class SnapshotVO implements Snapshot {
         return false;
     }
 
-    public long getSize() {
+    @Override
+    public Long getSize() {
         return size;
     }
 

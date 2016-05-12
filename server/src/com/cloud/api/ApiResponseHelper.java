@@ -448,6 +448,7 @@ public class ApiResponseHelper implements ResponseGenerator {
         VolumeVO volume = findVolumeById(snapshot.getVolumeId());
         String snapshotTypeStr = snapshot.getRecurringType().name();
         snapshotResponse.setSnapshotType(snapshotTypeStr);
+        snapshotResponse.setSize(snapshot.getSize());
         if (volume != null) {
             snapshotResponse.setVolumeId(volume.getUuid());
             snapshotResponse.setVolumeName(volume.getName());
