@@ -89,6 +89,6 @@ public interface Snapshot extends ControlledEntity, Identity, InternalIdentity, 
 
     short getsnapshotType();
 
-    long getSize();
+    Long getSize();
 
 }

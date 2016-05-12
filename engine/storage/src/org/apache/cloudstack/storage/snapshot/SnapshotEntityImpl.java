@@ -119,6 +119,12 @@ public class SnapshotEntityImpl implements SnapshotEntity {
     }
 
     @Override
+    public Long getSize() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
     public long getDomainId() {
         // TODO Auto-generated method stub
         return 0;
