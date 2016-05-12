@@ -59,8 +59,12 @@ public class SnapshotResponse extends BaseResponse implements ControlledEntityRe
     private String snapshotType;
 
     @SerializedName(ApiConstants.SIZE)
-    @Param(description = "the size of the snapshot")
+    @Param(description = "the size of original volume")
     private Long size;
+
+    @SerializedName(ApiConstants.PHYSICAL_SIZE)
+    @Param(description = "physical size of the snapshot on image store")
+    private long physicalSize;
 
     @SerializedName(ApiConstants.VOLUME_ID)
     @Param(description = "ID of the disk volume")
@@ -89,10 +93,6 @@ public class SnapshotResponse extends BaseResponse implements ControlledEntityRe
     @SerializedName(ApiConstants.STATE)
     @Param(description = "the state of the snapshot. BackedUp means that snapshot is ready to be used; Creating - the snapshot is being allocated on the primary storage; BackingUp - the snapshot is being backed up on secondary storage")
     private Snapshot.State state;
-
-    @SerializedName(ApiConstants.PHYSICAL_SIZE)
-    @Param(description = "physical size of backedup snapshot on image store")
-    private long physicalSize;
 
     @SerializedName(ApiConstants.ZONE_ID)
     @Param(description = "id of the availability zone")
