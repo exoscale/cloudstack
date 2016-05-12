@@ -2,7 +2,7 @@ package io.exo.cloudstack.restrictions;
 
 import java.util.List;
 
-public class RestrictionList {
+public class Restrictions {
 
     private List<Restriction> _restrictions;
 

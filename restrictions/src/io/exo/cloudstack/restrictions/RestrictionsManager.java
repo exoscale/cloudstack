@@ -13,21 +13,21 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.utils.PropertiesUtil;
 
-public class RestrictionListManager {
+public class RestrictionsManager {
 
-    private static RestrictionList restrictionList = null;
+    private static Restrictions restrictions = null;
     private static Boolean loaded = false;
 
     private static void loadFromYaml(String data) {
 
-        Constructor ctor = new Constructor(RestrictionList.class);
-        TypeDescription tdesc = new TypeDescription(RestrictionList.class);
+        Constructor ctor = new Constructor(Restrictions.class);
+        TypeDescription tdesc = new TypeDescription(Restrictions.class);
 
         tdesc.putMapPropertyType("restrictions", Restriction.class, Object.class);
         ctor.addTypeDescription(tdesc);
         Yaml parser = new Yaml(ctor);
 
-        restrictionList = (RestrictionList) parser.load(data);
+        restrictions = (Restrictions) parser.load(data);
     }
 
     private static void loadRestrictionList() throws IOException {
@@ -79,6 +79,6 @@ public class RestrictionListManager {
         if (!loaded) /* Only read once at startup */
             loadRestrictionList();
 
-        return restrictionList.getRestrictions();
+        return restrictions.getRestrictions();
     }
 }

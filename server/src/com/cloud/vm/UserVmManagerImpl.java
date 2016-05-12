@@ -275,7 +275,7 @@ import com.cloud.vm.snapshot.VMSnapshotManager;
 import com.cloud.vm.snapshot.VMSnapshotVO;
 import com.cloud.vm.snapshot.dao.VMSnapshotDao;
 
-import io.exo.cloudstack.restrictions.RestrictionListManager;
+import io.exo.cloudstack.restrictions.RestrictionsManager;
 
 public class UserVmManagerImpl extends ManagerBase implements UserVmManager, VirtualMachineGuru, UserVmService, Configurable {
     private static final Logger s_logger = Logger.getLogger(UserVmManagerImpl.class);
@@ -815,7 +815,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
                 String vmNewServiceOfferingName = String.valueOf(newServiceOffering.getName());
-                RestrictionListManager.enforceRestrictions(vmNewServiceOfferingName,
+                RestrictionsManager.enforceRestrictions(vmNewServiceOfferingName,
                                                            null,
                                                            volume.getSize());
             }
@@ -3063,7 +3063,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     // enforce exoscale restrictions
                     ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
                     String vmServiceOfferingName = String.valueOf(serviceOffering.getName());
-                    RestrictionListManager.enforceRestrictions(vmServiceOfferingName, templateVO.getName(), rootDiskSizebytes);
+                    RestrictionsManager.enforceRestrictions(vmServiceOfferingName, templateVO.getName(), rootDiskSizebytes);
                 }
 
                 if (isDisplayVm != null) {
