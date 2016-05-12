@@ -3,40 +3,62 @@ package io.exo.cloudstack.restrictions;
 import java.util.regex.Pattern;
 
 public class Restriction {
-    private Long _maxTemplateSize = null;
-    private String _templateName = null;
-    private Pattern _templateNamePattern = null;
-    private String _serviceOfferingName = null;
+    private Long maxTemplateSize = null;
+    private String templateName = null;
+    private Pattern templateNamePattern = null;
+    private String serviceOfferingName = null;
 
     public Long getMaxTemplateSize() {
-        return _maxTemplateSize;
+        return maxTemplateSize;
     }
 
     public void setMaxTemplateSize(Long maxTemplateSize) {
-        _maxTemplateSize = maxTemplateSize;
+        this.maxTemplateSize = maxTemplateSize;
     }
 
     public String getTemplateName() {
-        return _templateName;
+        return templateName;
     }
 
     public void setTemplateName(String templateName) {
-        _templateName = templateName;
+        this.templateName = templateName;
     }
 
     public String getServiceOfferingName() {
-        return _serviceOfferingName;
+        return serviceOfferingName;
     }
 
     public void setServiceOfferingName(String serviceOfferingName) {
-        _serviceOfferingName = serviceOfferingName;
+        this.serviceOfferingName = serviceOfferingName;
     }
 
     public Pattern getTemplateNamePattern() {
-        if (_templateName != null && _templateNamePattern == null) {
-            _templateNamePattern = Pattern.compile(_templateName);
+        if (templateName != null && templateNamePattern == null) {
+            templateNamePattern = Pattern.compile(templateName);
         }
-        return _templateNamePattern;
+        return templateNamePattern;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder("Restriction {");
+        if (serviceOfferingName != null) {
+            sb.append("serviceOffering: ");
+            sb.append(serviceOfferingName);
+            sb.append(", ");
+        }
+        if (templateName != null) {
+            sb.append("templateName: ");
+            sb.append(templateName);
+            sb.append(", ");
+        }
+        if(maxTemplateSize != null) {
+            sb.append("maxTemplateSize: ");
+            sb.append(maxTemplateSize);
+            sb.append(", ");
+        }
+        sb.replace(sb.length()-2, sb.length(), "");
+        sb.append("}");
+        return  sb.toString();
     }
 
 }

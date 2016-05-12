@@ -6,41 +6,56 @@ import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.constructor.Constructor;
 
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.utils.PropertiesUtil;
 
 public class RestrictionsManager {
+    private static final Logger s_logger = Logger.getLogger(RestrictionsManager.class);
 
     private static Restrictions restrictions = null;
-    private static Boolean loaded = false;
 
-    private static void loadFromYaml(String data) {
-
-        Constructor ctor = new Constructor(Restrictions.class);
-        TypeDescription tdesc = new TypeDescription(Restrictions.class);
-
-        tdesc.putMapPropertyType("restrictions", Restriction.class, Object.class);
-        ctor.addTypeDescription(tdesc);
-        Yaml parser = new Yaml(ctor);
-
-        restrictions = (Restrictions) parser.load(data);
+    public RestrictionsManager() {
+        if (restrictions == null) {
+            restrictions = loadRestrictions();
+        }
     }
 
-    private static void loadRestrictionList() throws IOException {
+    private Restrictions loadRestrictions() {
 
-        final Path path = PropertiesUtil.findConfigFile("restrictions.yaml").toPath();
-        final byte[] ba = Files.readAllBytes(path);
-        final String data = new String(ba, "UTF-8");
+        Restrictions restrictions = null;
+        try {
+            final Path path = PropertiesUtil.findConfigFile("restrictions.yaml").toPath();
+            final byte[] ba = Files.readAllBytes(path);
+            final String data = new String(ba, "UTF-8");
 
-        loadFromYaml(data);
-        loaded = true;
+            Constructor ctor = new Constructor(Restrictions.class);
+            Yaml parser = new Yaml(ctor);
+
+            restrictions = (Restrictions) parser.load(data);
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Loaded " + restrictions.size() + " restrictions");
+                for (Restriction res : restrictions.getRestrictions()) {
+                    s_logger.debug(res);
+                }
+            }
+        } catch (IOException e) {
+            s_logger.error("Could not load restrictions yaml file", e);
+        }
+        return restrictions;
     }
 
-    public static void enforceRestrictions(String serviceOfferingName, String templateName, Long templateSize) throws InvalidParameterValueException {
+    public void reloadRestrictions() {
+        Restrictions newRestrictions = loadRestrictions();
+        if (newRestrictions != null) {
+            restrictions = newRestrictions;
+        }
+    }
+
+    public void enforceRestrictions(String serviceOfferingName, String templateName, Long templateSize) throws InvalidParameterValueException {
 
         /*
          * Do not blow up when given invalid input.
@@ -55,14 +70,14 @@ public class RestrictionsManager {
 
                 if (restriction.getTemplateNamePattern() != null && templateName != null) {
                     if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
-                        restriction.getTemplateNamePattern().matcher(templateName).find()) {
+                            restriction.getTemplateNamePattern().matcher(templateName).find()) {
                         throw new InvalidParameterValueException("Template is restricted for this service offering.");
                     }
                 }
 
                 if (restriction.getMaxTemplateSize() != null) {
                     if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
-                        (restriction.getMaxTemplateSize() < templateSize)) {
+                            (restriction.getMaxTemplateSize() < templateSize)) {
                         throw new InvalidParameterValueException("The required disk size is restricted for this template");
                     }
                 }
@@ -74,11 +89,7 @@ public class RestrictionsManager {
 
     }
 
-    public static List<Restriction> getRestrictions() throws IOException {
-
-        if (!loaded) /* Only read once at startup */
-            loadRestrictionList();
-
+    public List<Restriction> getRestrictions() throws IOException {
         return restrictions.getRestrictions();
     }
 }

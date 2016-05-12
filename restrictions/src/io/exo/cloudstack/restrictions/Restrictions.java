@@ -4,13 +4,21 @@ import java.util.List;
 
 public class Restrictions {
 
-    private List<Restriction> _restrictions;
+    private List<Restriction> restrictions;
 
     public List<Restriction> getRestrictions() {
-        return _restrictions;
+        return restrictions;
     }
 
     public void setRestrictions(List<Restriction> restrictions) {
-        _restrictions = restrictions;
+        this.restrictions = restrictions;
+    }
+
+    public int size() {
+        if (restrictions == null) {
+            return 0;
+        } else {
+            return restrictions.size();
+        }
     }
 }

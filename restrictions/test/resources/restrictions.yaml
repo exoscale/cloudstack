@@ -1,0 +1,7 @@
+# MANAGED BY PUPPET
+---
+restrictions:
+  - maxTemplateSize: 214748364801
+    serviceOfferingName: Micro
+  - serviceOfferingName: Micro
+    templateName: Windows
