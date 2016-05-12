@@ -1,6 +1,7 @@
 package io.exo.cloudstack.restrictions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import java.nio.file.Files;
@@ -16,7 +17,8 @@ import com.cloud.utils.PropertiesUtil;
 public class RestrictionsManager {
     private static final Logger s_logger = Logger.getLogger(RestrictionsManager.class);
 
-    private static Restrictions restrictions = null;
+    // Working directly with the list instead of the RestrictionList object
+    private static List<Restriction> restrictions = null;
 
     public RestrictionsManager() {
         if (restrictions == null) {
@@ -24,72 +26,71 @@ public class RestrictionsManager {
         }
     }
 
-    private Restrictions loadRestrictions() {
+    private List<Restriction> loadRestrictions() {
 
-        Restrictions restrictions = null;
+        RestrictionList restrictionList = null;
         try {
             final Path path = PropertiesUtil.findConfigFile("restrictions.yaml").toPath();
             final byte[] ba = Files.readAllBytes(path);
             final String data = new String(ba, "UTF-8");
 
-            Constructor ctor = new Constructor(Restrictions.class);
+            Constructor ctor = new Constructor(RestrictionList.class);
             Yaml parser = new Yaml(ctor);
 
-            restrictions = (Restrictions) parser.load(data);
+            restrictionList = (RestrictionList) parser.load(data);
             if (s_logger.isDebugEnabled()) {
-                s_logger.debug("Loaded " + restrictions.size() + " restrictions");
-                for (Restriction res : restrictions.getRestrictions()) {
+                s_logger.debug("Loaded " + restrictionList.size() + " restrictionList");
+                for (Restriction res : restrictionList.getRestrictions()) {
                     s_logger.debug(res);
                 }
             }
         } catch (IOException e) {
-            s_logger.error("Could not load restrictions yaml file", e);
+            s_logger.error("Could not load restrictionList yaml file", e);
         }
-        return restrictions;
+        return restrictionList.getRestrictions();
     }
 
     public void reloadRestrictions() {
-        Restrictions newRestrictions = loadRestrictions();
+        List<Restriction> newRestrictions = loadRestrictions();
         if (newRestrictions != null) {
             restrictions = newRestrictions;
         }
     }
 
-    public void enforceRestrictions(String serviceOfferingName, String templateName, Long templateSize) throws InvalidParameterValueException {
+    public void validate(String serviceOfferingName, String templateName, Long templateSize) throws InvalidParameterValueException {
 
-        /*
-         * Do not blow up when given invalid input.
-         */
-        if (serviceOfferingName == null)
+        s_logger.debug("Enforce restrictions on serviceOfferingName=" + (serviceOfferingName == null ? "null" : serviceOfferingName) + ", templateName=" + (templateName == null ? "null" : templateName) + ", templateSize=" + (templateSize == null ? "null" : templateSize));
+
+        if (serviceOfferingName == null) {
             return;
+        }
 
-        try {
-            final List<Restriction> restrictions = getRestrictions();
+        final List<Restriction> restrictions = getRestrictions();
 
-            for (Restriction restriction: restrictions) {
+        for (Restriction restriction: restrictions) {
 
-                if (restriction.getTemplateNamePattern() != null && templateName != null) {
-                    if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
-                            restriction.getTemplateNamePattern().matcher(templateName).find()) {
-                        throw new InvalidParameterValueException("Template is restricted for this service offering.");
-                    }
-                }
-
-                if (restriction.getMaxTemplateSize() != null) {
-                    if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
-                            (restriction.getMaxTemplateSize() < templateSize)) {
-                        throw new InvalidParameterValueException("The required disk size is restricted for this template");
-                    }
+            if (restriction.getTemplateNamePattern() != null && templateName != null) {
+                if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
+                        restriction.getTemplateNamePattern().matcher(templateName).find()) {
+                    throw new InvalidParameterValueException("Template is restricted for this service offering.");
                 }
             }
 
-        } catch (IOException e) {
-            /* we could not load restrictions, we should log but not interrupt execution */
+            if (restriction.getMaxTemplateSize() != null) {
+                if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
+                        (restriction.getMaxTemplateSize() < templateSize)) {
+                    throw new InvalidParameterValueException("The required disk size is restricted for this template");
+                }
+            }
         }
+
 
     }
 
-    public List<Restriction> getRestrictions() throws IOException {
-        return restrictions.getRestrictions();
+    public List<Restriction> getRestrictions() {
+        if (restrictions != null) {
+            return restrictions;
+        }
+        return new ArrayList<>(0);
     }
 }

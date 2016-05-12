@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Helper class to load the Yaml file containing the restrictions.
  */
-public class Restrictions {
+public class RestrictionList {
 
     private List<Restriction> restrictions;
 

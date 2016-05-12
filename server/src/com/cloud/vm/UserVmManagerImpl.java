@@ -460,6 +460,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     DataStoreManager _dataStoreMgr;
     @Inject
     ManagementService _mgr;
+    @Inject
+    RestrictionsManager restrictionsManager;
 
     protected ScheduledExecutorService _executor = null;
     protected int _expungeInterval;
@@ -814,10 +816,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                String vmNewServiceOfferingName = String.valueOf(newServiceOffering.getName());
-                RestrictionsManager.enforceRestrictions(vmNewServiceOfferingName,
-                                                           null,
-                                                           volume.getSize());
+                restrictionsManager.validate(newServiceOffering.getName(), null, volume.getSize());
             }
         }
 
@@ -3025,6 +3024,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 Long rootDiskSizebytes = null;
                 VMTemplateVO templateVO = _templateDao.findById(template.getId());
                 DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
+                ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
 
                 if (templateVO == null) {
                     throw new InvalidParameterValueException("Unable to look up template by id " + template.getId());
@@ -3061,9 +3061,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions
-                    ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
-                    String vmServiceOfferingName = String.valueOf(serviceOffering.getName());
-                    RestrictionsManager.enforceRestrictions(vmServiceOfferingName, templateVO.getName(), rootDiskSizebytes);
+                    restrictionsManager.validate(serviceOffering.getName(), templateVO.getName(), rootDiskSizebytes);
+                } else {
+                    // enforce exoscale restrictions
+                    restrictionsManager.validate(serviceOffering.getName(), templateVO.getName(), offeringVO.getDiskSize());
+
                 }
 
                 if (isDisplayVm != null) {
