@@ -2,6 +2,9 @@ package io.exo.cloudstack.restrictions;
 
 import java.util.List;
 
+/**
+ * Helper class to load the Yaml file containing the restrictions.
+ */
 public class Restrictions {
 
     private List<Restriction> restrictions;

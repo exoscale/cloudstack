@@ -2,6 +2,9 @@ package io.exo.cloudstack.restrictions;
 
 import java.util.regex.Pattern;
 
+/**
+ * Class representing the data for a single restriction (laoded from Yaml configuration file in our case).
+ */
 public class Restriction {
     private Long maxTemplateSize = null;
     private String templateName = null;
