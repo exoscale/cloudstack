@@ -1,6 +1,6 @@
 package io.exo.cloudstack.restrictions;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,26 +28,28 @@ public class RestrictionServiceImpl implements RestrictionService {
 
     private List<Restriction> loadRestrictions() {
 
-        RestrictionList restrictionList = null;
+        List<Restriction> restrictionsList = null;
         try {
-            final Path path = PropertiesUtil.findConfigFile("restrictions.yaml").toPath();
+            final File file = PropertiesUtil.findConfigFile("restrictions.yaml");
+            final Path path = file.toPath();
             final byte[] ba = Files.readAllBytes(path);
             final String data = new String(ba, "UTF-8");
 
             Constructor ctor = new Constructor(RestrictionList.class);
             Yaml parser = new Yaml(ctor);
 
-            restrictionList = (RestrictionList) parser.load(data);
+            RestrictionList restrictionList = (RestrictionList) parser.load(data);
             if (s_logger.isDebugEnabled()) {
                 s_logger.debug("Loaded " + restrictionList.size() + " restrictionList");
                 for (Restriction res : restrictionList.getRestrictions()) {
                     s_logger.debug(res);
                 }
             }
-        } catch (IOException e) {
+            restrictionsList = restrictionList.getRestrictions();
+        } catch (Exception e) {
             s_logger.error("Could not load restrictionList yaml file", e);
         }
-        return restrictionList.getRestrictions();
+        return restrictionsList;
     }
 
     @Override
@@ -95,4 +97,5 @@ public class RestrictionServiceImpl implements RestrictionService {
         }
         return new ArrayList<>(0);
     }
+
 }
