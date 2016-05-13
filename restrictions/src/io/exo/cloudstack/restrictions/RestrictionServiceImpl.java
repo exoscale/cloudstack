@@ -14,13 +14,13 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.utils.PropertiesUtil;
 
-public class RestrictionsManager {
-    private static final Logger s_logger = Logger.getLogger(RestrictionsManager.class);
+public class RestrictionServiceImpl implements RestrictionService {
+    private static final Logger s_logger = Logger.getLogger(RestrictionServiceImpl.class);
 
     // Working directly with the list instead of the RestrictionList object
     private static List<Restriction> restrictions = null;
 
-    public RestrictionsManager() {
+    public RestrictionServiceImpl() {
         if (restrictions == null) {
             restrictions = loadRestrictions();
         }
@@ -50,6 +50,7 @@ public class RestrictionsManager {
         return restrictionList.getRestrictions();
     }
 
+    @Override
     public void reloadRestrictions() {
         List<Restriction> newRestrictions = loadRestrictions();
         if (newRestrictions != null) {
@@ -57,6 +58,7 @@ public class RestrictionsManager {
         }
     }
 
+    @Override
     public void validate(String serviceOfferingName, String templateName, Long templateSize) throws InvalidParameterValueException {
 
         s_logger.debug("Enforce restrictions on serviceOfferingName=" + (serviceOfferingName == null ? "null" : serviceOfferingName) + ", templateName=" + (templateName == null ? "null" : templateName) + ", templateSize=" + (templateSize == null ? "null" : templateSize));

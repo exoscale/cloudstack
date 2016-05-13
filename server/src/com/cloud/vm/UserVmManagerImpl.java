@@ -36,6 +36,7 @@ import javax.naming.ConfigurationException;
 
 import com.cloud.offering.DiskOffering;
 import com.cloud.server.ManagementService;
+import io.exo.cloudstack.restrictions.RestrictionService;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
@@ -461,7 +462,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     @Inject
     ManagementService _mgr;
     @Inject
-    RestrictionsManager restrictionsManager;
+    RestrictionService restrictionService;
 
     protected ScheduledExecutorService _executor = null;
     protected int _expungeInterval;
@@ -816,7 +817,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                restrictionsManager.validate(newServiceOffering.getName(), null, volume.getSize());
+                restrictionService.validate(newServiceOffering.getName(), null, volume.getSize());
             }
         }
 
@@ -3061,10 +3062,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions
-                    restrictionsManager.validate(serviceOffering.getName(), templateVO.getName(), rootDiskSizebytes);
+                    restrictionService.validate(serviceOffering.getName(), templateVO.getName(), rootDiskSizebytes);
                 } else {
                     // enforce exoscale restrictions
-                    restrictionsManager.validate(serviceOffering.getName(), templateVO.getName(), offeringVO.getDiskSize());
+                    restrictionService.validate(serviceOffering.getName(), templateVO.getName(), offeringVO.getDiskSize());
 
                 }
 

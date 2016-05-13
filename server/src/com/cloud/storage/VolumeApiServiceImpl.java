@@ -29,7 +29,7 @@ import javax.inject.Inject;
 import com.cloud.offering.DiskOffering;
 import com.cloud.template.VirtualMachineTemplate;
 import com.cloud.utils.DateUtil;
-import io.exo.cloudstack.restrictions.RestrictionsManager;
+import io.exo.cloudstack.restrictions.RestrictionService;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.api.command.user.volume.AttachVolumeCmd;
@@ -232,7 +232,7 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     protected VmWorkJobDao _workJobDao;
 
     @Inject
-    RestrictionsManager restrictionsManager;
+    RestrictionService restrictionService;
 
     VmWorkJobHandlerProxy _jobHandlerProxy = new VmWorkJobHandlerProxy(this);
 
@@ -838,7 +838,7 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         //Exoscale restrictions
         ServiceOfferingVO serviceOffering = _offeringDao.findById(userVm.getId(), userVm.getServiceOfferingId());
-        restrictionsManager.validate(serviceOffering.getName(), null, newSize);
+        restrictionService.validate(serviceOffering.getName(), null, newSize);
 
         if (!shrinkOk) {
             /* Check resource limit for this account on primary storage resource */

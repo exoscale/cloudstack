@@ -11,7 +11,7 @@ public class RestrictionsTest {
 
     @Test
     public void testFileLoading() throws IOException {
-        RestrictionsManager restrictionsManager = new RestrictionsManager();
+        RestrictionServiceImpl restrictionsManager = new RestrictionServiceImpl();
         List<Restriction> restrictions = restrictionsManager.getRestrictions();
         assertTrue(2 == restrictions.size());
     }
