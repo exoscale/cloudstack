@@ -195,10 +195,6 @@ public class SnapshotDataStoreVO implements StateObject<ObjectInDataStoreStateMa
         return physicalSize;
     }
 
-    public long getVolumeSize() {
-        return -1;
-    }
-
     @Override
     public String toString() {
         return new StringBuilder("SnapshotDataStore[").append(id)
@@ -229,7 +225,6 @@ public class SnapshotDataStoreVO implements StateObject<ObjectInDataStoreStateMa
 
     @Override
     public ObjectInDataStoreStateMachine.State getState() {
-        // TODO Auto-generated method stub
         return state;
     }
 

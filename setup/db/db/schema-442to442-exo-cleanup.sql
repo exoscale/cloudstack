@@ -60,3 +60,8 @@ ALTER TABLE `cloud`.`vpn_users` DROP INDEX `id` ;
 -- --- Missing indexes (Add indexes to avoid full table scans)
 ALTER TABLE `cloud`.`vm_network_map` ADD INDEX `i_vm_id` (`vm_id` ASC);
 ALTER TABLE `cloud`.`user_vm_details` ADD INDEX `i_name_vm_id` (`vm_id` ASC, `name` ASC);
+
+
+-- Fix Snapshots size column
+UPDATE `cloud`.`snapshot_store_ref` SET `physical_size` = `size`
+WHERE `physical_size` = 0 AND `store_role` = 'Image' AND `size` > 0;

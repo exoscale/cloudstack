@@ -37,5 +37,5 @@ public interface SnapshotInfo extends DataObject, Snapshot {
 
     boolean isRevertable();
 
-    long getPhysicalSize();
+    Long getPhysicalSize();
 }

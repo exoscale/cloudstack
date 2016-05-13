@@ -163,7 +163,6 @@ public class ObjectInDataStoreManagerImpl implements ObjectInDataStoreManager {
                     ss.setSnapshotId(obj.getId());
                     ss.setDataStoreId(dataStore.getId());
                     ss.setRole(dataStore.getRole());
-                    ss.setRole(dataStore.getRole());
                     ss.setVolumeId(snapshot.getVolumeId());
                     SnapshotDataStoreVO snapshotDataStoreVO = snapshotDataStoreDao.findParent(dataStore.getRole(), dataStore.getId(), snapshot.getVolumeId());
                     if (snapshotDataStoreVO != null) {

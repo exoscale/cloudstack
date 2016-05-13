@@ -139,8 +139,8 @@ public class SnapshotObject implements SnapshotInfo {
     }
 
     @Override
-    public long getPhysicalSize() {
-        long physicalSize = 0;
+    public Long getPhysicalSize() {
+        Long physicalSize = 0L;
         SnapshotDataStoreVO snapshotStore = snapshotStoreDao.findBySnapshot(snapshot.getId(), DataStoreRole.Image);
         if (snapshotStore != null) {
             physicalSize = snapshotStore.getPhysicalSize();
@@ -298,7 +298,7 @@ public class SnapshotObject implements SnapshotInfo {
                 snapshotStore.setInstallPath(snapshotTO.getPath());
                 if (snapshotTO.getPhysicalSize() != null) {
                     // For S3 delta snapshot, physical size is currently not set
-                snapshotStore.setSize(snapshotTO.getPhysicalSize());
+                    snapshotStore.setPhysicalSize(snapshotTO.getPhysicalSize());
                 }
                 if (snapshotTO.getParentSnapshotPath() == null) {
                     snapshotStore.setParentSnapshotId(0L);
