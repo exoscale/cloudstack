@@ -774,6 +774,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         Long vmId = cmd.getId();
         Long svcOffId = cmd.getServiceOfferingId();
         Account caller = CallContext.current().getCallingAccount();
+        Account owner = _accountService.getActiveAccountById(cmd.getEntityOwnerId());
 
         // Verify input parameters
         //UserVmVO vmInstance = _vmDao.findById(vmId);
@@ -817,7 +818,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                restrictionService.validate(newServiceOffering.getName(), null, volume.getSize());
+                restrictionService.validate(newServiceOffering.getName(), owner.getUuid(), null, volume.getSize());
             }
         }
 
@@ -3022,7 +3023,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 }
 
                 Long rootDiskSize = null;
-                Long rootDiskSizebytes = null;
                 VMTemplateVO templateVO = _templateDao.findById(template.getId());
                 DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
                 ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
@@ -3056,16 +3056,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                         throw new InvalidParameterValueException("volume size " + rootDiskSize + ", but the maximum size allowed is " + _maxVolumeSizeInGb + " Gb.");
                     }
 
-                    rootDiskSizebytes = (rootDiskSize * 1024 * 1024 * 1024);
-
                     s_logger.debug("found root disk size of " + rootDiskSize);
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), rootDiskSizebytes);
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
                 } else {
                     // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), (offeringVO == null ? null : offeringVO.getDiskSize()));
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (offeringVO == null ? null : offeringVO.getDiskSize()));
 
                 }
 

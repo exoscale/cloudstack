@@ -28,6 +28,7 @@ import javax.inject.Inject;
 
 import com.cloud.offering.DiskOffering;
 import com.cloud.template.VirtualMachineTemplate;
+import com.cloud.user.AccountService;
 import com.cloud.utils.DateUtil;
 import io.exo.cloudstack.restrictions.RestrictionService;
 import org.apache.log4j.Logger;
@@ -170,6 +171,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     private SnapshotManager _snapshotMgr;
     @Inject
     private AccountManager _accountMgr;
+    @Inject
+    protected AccountService _accountService;
     @Inject
     private ConfigurationManager _configMgr;
     @Inject
@@ -837,8 +840,9 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
         }
 
         //Exoscale restrictions
+        Account owner = _accountService.getActiveAccountById(cmd.getEntityOwnerId());
         ServiceOfferingVO serviceOffering = _offeringDao.findById(userVm.getId(), userVm.getServiceOfferingId());
-        restrictionService.validate(serviceOffering.getName(), null, newSize);
+        restrictionService.validate(serviceOffering.getName(), owner.getUuid(), null, newSize);
 
         if (!shrinkOk) {
             /* Check resource limit for this account on primary storage resource */

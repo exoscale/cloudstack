@@ -1,31 +1,17 @@
 package io.exo.cloudstack.restrictions;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
  * Class representing the data for a single restriction (laoded from Yaml configuration file in our case).
  */
 public class Restriction {
-    private Long maxTemplateSize = null;
-    private String templateName = null;
-    private Pattern templateNamePattern = null;
     private String serviceOfferingName = null;
-
-    public Long getMaxTemplateSize() {
-        return maxTemplateSize;
-    }
-
-    public void setMaxTemplateSize(Long maxTemplateSize) {
-        this.maxTemplateSize = maxTemplateSize;
-    }
-
-    public String getTemplateName() {
-        return templateName;
-    }
-
-    public void setTemplateName(String templateName) {
-        this.templateName = templateName;
-    }
+    private Long maxTemplateSize = null;
+    private String unauthorizedTemplateName = null;
+    private Pattern templateNamePattern = null;
+    private List<String> authorizedOrgs = null;
 
     public String getServiceOfferingName() {
         return serviceOfferingName;
@@ -35,11 +21,35 @@ public class Restriction {
         this.serviceOfferingName = serviceOfferingName;
     }
 
+    public Long getMaxTemplateSize() {
+        return maxTemplateSize;
+    }
+
+    public void setMaxTemplateSize(Long maxTemplateSize) {
+        this.maxTemplateSize = maxTemplateSize;
+    }
+
+    public String getUnauthorizedTemplateName() {
+        return unauthorizedTemplateName;
+    }
+
+    public void setUnauthorizedTemplateName(String unauthorizedTemplateName) {
+        this.unauthorizedTemplateName = unauthorizedTemplateName;
+    }
+
     public Pattern getTemplateNamePattern() {
-        if (templateName != null && templateNamePattern == null) {
-            templateNamePattern = Pattern.compile(templateName);
+        if (unauthorizedTemplateName != null && templateNamePattern == null) {
+            templateNamePattern = Pattern.compile(unauthorizedTemplateName);
         }
         return templateNamePattern;
+    }
+
+    public void setAuthorizedOrgs(List<String> authorizedOrgs) {
+        this.authorizedOrgs = authorizedOrgs;
+    }
+
+    public List<String> getAuthorizedOrgs() {
+        return authorizedOrgs;
     }
 
     public String toString() {
@@ -49,9 +59,9 @@ public class Restriction {
             sb.append(serviceOfferingName);
             sb.append(", ");
         }
-        if (templateName != null) {
-            sb.append("templateName: ");
-            sb.append(templateName);
+        if (unauthorizedTemplateName != null) {
+            sb.append("unauthorizedTemplateName: ");
+            sb.append(unauthorizedTemplateName);
             sb.append(", ");
         }
         if(maxTemplateSize != null) {
