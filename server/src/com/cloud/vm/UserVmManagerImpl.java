@@ -3062,10 +3062,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions
-                    restrictionService.validate(serviceOffering.getName(), templateVO.getName(), rootDiskSizebytes);
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), rootDiskSizebytes);
                 } else {
                     // enforce exoscale restrictions
-                    restrictionService.validate(serviceOffering.getName(), templateVO.getName(), offeringVO.getDiskSize());
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), (offeringVO == null ? null : offeringVO.getDiskSize()));
 
                 }
 
