@@ -80,7 +80,7 @@ public class RestrictionServiceImpl implements RestrictionService {
                 }
             }
 
-            if (restriction.getMaxTemplateSize() != null) {
+            if (restriction.getMaxTemplateSize() != null && templateSize != null) {
                 if (serviceOfferingName.equals(restriction.getServiceOfferingName()) &&
                         (restriction.getMaxTemplateSize() < templateSize)) {
                     throw new InvalidParameterValueException("The required disk size is restricted for this template");
