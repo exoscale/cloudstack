@@ -18,20 +18,28 @@ import com.cloud.utils.PropertiesUtil;
 public class RestrictionServiceImpl implements RestrictionService {
     private static final Logger s_logger = Logger.getLogger(RestrictionServiceImpl.class);
 
+    private String DEFAULTFILENAME = "restrictions.yaml";
+
     // Working directly with the map of restrictions
     private Map<String, List<Restriction>> restrictions = null;
 
     public RestrictionServiceImpl() {
         if (restrictions == null) {
-            restrictions = loadRestrictions();
+            restrictions = loadRestrictions(DEFAULTFILENAME);
         }
     }
 
-    private Map<String, List<Restriction>> loadRestrictions() {
+    public RestrictionServiceImpl(String filename) {
+        if (restrictions == null) {
+            restrictions = loadRestrictions(filename);
+        }
+    }
+
+    private Map<String, List<Restriction>> loadRestrictions(String filename) {
 
         Map<String, List<Restriction>> restrictionsList = null;
         try {
-            final File file = PropertiesUtil.findConfigFile("restrictions.yaml");
+            final File file = PropertiesUtil.findConfigFile(filename);
             final Path path = file.toPath();
             final byte[] ba = Files.readAllBytes(path);
             final String data = new String(ba, "UTF-8");
@@ -48,14 +56,14 @@ public class RestrictionServiceImpl implements RestrictionService {
             }
             restrictionsList = restrictionList.getRestrictionsMap();
         } catch (Exception e) {
-            s_logger.error("Could not load restrictionList yaml file", e);
+            s_logger.error("Could not load restrictions yaml file", e);
         }
         return restrictionsList;
     }
 
     @Override
     public void reloadRestrictions() {
-        Map<String, List<Restriction>> newRestrictions = loadRestrictions();
+        Map<String, List<Restriction>> newRestrictions = loadRestrictions(DEFAULTFILENAME);
         if (newRestrictions != null) {
             restrictions = newRestrictions;
         }
@@ -71,7 +79,7 @@ public class RestrictionServiceImpl implements RestrictionService {
             return;
         }
 
-        if (restrictions.containsKey(serviceOfferingName)) {
+        if (restrictions != null && restrictions.containsKey(serviceOfferingName)) {
             for (Restriction restriction: restrictions.get(serviceOfferingName)) {
                 if (restriction.getTemplateNamePattern() != null && templateName != null && restriction.getTemplateNamePattern().matcher(templateName).find()) {
                     throw new InvalidParameterValueException("This service offering cannot be used with this template.");

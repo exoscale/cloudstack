@@ -23,6 +23,13 @@ public class RestrictionsTest {
         assertTrue(1 == restrictions.get(TITAN_OFFER).size());
     }
 
+    @Test
+    public void testInvalidFileLoading() throws IOException {
+        RestrictionServiceImpl restrictionsManager = new RestrictionServiceImpl("restrictions-invalid.yaml");
+        Map<String, List<Restriction>> restrictions = restrictionsManager.getRestrictions();
+        assertTrue(0 == restrictions.size());
+    }
+
     @Test(expected = InvalidParameterValueException.class)
     public void testInvalidMicroAndWindows() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();

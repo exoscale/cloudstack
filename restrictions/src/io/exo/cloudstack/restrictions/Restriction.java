@@ -36,7 +36,7 @@ public class Restriction {
     public String getTemplateName() {
         return unauthorizedTemplateName;
     }
-    
+
     public String getUnauthorizedTemplateName() {
         return unauthorizedTemplateName;
     }
