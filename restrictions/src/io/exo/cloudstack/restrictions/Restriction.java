@@ -77,6 +77,11 @@ public class Restriction {
             sb.append(maxTemplateSize);
             sb.append(", ");
         }
+        if (authorizedOrgs != null) {
+            sb.append("authorizedOrgs: ");
+            sb.append(authorizedOrgs.size());
+            sb.append(", ");
+        }
         sb.replace(sb.length()-2, sb.length(), "");
         sb.append("}");
         return  sb.toString();
