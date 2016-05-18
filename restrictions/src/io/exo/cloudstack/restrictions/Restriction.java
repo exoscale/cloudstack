@@ -29,6 +29,14 @@ public class Restriction {
         this.maxTemplateSize = maxTemplateSize;
     }
 
+    public void setTemplateName(String templateName) {
+        this.unauthorizedTemplateName = templateName;
+    }
+
+    public String getTemplateName() {
+        return unauthorizedTemplateName;
+    }
+    
     public String getUnauthorizedTemplateName() {
         return unauthorizedTemplateName;
     }
