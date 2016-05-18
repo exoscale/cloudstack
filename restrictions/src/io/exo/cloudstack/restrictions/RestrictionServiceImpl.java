@@ -63,6 +63,7 @@ public class RestrictionServiceImpl implements RestrictionService {
 
     @Override
     public void reloadRestrictions() {
+        s_logger.debug("Reloading restrictions file");
         Map<String, List<Restriction>> newRestrictions = loadRestrictions(DEFAULTFILENAME);
         if (newRestrictions != null) {
             restrictions = newRestrictions;
