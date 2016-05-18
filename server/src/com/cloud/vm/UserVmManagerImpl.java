@@ -3024,7 +3024,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
                 Long rootDiskSize = null;
                 VMTemplateVO templateVO = _templateDao.findById(template.getId());
-                DiskOfferingVO offeringVO = _diskOfferingDao.findById(diskOfferingId);
                 ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
 
                 if (templateVO == null) {
@@ -3063,7 +3062,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
                 } else {
                     // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (offeringVO == null ? null : offeringVO.getDiskSize()));
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (templateVO == null ? null : templateVO.getSize()));
 
                 }
 
