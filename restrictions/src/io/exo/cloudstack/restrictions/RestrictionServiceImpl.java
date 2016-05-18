@@ -49,7 +49,7 @@ public class RestrictionServiceImpl implements RestrictionService {
 
             RestrictionList restrictionList = (RestrictionList) parser.load(data);
             if (s_logger.isDebugEnabled()) {
-                s_logger.debug("Loaded " + restrictionList.size() + " restrictionList");
+                s_logger.debug("Loaded " + restrictionList.size() + " restrictions");
                 for (Restriction res : restrictionList.getRestrictions()) {
                     s_logger.debug(res);
                 }
