@@ -4,6 +4,9 @@ restrictions:
   - serviceOfferingName: Micro
     maxTemplateSize: 214748364801
     unauthorizedTemplateName: Windows
+  - serviceOfferingName: Mega
+    authorizedOrgs:
+      - none
   - serviceOfferingName: Titan
     authorizedOrgs:
       - 0f286087-85f3-4195-abcf-e67e7cc7eb63

@@ -12,14 +12,16 @@ import static org.junit.Assert.assertTrue;
 public class RestrictionsTest {
 
     private static final String MICRO_OFFER = "Micro";
+    private static final String MEGA_OFFER = "Mega";
     private static final String TITAN_OFFER = "Titan";
 
     @Test
     public void testFileLoading() throws IOException {
         RestrictionServiceImpl restrictionsManager = new RestrictionServiceImpl();
         Map<String, List<Restriction>> restrictions = restrictionsManager.getRestrictions();
-        assertTrue(2 == restrictions.size());
+        assertTrue(3 == restrictions.size());
         assertTrue(1 == restrictions.get(MICRO_OFFER).size());
+        assertTrue(1 == restrictions.get(MEGA_OFFER).size());
         assertTrue(1 == restrictions.get(TITAN_OFFER).size());
     }
 
@@ -71,4 +73,11 @@ public class RestrictionsTest {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
         restrictionsManager.validate(TITAN_OFFER, "someone", "Ubuntu 16.04 LTS", 600L * 1024 * 1024 * 1024);
     }
+
+    @Test(expected = InvalidParameterValueException.class)
+    public void testMegaOfferingInaccessible() throws IOException {
+        RestrictionServiceImpl restrictionsManager = new RestrictionServiceImpl();
+        restrictionsManager.validate(MEGA_OFFER, "0f286087-85f3-4195-abcf-e67e7cc7eb63", "Ubuntu 16.04 LTS", 50L * 1024 * 1024 * 1024);
+    }
+
 }
