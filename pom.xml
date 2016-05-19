@@ -747,6 +747,7 @@
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
+          <version>0.8</version>
           <configuration>
             <numUnapprovedLicenses>0</numUnapprovedLicenses>
             <excludeSubProjects>false</excludeSubProjects>
@@ -1087,17 +1088,6 @@
       </properties>
       <modules>
         <module>developer</module>
-      </modules>
-    </profile>
-    <profile>
-      <id>vmware</id>
-      <activation>
-        <property>
-          <name>noredist</name>
-        </property>
-      </activation>
-      <modules>
-        <module>vmware-base</module>
       </modules>
     </profile>
     <profile>
