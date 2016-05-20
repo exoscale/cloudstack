@@ -96,5 +96,4 @@ public class RestrictionServiceImpl implements RestrictionService {
     public Map<String, List<Restriction>> getRestrictions() {
         return restrictions == null ? new HashMap<String, List<Restriction>>(0) : restrictions;
     }
-
 }
