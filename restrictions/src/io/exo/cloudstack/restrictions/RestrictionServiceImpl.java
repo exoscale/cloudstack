@@ -18,21 +18,17 @@ import com.cloud.utils.PropertiesUtil;
 public class RestrictionServiceImpl implements RestrictionService {
     private static final Logger s_logger = Logger.getLogger(RestrictionServiceImpl.class);
 
-    private String DEFAULTFILENAME = "restrictions.yaml";
+    private static final String DEFAULTFILENAME = "restrictions.yaml";
 
     // Working directly with the map of restrictions
-    private Map<String, List<Restriction>> restrictions = null;
+    private volatile Map<String, List<Restriction>> restrictions = null;
 
     public RestrictionServiceImpl() {
-        if (restrictions == null) {
-            restrictions = loadRestrictions(DEFAULTFILENAME);
-        }
+        this(DEFAULTFILENAME);
     }
 
     public RestrictionServiceImpl(String filename) {
-        if (restrictions == null) {
-            restrictions = loadRestrictions(filename);
-        }
+        restrictions = loadRestrictions(filename);
     }
 
     private Map<String, List<Restriction>> loadRestrictions(String filename) {
