@@ -31,7 +31,7 @@ public class RestrictionServiceImpl implements RestrictionService {
         restrictions = loadRestrictions(filename);
     }
 
-    private Map<String, List<Restriction>> loadRestrictions(String filename) {
+    private static Map<String, List<Restriction>> loadRestrictions(String filename) {
 
         Map<String, List<Restriction>> restrictionsMap = null;
         try {
