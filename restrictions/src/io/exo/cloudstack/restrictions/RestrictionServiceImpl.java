@@ -37,7 +37,7 @@ public class RestrictionServiceImpl implements RestrictionService {
 
     private Map<String, List<Restriction>> loadRestrictions(String filename) {
 
-        Map<String, List<Restriction>> restrictionsList = null;
+        Map<String, List<Restriction>> restrictionsMap = null;
         try {
             final File file = PropertiesUtil.findConfigFile(filename);
             final Path path = file.toPath();
@@ -54,11 +54,11 @@ public class RestrictionServiceImpl implements RestrictionService {
                     s_logger.debug(res);
                 }
             }
-            restrictionsList = restrictionList.getRestrictionsMap();
+            restrictionsMap = restrictionList.getRestrictionsMap();
         } catch (Exception e) {
             s_logger.error("Could not load restrictions yaml file", e);
         }
-        return restrictionsList;
+        return restrictionsMap;
     }
 
     @Override
@@ -95,16 +95,10 @@ public class RestrictionServiceImpl implements RestrictionService {
                 }
             }
         }
-
-
-
     }
 
     public Map<String, List<Restriction>> getRestrictions() {
-        if (restrictions != null) {
-            return restrictions;
-        }
-        return new HashMap<>(0);
+        return restrictions == null ? new HashMap<String, List<Restriction>>(0) : restrictions;
     }
 
 }

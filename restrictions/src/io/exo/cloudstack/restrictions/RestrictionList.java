@@ -34,13 +34,14 @@ public class RestrictionList {
         if (restrictions != null) {
             result = new HashMap<>(size());
             for(Restriction restriction : restrictions) {
-                if (restriction.getServiceOfferingName() != null) {
+                String serviceOfferingName = restriction.getServiceOfferingName();
+                if (serviceOfferingName != null) {
                     List<Restriction> lr = null;
-                    if (result.containsKey(restriction.getServiceOfferingName())) {
-                        lr = result.get(restriction.getServiceOfferingName());
+                    if (result.containsKey(serviceOfferingName)) {
+                        lr = result.get(serviceOfferingName);
                     } else {
                         lr = new ArrayList<>();
-                        result.put(restriction.getServiceOfferingName(), lr);
+                        result.put(serviceOfferingName, lr);
                     }
                     lr.add(restriction);
                 }

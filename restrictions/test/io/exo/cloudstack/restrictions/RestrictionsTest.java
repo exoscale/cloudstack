@@ -15,6 +15,8 @@ public class RestrictionsTest {
     private static final String MEGA_OFFER = "Mega";
     private static final String TITAN_OFFER = "Titan";
 
+    private static final long GIGABYTES = (long) java.lang.Math.pow(1024, 3);
+
     @Test
     public void testFileLoading() throws IOException {
         RestrictionServiceImpl restrictionsManager = new RestrictionServiceImpl();
@@ -39,45 +41,49 @@ public class RestrictionsTest {
     }
 
     @Test(expected = InvalidParameterValueException.class)
-    public void testInvalidMicroLinux400() {
+    public void testInvalidMicro400GB() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(MICRO_OFFER, "someone", "Ubuntu 16.04 LTS 64-bit", 400L * 1024 * 1024 * 1024);
+        restrictionsManager.validate(MICRO_OFFER, "someone", "Ubuntu 16.04 LTS 64-bit", 400 * GIGABYTES);
     }
 
     @Test(expected = InvalidParameterValueException.class)
     public void testInvalidMicroDiskUpgrade() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(MICRO_OFFER, "someone", null, 201L * 1024 * 1024 * 1024);
+        restrictionsManager.validate(MICRO_OFFER, "someone", null, 201 * GIGABYTES);
     }
 
     @Test
-    public void testValidMicroDisk200() {
+    public void testValidMicroDisk200GB() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(MICRO_OFFER, "someone", null, 200L * 1024 * 1024 * 1024);
+        restrictionsManager.validate(MICRO_OFFER, "someone", null, 200 * GIGABYTES);
     }
 
     @Test
     public void testMissingOffering() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(null, "someone", "Debian 8", 400L * 1024 * 1024 * 1024);
+        restrictionsManager.validate(null, "someone", "Debian 8", 400 * GIGABYTES);
     }
 
     @Test
     public void testValidTitanOrg() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(TITAN_OFFER, "c36c1577-ee3d-49c4-8934-e32a56f26405", "Debian 8", 600L * 1024 * 1024 * 1024);
+        restrictionsManager.validate(TITAN_OFFER, "c36c1577-ee3d-49c4-8934-e32a56f26405", "Debian 8", 600 * GIGABYTES);
     }
 
     @Test(expected = InvalidParameterValueException.class)
     public void testInvalidTitanOrg() {
         RestrictionService restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(TITAN_OFFER, "someone", "Ubuntu 16.04 LTS", 600L * 1024 * 1024 * 1024);
+        restrictionsManager.validate(TITAN_OFFER, "someone", "Ubuntu 16.04 LTS", 600 * GIGABYTES);
     }
 
     @Test(expected = InvalidParameterValueException.class)
     public void testMegaOfferingInaccessible() throws IOException {
         RestrictionServiceImpl restrictionsManager = new RestrictionServiceImpl();
-        restrictionsManager.validate(MEGA_OFFER, "0f286087-85f3-4195-abcf-e67e7cc7eb63", "Ubuntu 16.04 LTS", 50L * 1024 * 1024 * 1024);
+        Map<String, List<Restriction>> restrictions = restrictionsManager.getRestrictions();
+        for(Restriction restriction : restrictions.get(MEGA_OFFER)) {
+            assertTrue("No orgs in authorized list", restriction.getAuthorizedOrgs() == null || restriction.getAuthorizedOrgs().size() == 0);
+        }
+        // Ensure that an org in another list (TITAN) is not granted access to this offer as well
+        restrictionsManager.validate(MEGA_OFFER, "0f286087-85f3-4195-abcf-e67e7cc7eb63", "Ubuntu 16.04 LTS", 50 * GIGABYTES);
     }
-
 }
