@@ -134,6 +134,9 @@ public class DiskOfferingVO implements DiskOffering {
     @Column(name = "hv_ss_reserve")
     Integer hypervisorSnapshotReserve;
 
+    @Column(name = "restricted")
+    boolean restricted = false;
+
     public DiskOfferingVO() {
         uuid = UUID.randomUUID().toString();
     }
@@ -501,5 +504,14 @@ public class DiskOfferingVO implements DiskOffering {
     @Override
     public Integer getHypervisorSnapshotReserve() {
         return hypervisorSnapshotReserve;
+    }
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
+    }
+
+    @Override
+    public boolean isRestricted() {
+        return restricted;
     }
 }
