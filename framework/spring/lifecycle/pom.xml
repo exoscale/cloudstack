@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.apache.cloudstack</groupId>
         <artifactId>cloud-maven-standard</artifactId>
-        <version>4.4.2-exoscale-SNAPSHOT</version>
+        <version>4.4.2-exoscale-20160520-1444</version>
         <relativePath>../../../maven-standard/pom.xml</relativePath>
     </parent>
     <dependencies>
