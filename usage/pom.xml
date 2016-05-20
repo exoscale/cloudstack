@@ -14,7 +14,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack</artifactId>
-    <version>4.4.2-exoscale-20160520-1444</version>
+    <version>4.4.2-exoscale-SNAPSHOT</version>
   </parent>
   <dependencies>
     <dependency>
