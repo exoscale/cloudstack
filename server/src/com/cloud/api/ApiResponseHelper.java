@@ -389,6 +389,7 @@ public class ApiResponseHelper implements ResponseGenerator {
             populateDomain(resourceLimitResponse, accountTemp.getDomainId());
         }
         resourceLimitResponse.setResourceType(Integer.valueOf(limit.getType().getOrdinal()).toString());
+        resourceLimitResponse.setResourceTypeName(limit.getType().getName());
 
         if ((limit.getType() == ResourceType.primary_storage || limit.getType() == ResourceType.secondary_storage) && limit.getMax() >= 0) {
             resourceLimitResponse.setMax((long)Math.ceil((double)limit.getMax() / ResourceType.bytesToGiB));

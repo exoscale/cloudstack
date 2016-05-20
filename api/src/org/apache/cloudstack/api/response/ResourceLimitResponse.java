@@ -44,6 +44,10 @@ public class ResourceLimitResponse extends BaseResponse implements ControlledEnt
     @Param(description = "resource type. Values include 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11. See the resourceType parameter for more information on these values.")
     private String resourceType;
 
+    @SerializedName(ApiConstants.RESOURCE_TYPE_NAME)
+    @Param(description = "resource type name. Values include user_vm, public_ip, volume, snapshot, template, project, network, vpc, cpu, memory, primary_storage, secondary_storage.")
+    private String resourceTypeName;
+
     @SerializedName("max")
     @Param(description = "the maximum number of the resource. A -1 means the resource currently has no limit.")
     private Long max;
@@ -78,6 +82,10 @@ public class ResourceLimitResponse extends BaseResponse implements ControlledEnt
 
     public void setResourceType(String resourceType) {
         this.resourceType = resourceType;
+    }
+
+    public void setResourceTypeName(String resourceTypeName) {
+        this.resourceTypeName = resourceTypeName;
     }
 
     public void setMax(Long max) {

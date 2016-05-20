@@ -19,6 +19,8 @@ package org.apache.cloudstack.api.command.user.resource;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cloud.configuration.Resource;
+import com.cloud.exception.InvalidParameterValueException;
 import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.BaseListProjectAndAccountResourcesCmd;
@@ -53,6 +55,21 @@ public class ListResourceLimitsCmd extends BaseListProjectAndAccountResourcesCmd
         + "11 - Secondary Storage. Amount of Secondary storage an account can allocate for his resources.")
     private Integer resourceType;
 
+    @Parameter(name = ApiConstants.RESOURCE_TYPE_NAME, type = CommandType.STRING, description = "Type of resource (wins over resourceType if both are provided). Values are: "
+            + "user_vm - Instance. Number of instances a user can create. "
+            + "public_ip - IP. Number of public IP addresses an account can own. "
+            + "volume - Volume. Number of disk volumes an account can own. "
+            + "snapshot - Snapshot. Number of snapshots an account can own. "
+            + "template - Template. Number of templates an account can register/create. "
+            + "project - Project. Number of projects an account can own. "
+            + "network - Network. Number of networks an account can own. "
+            + "vpc - VPC. Number of VPC an account can own. "
+            + "cpu - CPU. Number of CPU an account can allocate for his resources. "
+            + "memory - Memory. Amount of RAM an account can allocate for his resources. "
+            + "primary_storage - PrimaryStorage. Total primary storage space (in GiB) a user can use. "
+            + "secondary_storage - SecondaryStorage. Total secondary storage space (in GiB) a user can use. ")
+    private String resourceTypeName;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -63,6 +80,10 @@ public class ListResourceLimitsCmd extends BaseListProjectAndAccountResourcesCmd
 
     public Integer getResourceType() {
         return resourceType;
+    }
+
+    public String getResourceTypeName() {
+        return resourceTypeName;
     }
 
     /////////////////////////////////////////////////////
@@ -78,7 +99,7 @@ public class ListResourceLimitsCmd extends BaseListProjectAndAccountResourcesCmd
     public void execute() {
         List<? extends ResourceLimit> result =
                 _resourceLimitService.searchForLimits(id, _accountService.finalyzeAccountId(this.getAccountName(), this.getDomainId(), this.getProjectId(), false), this.getDomainId(),
-                resourceType, this.getStartIndex(), this.getPageSizeVal());
+                        getResourceTypeEnum(), this.getStartIndex(), this.getPageSizeVal());
         ListResponse<ResourceLimitResponse> response = new ListResponse<ResourceLimitResponse>();
         List<ResourceLimitResponse> limitResponses = new ArrayList<ResourceLimitResponse>();
         for (ResourceLimit limit : result) {
@@ -90,5 +111,25 @@ public class ListResourceLimitsCmd extends BaseListProjectAndAccountResourcesCmd
         response.setResponses(limitResponses);
         response.setResponseName(getCommandName());
         this.setResponseObject(response);
+    }
+
+    private Resource.ResourceType getResourceTypeEnum() {
+        // Map resource type
+        Resource.ResourceType resourceTypeResult = null;
+        if (resourceTypeName != null) {
+            try {
+                resourceTypeResult = Resource.ResourceType.valueOf(resourceTypeName);
+            } catch (IllegalArgumentException e) {
+                throw new InvalidParameterValueException("Please specify a valid resource type name.");
+            }
+        } else if (resourceType != null) {
+            try {
+                resourceTypeResult = Resource.ResourceType.values()[resourceType];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new InvalidParameterValueException("Please specify a valid resource type.");
+            }
+        }
+
+        return resourceTypeResult;
     }
 }
