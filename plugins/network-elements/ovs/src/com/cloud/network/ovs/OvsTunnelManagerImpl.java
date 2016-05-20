@@ -47,7 +47,6 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 import javax.persistence.EntityExistsException;
@@ -92,7 +91,6 @@ import com.cloud.vm.dao.DomainRouterDao;
 import com.cloud.vm.dao.NicDao;
 
 @Component
-@Local(value = {OvsTunnelManager.class})
 public class OvsTunnelManagerImpl extends ManagerBase implements OvsTunnelManager, StateListener<VirtualMachine.State, VirtualMachine.Event, VirtualMachine> {
     public static final Logger s_logger = Logger.getLogger(OvsTunnelManagerImpl.class.getName());
 

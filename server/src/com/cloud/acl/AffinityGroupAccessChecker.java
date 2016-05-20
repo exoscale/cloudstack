@@ -16,14 +16,12 @@
 // under the License.
 package com.cloud.acl;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 
 import org.springframework.stereotype.Component;
 
 import org.apache.cloudstack.acl.ControlledEntity;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
-import org.apache.cloudstack.acl.SecurityChecker;
 import org.apache.cloudstack.affinity.AffinityGroup;
 import org.apache.cloudstack.affinity.AffinityGroupService;
 import org.apache.cloudstack.affinity.dao.AffinityGroupDomainMapDao;
@@ -33,7 +31,6 @@ import com.cloud.user.Account;
 import com.cloud.user.AccountManager;
 
 @Component
-@Local(value = SecurityChecker.class)
 public class AffinityGroupAccessChecker extends DomainChecker {
 
     @Inject

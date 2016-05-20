@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
@@ -78,9 +77,6 @@ import com.cloud.vm.VirtualMachineProfile;
 import com.cloud.vm.dao.DomainRouterDao;
 import com.cloud.vm.VirtualMachine;
 
-@Local(value = {NetworkElement.class, ConnectivityProvider.class,
-        SourceNatServiceProvider.class, StaticNatServiceProvider.class,
-        PortForwardingServiceProvider.class, IpDeployer.class, NetworkMigrationResponder.class})
 public class OvsElement extends AdapterBase implements NetworkElement,
 OvsElementService, ConnectivityProvider, ResourceStateAdapter,
 PortForwardingServiceProvider, LoadBalancingServiceProvider, NetworkMigrationResponder,

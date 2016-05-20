@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
@@ -60,7 +59,6 @@ import com.cloud.utils.db.SearchCriteria;
 import com.cloud.utils.db.TransactionLegacy;
 
 @Component
-@Local(value = {UsageService.class})
 public class UsageServiceImpl extends ManagerBase implements UsageService, Manager {
     public static final Logger s_logger = Logger.getLogger(UsageServiceImpl.class);
 

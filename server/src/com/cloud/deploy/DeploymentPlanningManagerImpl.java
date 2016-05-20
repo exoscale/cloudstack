@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TreeSet;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
@@ -129,7 +128,6 @@ import com.cloud.vm.VirtualMachineProfile;
 import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.VMInstanceDao;
 
-@Local(value = {DeploymentPlanningManager.class})
 public class DeploymentPlanningManagerImpl extends ManagerBase implements DeploymentPlanningManager, Manager, Listener,
         StateListener<State, VirtualMachine.Event, VirtualMachine> {
 
@@ -1206,12 +1204,7 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
 
         for (VolumeVO toBeCreated : volumesTobeCreated) {
             s_logger.debug("Checking suitable pools for volume (Id, Type): (" + toBeCreated.getId() + "," + toBeCreated.getVolumeType().name() + ")");
-
-            // If the plan specifies a poolId, it means that this VM's ROOT
-            // volume is ready and the pool should be reused.
-            // In this case, also check if rest of the volumes are ready and can
-            // be reused.
-            if (plan.getPoolId() != null) {
+            if (plan.getPoolId() != null || (toBeCreated.getVolumeType() == Volume.Type.DATADISK && toBeCreated.getPoolId() != null && toBeCreated.getState() == Volume.State.Ready)) {
                 s_logger.debug("Volume has pool already allocated, checking if pool can be reused, poolId: " + toBeCreated.getPoolId());
                 List<StoragePool> suitablePools = new ArrayList<StoragePool>();
                 StoragePool pool = null;
@@ -1467,3 +1460,4 @@ public class DeploymentPlanningManagerImpl extends ManagerBase implements Deploy
         return true;
     }
 }
+

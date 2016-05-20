@@ -16,7 +16,6 @@
 // under the License.
 package com.cloud.network.router;
 
-
 import com.cloud.agent.api.Answer;
 import com.cloud.agent.api.Command;
 import com.cloud.agent.api.Command.OnError;
@@ -64,7 +63,6 @@ import com.cloud.network.RemoteAccessVpn;
 import com.cloud.network.Site2SiteVpnConnection;
 import com.cloud.network.VirtualRouterProvider;
 import com.cloud.network.VirtualRouterProvider.Type;
-import com.cloud.network.VpcVirtualNetworkApplianceService;
 import com.cloud.network.VpnUser;
 import com.cloud.network.addr.PublicIp;
 import com.cloud.network.dao.FirewallRulesDao;
@@ -116,7 +114,6 @@ import com.cloud.vm.dao.VMInstanceDao;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 import java.net.URI;
@@ -130,7 +127,6 @@ import java.util.Map;
 import java.util.TreeSet;
 
 @Component
-@Local(value = {VpcVirtualNetworkApplianceManager.class, VpcVirtualNetworkApplianceService.class})
 public class VpcVirtualNetworkApplianceManagerImpl extends VirtualNetworkApplianceManagerImpl implements VpcVirtualNetworkApplianceManager {
     private static final Logger s_logger = Logger.getLogger(VpcVirtualNetworkApplianceManagerImpl.class);
     String _name;

@@ -20,7 +20,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
@@ -35,7 +34,6 @@ import com.cloud.utils.exception.CloudRuntimeException;
  * comparing it against the local database.
  *
  */
-@Local(value = {UserAuthenticator.class})
 public class MD5UserAuthenticator extends DefaultUserAuthenticator {
     public static final Logger s_logger = Logger.getLogger(MD5UserAuthenticator.class);
 

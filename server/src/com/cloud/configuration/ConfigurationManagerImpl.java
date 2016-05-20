@@ -33,7 +33,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
@@ -211,7 +210,6 @@ import com.cloud.vm.dao.NicIpAliasDao;
 import com.cloud.vm.dao.NicIpAliasVO;
 import com.cloud.vm.dao.NicSecondaryIpDao;
 
-@Local(value = {ConfigurationManager.class, ConfigurationService.class})
 public class ConfigurationManagerImpl extends ManagerBase implements ConfigurationManager, ConfigurationService {
     public static final Logger s_logger = Logger.getLogger(ConfigurationManagerImpl.class);
 

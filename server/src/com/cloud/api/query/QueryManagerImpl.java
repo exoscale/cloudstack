@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 
 import org.apache.log4j.Logger;
@@ -207,7 +206,6 @@ import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.UserVmDetailsDao;
 
 @Component
-@Local(value = {QueryService.class})
 public class QueryManagerImpl extends ManagerBase implements QueryService {
 
     public static final Logger s_logger = Logger.getLogger(QueryManagerImpl.class);

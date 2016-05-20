@@ -24,7 +24,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Map;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
@@ -37,7 +36,6 @@ import com.cloud.network.dao.IPAddressDao;
 import com.cloud.utils.component.AdapterBase;
 import com.cloud.utils.exception.CloudRuntimeException;
 
-@Local(value = IpAddrAllocator.class)
 public class ExternalIpAddressAllocator extends AdapterBase implements IpAddrAllocator {
     private static final Logger s_logger = Logger.getLogger(ExternalIpAddressAllocator.class);
     @Inject

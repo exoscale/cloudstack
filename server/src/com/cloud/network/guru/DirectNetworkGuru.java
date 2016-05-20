@@ -18,7 +18,6 @@ package com.cloud.network.guru;
 
 import java.util.List;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 
 import com.cloud.utils.exception.CloudRuntimeException;
@@ -73,7 +72,6 @@ import com.cloud.network.dao.NetworkVO;
 import com.cloud.network.dao.UserIpv6AddressDao;
 
 
-@Local(value = {NetworkGuru.class})
 public class DirectNetworkGuru extends AdapterBase implements NetworkGuru {
     private static final Logger s_logger = Logger.getLogger(DirectNetworkGuru.class);
 

@@ -90,7 +90,6 @@ import org.apache.cloudstack.api.command.admin.router.ListVirtualRouterElementsC
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
 import org.apache.log4j.Logger;
 
-import javax.ejb.Local;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,11 +97,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Local(value = {NetworkElement.class, FirewallServiceProvider.class,
-    DhcpServiceProvider.class, UserDataServiceProvider.class,
-    StaticNatServiceProvider.class, LoadBalancingServiceProvider.class,
-    PortForwardingServiceProvider.class, IpDeployer.class,
-    RemoteAccessVPNServiceProvider.class, NetworkMigrationResponder.class})
 public class VirtualRouterElement extends AdapterBase implements VirtualRouterElementService, DhcpServiceProvider,
         UserDataServiceProvider, SourceNatServiceProvider, StaticNatServiceProvider, FirewallServiceProvider,
         LoadBalancingServiceProvider, PortForwardingServiceProvider, RemoteAccessVPNServiceProvider, IpDeployer,
