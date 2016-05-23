@@ -154,6 +154,10 @@ public class ServiceOfferingResponse extends BaseResponse {
     @Param(description = "is this offering restricted", since = "4.4.2-exo")
     private Boolean restricted;
 
+    @SerializedName(ApiConstants.AUTHORIZED)
+    @Param(description = "is the account/domain authorized to use this service offering", since = "4.4.2-exo")
+    private Boolean authorized;
+
     public ServiceOfferingResponse() {
     }
 
@@ -370,8 +374,19 @@ public class ServiceOfferingResponse extends BaseResponse {
 
     }
 
+    public Boolean isRestricted() {
+        return restricted;
+    }
+
     public void setRestricted(Boolean restricted) {
         this.restricted = restricted;
     }
 
+    public Boolean isAuthorized() {
+        return authorized;
+    }
+
+    public void setAuthorized(Boolean authorized) {
+        this.authorized = authorized;
+    }
 }

@@ -17,6 +17,7 @@
 package com.cloud.offering;
 
 import java.util.Date;
+import java.util.Set;
 
 import org.apache.cloudstack.acl.InfrastructureEntity;
 import org.apache.cloudstack.api.Identity;
@@ -118,4 +119,9 @@ public interface ServiceOffering extends DiskOffering, InfrastructureEntity, Int
     String getDeploymentPlanner();
 
     boolean isDynamic();
+
+    Set<Long> getAuthorizedDomains();
+
+    Set<Long> getAuthorizedAccounts();
+
 }

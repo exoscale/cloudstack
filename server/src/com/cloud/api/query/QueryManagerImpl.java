@@ -25,6 +25,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import com.cloud.api.ApiDBUtils;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -2420,8 +2421,22 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
     public ListResponse<ServiceOfferingResponse> searchForServiceOfferings(ListServiceOfferingsCmd cmd) {
         Pair<List<ServiceOfferingJoinVO>, Integer> result = searchForServiceOfferingsInternal(cmd);
         ListResponse<ServiceOfferingResponse> response = new ListResponse<ServiceOfferingResponse>();
-        List<ServiceOfferingResponse> offeringResponses =
-            ViewResponseHelper.createServiceOfferingResponse(result.first().toArray(new ServiceOfferingJoinVO[result.first().size()]));
+        List<ServiceOfferingResponse> offeringResponses = new ArrayList<>(result.first().size());
+        for(ServiceOfferingJoinVO serviceOfferingJoinVO : result.first()) {
+            ServiceOfferingResponse resp = ApiDBUtils.newServiceOfferingResponse(serviceOfferingJoinVO);
+            if (resp.isRestricted()) {
+                CallContext caller = CallContext.current();
+                if (caller.getCallingAccount().getDomainId() == 1) { // ROOT
+                    resp.setAuthorized(true);
+                } else {
+                    ServiceOfferingVO offeringVO = _srvOfferingDao.findByIdIncludingRemoved(serviceOfferingJoinVO.getId());
+                    resp.setAuthorized(offeringVO.getAuthorizedAccounts().contains(new Long(caller.getCallingAccountId())) || offeringVO.getAuthorizedDomains().contains(new Long(caller.getCallingAccount().getDomainId())));
+                }
+            }
+            offeringResponses.add(resp);
+        }
+//        List<ServiceOfferingResponse> offeringResponses =
+//            ViewResponseHelper.createServiceOfferingResponse(result.first().toArray(new ServiceOfferingJoinVO[result.first().size()]));
         response.setResponses(offeringResponses, result.second());
         return response;
     }

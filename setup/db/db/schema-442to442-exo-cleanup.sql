@@ -147,6 +147,21 @@ FROM
     LEFT JOIN `domain` ON `disk_offering`.`domain_id` = `domain`.`id`
 WHERE (`disk_offering`.`state` = 'Active');
 
+DROP TABLE IF EXISTS `cloud`.`service_offering_authorizations`;
+CREATE TABLE `cloud`.`service_offering_authorizations` (
+  `id` bigint unsigned UNIQUE NOT NULL AUTO_INCREMENT,
+  `service_offering_id` bigint unsigned NOT NULL,
+  `account_id` bigint unsigned NULL,
+  `domain_id` bigint unsigned NULL,
+  PRIMARY KEY (`id`),
+  KEY `i_service_offering_authorizations__service_offering_id` (`service_offering_id`),
+  KEY `i_service_offering_authorizations__account_id` (`account_id`),
+  KEY `i_service_offering_authorizations__domain_id` (`domain_id`),
+  CONSTRAINT `fk_service_offering_authorizations_join_map__service_offering_id` FOREIGN KEY (`service_offering_id`) REFERENCES `service_offering` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_service_offering_authorizations_join_map__account_id` FOREIGN KEY (`account_id`) REFERENCES `account` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_service_offering_authorizations_join_map__domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 -- 2016.05.30 Update URL fields to 2048 bits
 ALTER TABLE `cloud`.`volume_host_ref` MODIFY COLUMN `url` varchar(2048);

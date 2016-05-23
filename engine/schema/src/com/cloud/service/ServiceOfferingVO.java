@@ -17,10 +17,15 @@
 package com.cloud.service;
 
 import java.util.Map;
+import java.util.Set;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -72,6 +77,16 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
 
     @Column(name = "deployment_planner")
     private String deploymentPlanner = null;
+
+    @ElementCollection(targetClass = Long.class, fetch = FetchType.LAZY)
+    @Column(name = "domain_id")
+    @CollectionTable(name = "service_offering_authorizations", joinColumns = @JoinColumn(name = "service_offering_id"))
+    private Set<Long> authorizedDomains;
+
+    @ElementCollection(targetClass = Long.class, fetch = FetchType.LAZY)
+    @Column(name = "account_id")
+    @CollectionTable(name = "service_offering_authorizations", joinColumns = @JoinColumn(name = "service_offering_id"))
+    private Set<Long> authorizedAccounts;
 
     // This is a delayed load value.  If the value is null,
     // then this field has not been loaded yet.
@@ -330,5 +345,23 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
 
     public void setDynamicFlag(boolean isdynamic) {
         isDynamic = isdynamic;
+    }
+
+    public void setAuthorizedDomains(Set<Long> authorizedDomains) {
+        this.authorizedDomains = authorizedDomains;
+    }
+
+    @Override
+    public Set<Long> getAuthorizedDomains() {
+        return authorizedDomains;
+    }
+
+    public void setAuthorizedAccounts(Set<Long> authorizedAccounts) {
+        this.authorizedAccounts = authorizedAccounts;
+    }
+
+    @Override
+    public Set<Long> getAuthorizedAccounts() {
+        return authorizedAccounts;
     }
 }

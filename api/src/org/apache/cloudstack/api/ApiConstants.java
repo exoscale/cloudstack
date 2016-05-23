@@ -24,6 +24,7 @@ public class ApiConstants {
     public static final String ALGORITHM = "algorithm";
     public static final String ALLOCATED_ONLY = "allocatedonly";
     public static final String API_KEY = "apikey";
+    public static final String AUTHORIZED = "authorized";
     public static final String USER_API_KEY = "userapikey";
     public static final String APPLIED = "applied";
     public static final String LIST_LB_VMIPS = "lbvmips";
