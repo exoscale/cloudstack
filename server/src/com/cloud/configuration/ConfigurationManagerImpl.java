@@ -2182,7 +2182,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             throw new InvalidParameterValueException("unable to find service offering " + id);
         }
 
-        boolean updateNeeded = (name != null || displayText != null || sortKey != null);
+        boolean updateNeeded = (name != null || displayText != null || sortKey != null || restricted != null);
         if (!updateNeeded) {
             return _serviceOfferingDao.findById(id);
         }
