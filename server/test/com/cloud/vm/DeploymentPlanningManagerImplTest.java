@@ -163,7 +163,7 @@ public class DeploymentPlanningManagerImplTest {
     @Test
     public void dataCenterAvoidTest() throws InsufficientServerCapacityException, AffinityConflictException {
         ServiceOfferingVO svcOffering =
-            new ServiceOfferingVO("testOffering", 1, 512, 500, 1, 1, false, false, false, "test dpm", false, false, null, false, VirtualMachine.Type.User, domainId,
+            new ServiceOfferingVO("testOffering", 1, 512, 500, 1, 1, false, false, false, "test dpm", false, false, null, false, VirtualMachine.Type.User, domainId, false,
                 null, "FirstFitPlanner");
         Mockito.when(vmProfile.getServiceOffering()).thenReturn(svcOffering);
 
@@ -177,7 +177,7 @@ public class DeploymentPlanningManagerImplTest {
     @Test
     public void plannerCannotHandleTest() throws InsufficientServerCapacityException, AffinityConflictException {
         ServiceOfferingVO svcOffering =
-            new ServiceOfferingVO("testOffering", 1, 512, 500, 1, 1, false, false, false, "test dpm", false, false, null, false, VirtualMachine.Type.User, domainId,
+            new ServiceOfferingVO("testOffering", 1, 512, 500, 1, 1, false, false, false, "test dpm", false, false, null, false, VirtualMachine.Type.User, domainId, false,
                 null, "UserDispersingPlanner");
         Mockito.when(vmProfile.getServiceOffering()).thenReturn(svcOffering);
 
@@ -192,7 +192,7 @@ public class DeploymentPlanningManagerImplTest {
     @Test
     public void emptyClusterListTest() throws InsufficientServerCapacityException, AffinityConflictException {
         ServiceOfferingVO svcOffering =
-            new ServiceOfferingVO("testOffering", 1, 512, 500, 1, 1, false, false, false, "test dpm", false, false, null, false, VirtualMachine.Type.User, domainId,
+            new ServiceOfferingVO("testOffering", 1, 512, 500, 1, 1, false, false, false, "test dpm", false, false, null, false, VirtualMachine.Type.User, domainId, false,
                 null, "FirstFitPlanner");
         Mockito.when(vmProfile.getServiceOffering()).thenReturn(svcOffering);
 

@@ -2010,6 +2010,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         Boolean offerHA = cmd.getOfferHa();
         Boolean limitCpuUse = cmd.GetLimitCpuUse();
         Boolean volatileVm = cmd.getVolatileVm();
+        Boolean restricted = cmd.isRestricted();
 
         String vmTypeString = cmd.getSystemVmType();
         VirtualMachine.Type vmType = null;
@@ -2050,16 +2051,16 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         return createServiceOffering(userId, cmd.getIsSystem(), vmType, cmd.getServiceOfferingName(), cpuNumber, memory, cpuSpeed, cmd.getDisplayText(), localStorageRequired,
                 offerHA, limitCpuUse, volatileVm, cmd.getTags(), cmd.getDomainId(), cmd.getHostTag(), cmd.getNetworkRate(), cmd.getDeploymentPlanner(), cmd.getDetails(),
                 cmd.isCustomizedIops(), cmd.getMinIops(), cmd.getMaxIops(), cmd.getBytesReadRate(), cmd.getBytesWriteRate(), cmd.getIopsReadRate(), cmd.getIopsWriteRate(),
-                cmd.getHypervisorSnapshotReserve());
+                cmd.getHypervisorSnapshotReserve(), restricted);
     }
 
     protected ServiceOfferingVO createServiceOffering(long userId, boolean isSystem, VirtualMachine.Type vmType, String name, Integer cpu, Integer ramSize, Integer speed,
             String displayText, boolean localStorageRequired, boolean offerHA, boolean limitResourceUse, boolean volatileVm, String tags, Long domainId, String hostTag,
             Integer networkRate, String deploymentPlanner, Map<String, String> details, Boolean isCustomizedIops, Long minIops, Long maxIops,
-            Long bytesReadRate, Long bytesWriteRate, Long iopsReadRate, Long iopsWriteRate, Integer hypervisorSnapshotReserve) {
+            Long bytesReadRate, Long bytesWriteRate, Long iopsReadRate, Long iopsWriteRate, Integer hypervisorSnapshotReserve, boolean restricted) {
         tags = StringUtils.cleanupTags(tags);
         ServiceOfferingVO offering = new ServiceOfferingVO(name, cpu, ramSize, speed, networkRate, null, offerHA, limitResourceUse, volatileVm, displayText, localStorageRequired,
-                false, tags, isSystem, vmType, domainId, hostTag, deploymentPlanner);
+                false, tags, isSystem, vmType, domainId, restricted, hostTag, deploymentPlanner);
 
         if (isCustomizedIops != null) {
             bytesReadRate = null;
@@ -2167,6 +2168,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         Long id = cmd.getId();
         String name = cmd.getServiceOfferingName();
         Integer sortKey = cmd.getSortKey();
+        Boolean restricted = cmd.isRestricted();
         Long userId = CallContext.current().getCallingUserId();
 
         if (userId == null) {
@@ -2197,6 +2199,10 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
 
         if (sortKey != null) {
             offering.setSortKey(sortKey);
+        }
+
+        if (restricted != null) {
+            offering.setRestricted(restricted);
         }
 
         // Note: tag editing commented out for now; keeping the code intact,

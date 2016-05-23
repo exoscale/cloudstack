@@ -114,6 +114,9 @@ public class ServiceOfferingJoinVO extends BaseViewVO implements InternalIdentit
     @Column(name = "iops_write_rate")
     Long iopsWriteRate;
 
+    @Column(name = "restricted")
+    private boolean restricted;
+
     @Column(name = GenericDao.CREATED_COLUMN)
     private Date created;
 
@@ -274,6 +277,10 @@ public class ServiceOfferingJoinVO extends BaseViewVO implements InternalIdentit
 
     public Long getIopsWriteRate() {
         return iopsWriteRate;
+    }
+
+    public boolean isRestricted() {
+        return restricted;
     }
 
     public boolean isDynamic() {

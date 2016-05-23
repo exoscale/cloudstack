@@ -105,8 +105,8 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
 
     public ServiceOfferingVO(String name, Integer cpu, Integer ramSize, Integer speed, Integer rateMbps, Integer multicastRateMbps, boolean offerHA, boolean limitCpuUse,
             boolean volatileVm, String displayText, boolean useLocalStorage, boolean recreatable, String tags, boolean systemUse, VirtualMachine.Type vmType,
-            Long domainId) {
-        super(name, displayText, false, tags, recreatable, useLocalStorage, systemUse, true, domainId);
+            Long domainId, boolean restricted) {
+        super(name, displayText, false, tags, recreatable, useLocalStorage, systemUse, true, domainId, restricted);
         this.cpu = cpu;
         this.ramSize = ramSize;
         this.speed = speed;
@@ -120,29 +120,7 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
 
     public ServiceOfferingVO(String name, Integer cpu, Integer ramSize, Integer speed, Integer rateMbps, Integer multicastRateMbps, boolean offerHA,
             boolean limitResourceUse, boolean volatileVm, String displayText, boolean useLocalStorage, boolean recreatable, String tags, boolean systemUse,
-            VirtualMachine.Type vmType, Long domainId, String hostTag) {
-        this(name,
-            cpu,
-            ramSize,
-            speed,
-            rateMbps,
-            multicastRateMbps,
-            offerHA,
-            limitResourceUse,
-            volatileVm,
-            displayText,
-            useLocalStorage,
-            recreatable,
-            tags,
-            systemUse,
-            vmType,
-            domainId);
-        this.hostTag = hostTag;
-    }
-
-    public ServiceOfferingVO(String name, Integer cpu, Integer ramSize, Integer speed, Integer rateMbps, Integer multicastRateMbps, boolean offerHA,
-            boolean limitResourceUse, boolean volatileVm, String displayText, boolean useLocalStorage, boolean recreatable, String tags, boolean systemUse,
-            VirtualMachine.Type vmType, Long domainId, String hostTag, String deploymentPlanner) {
+            VirtualMachine.Type vmType, Long domainId, boolean restricted, String hostTag) {
         this(name,
             cpu,
             ramSize,
@@ -159,6 +137,30 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
             systemUse,
             vmType,
             domainId,
+            restricted);
+        this.hostTag = hostTag;
+    }
+
+    public ServiceOfferingVO(String name, Integer cpu, Integer ramSize, Integer speed, Integer rateMbps, Integer multicastRateMbps, boolean offerHA,
+            boolean limitResourceUse, boolean volatileVm, String displayText, boolean useLocalStorage, boolean recreatable, String tags, boolean systemUse,
+            VirtualMachine.Type vmType, Long domainId, boolean restricted, String hostTag, String deploymentPlanner) {
+        this(name,
+            cpu,
+            ramSize,
+            speed,
+            rateMbps,
+            multicastRateMbps,
+            offerHA,
+            limitResourceUse,
+            volatileVm,
+            displayText,
+            useLocalStorage,
+            recreatable,
+            tags,
+            systemUse,
+            vmType,
+            domainId,
+            restricted,
             hostTag);
         this.deploymentPlanner = deploymentPlanner;
     }
@@ -174,7 +176,8 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
             offering.getSystemUse(),
             true,
             offering.isCustomizedIops()== null ? false:offering.isCustomizedIops(),
-            offering.getDomainId());
+            offering.getDomainId(),
+            offering.isRestricted());
         cpu = offering.getCpu();
         ramSize = offering.getRamSize();
         speed = offering.getSpeed();

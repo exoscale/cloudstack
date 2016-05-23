@@ -54,6 +54,9 @@ public class UpdateServiceOfferingCmd extends BaseCmd {
     @Parameter(name = ApiConstants.SORT_KEY, type = CommandType.INTEGER, description = "sort key of the service offering, integer")
     private Integer sortKey;
 
+    @Parameter(name = ApiConstants.RESTRICTED, type = CommandType.BOOLEAN, required = false, description = "is this offering restricted", since = "4.4.2-exo")
+    private Boolean restricted;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -72,6 +75,10 @@ public class UpdateServiceOfferingCmd extends BaseCmd {
 
     public Integer getSortKey() {
         return sortKey;
+    }
+
+    public Boolean isRestricted() {
+        return restricted;
     }
 
     /////////////////////////////////////////////////////

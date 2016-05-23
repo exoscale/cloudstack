@@ -134,6 +134,9 @@ public class CreateServiceOfferingCmd extends BaseCmd {
             since = "4.4")
     private Integer hypervisorSnapshotReserve;
 
+    @Parameter(name = ApiConstants.RESTRICTED, type = CommandType.BOOLEAN, required = false, description = "is this offering restricted", since = "4.4.2-exo")
+    private Boolean restricted;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -250,6 +253,10 @@ public class CreateServiceOfferingCmd extends BaseCmd {
 
     public Integer getHypervisorSnapshotReserve() {
         return hypervisorSnapshotReserve;
+    }
+
+    public Boolean isRestricted() {
+        return restricted == null ? false : restricted;
     }
 
     /////////////////////////////////////////////////////

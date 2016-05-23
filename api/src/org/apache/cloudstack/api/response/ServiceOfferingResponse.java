@@ -150,6 +150,10 @@ public class ServiceOfferingResponse extends BaseResponse {
     @Param(description = "is true if the offering is customized", since = "4.3.0")
     private Boolean isCustomized;
 
+    @SerializedName(ApiConstants.RESTRICTED)
+    @Param(description = "is this offering restricted", since = "4.4.2-exo")
+    private Boolean restricted;
+
     public ServiceOfferingResponse() {
     }
 
@@ -364,6 +368,10 @@ public class ServiceOfferingResponse extends BaseResponse {
     public void setIscutomized(boolean iscutomized) {
         this.isCustomized = iscutomized;
 
+    }
+
+    public void setRestricted(Boolean restricted) {
+        this.restricted = restricted;
     }
 
 }
