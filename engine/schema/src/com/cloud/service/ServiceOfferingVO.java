@@ -78,12 +78,12 @@ public class ServiceOfferingVO extends DiskOfferingVO implements ServiceOffering
     @Column(name = "deployment_planner")
     private String deploymentPlanner = null;
 
-    @ElementCollection(targetClass = Long.class, fetch = FetchType.LAZY)
+    @ElementCollection(targetClass = Long.class, fetch = FetchType.EAGER)
     @Column(name = "domain_id")
     @CollectionTable(name = "service_offering_authorizations", joinColumns = @JoinColumn(name = "service_offering_id"))
     private Set<Long> authorizedDomains;
 
-    @ElementCollection(targetClass = Long.class, fetch = FetchType.LAZY)
+    @ElementCollection(targetClass = Long.class, fetch = FetchType.EAGER)
     @Column(name = "account_id")
     @CollectionTable(name = "service_offering_authorizations", joinColumns = @JoinColumn(name = "service_offering_id"))
     private Set<Long> authorizedAccounts;
