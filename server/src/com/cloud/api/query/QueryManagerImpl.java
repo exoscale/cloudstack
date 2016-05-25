@@ -2469,6 +2469,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         Long vmId = cmd.getVirtualMachineId();
         Long domainId = cmd.getDomainId();
         Boolean isSystem = cmd.getIsSystem();
+        Boolean restrictedOnly = cmd.getRestricted();
         String vmTypeStr = cmd.getSystemVmType();
 
         SearchCriteria<ServiceOfferingJoinVO> sc = _srvOfferingJoinDao.createSearchCriteria();
@@ -2569,6 +2570,10 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
             // note that for non-root users, isSystem is always false when
             // control comes to here
             sc.addAnd("systemUse", SearchCriteria.Op.EQ, isSystem);
+        }
+
+        if (restrictedOnly != null) {
+            sc.addAnd("restricted", SearchCriteria.Op.EQ, restrictedOnly);
         }
 
         if (name != null) {

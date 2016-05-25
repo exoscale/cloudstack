@@ -64,6 +64,12 @@ public class ListServiceOfferingsCmd extends BaseListCmd {
                description = "the system VM type. Possible types are \"consoleproxy\", \"secondarystoragevm\" or \"domainrouter\".")
     private String systemVmType;
 
+    @Parameter(name = ApiConstants.RESTRICTED,
+               type = CommandType.BOOLEAN,
+               description = "filter by the restriction flag: true to list only the restricted service offerings, false to list non-restricted service offerings, or nothing for all.",
+               since = "4.4.2-exo")
+    private Boolean restricted;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -90,6 +96,10 @@ public class ListServiceOfferingsCmd extends BaseListCmd {
 
     public String getSystemVmType() {
         return systemVmType;
+    }
+
+    public Boolean getRestricted() {
+        return restricted;
     }
 
     /////////////////////////////////////////////////////
