@@ -37,6 +37,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
 import org.apache.cloudstack.api.command.user.snapshot.UpdateSnapshotPolicyCmd;
 import org.apache.commons.codec.binary.Base64;
@@ -2596,6 +2597,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(DeleteServiceOfferingCmd.class);
         cmdList.add(UpdateDiskOfferingCmd.class);
         cmdList.add(UpdateServiceOfferingCmd.class);
+        cmdList.add(CreateServiceOfferingAuthorizationCmd.class);
         cmdList.add(ListServiceOfferingAuthorizationsCmd.class);
         cmdList.add(CreatePodCmd.class);
         cmdList.add(DeletePodCmd.class);

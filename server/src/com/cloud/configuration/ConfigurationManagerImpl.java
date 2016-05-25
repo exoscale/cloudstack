@@ -36,8 +36,12 @@ import java.util.UUID;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.offering.ServiceOfferingAuthorization;
+import com.cloud.service.ServiceOfferingAuthorizationVO;
+import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import com.cloud.storage.StorageManager;
 
+import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
 import org.apache.log4j.Logger;
 import org.apache.cloudstack.acl.SecurityChecker;
 import org.apache.cloudstack.affinity.AffinityGroup;
@@ -233,6 +237,8 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
     ServiceOfferingDao _serviceOfferingDao;
     @Inject
     ServiceOfferingDetailsDao _serviceOfferingDetailsDao;
+    @Inject
+    ServiceOfferingAuthorizationDao _serviceOfferingAuthorizationDao;
     @Inject
     DiskOfferingDao _diskOfferingDao;
     @Inject
@@ -4999,4 +5005,31 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         _secChecker = secChecker;
     }
 
+    @Override
+    @DB
+    @ActionEvent(eventType = EventTypes.EVENT_SERVICE_OFFERING_AUTHORIZATION_CREATE, eventDescription = "creating service offering authorization")
+    public ServiceOfferingAuthorization createServiceOfferingAuthorization(CreateServiceOfferingAuthorizationCmd cmd) {
+        // Verify input parameters
+        ServiceOffering offeringHandle = _entityMgr.findById(ServiceOffering.class, cmd.getServiceOfferingId());
+        if (offeringHandle == null) {
+            throw new InvalidParameterValueException("unable to find service offering " + cmd.getServiceOfferingId());
+        }
+
+        // Only restricted service offering can have an authorization list
+        if (!offeringHandle.isRestricted()) {
+            throw new InvalidParameterValueException("this service offering is not restricted " + cmd.getServiceOfferingId());
+        }
+
+        // check if domain is valid
+        if (cmd.getDomainId() != null && _domainDao.findById(cmd.getDomainId()) == null) {
+            throw new InvalidParameterValueException("please specify a valid domain id");
+        }
+        // check if account is valid
+        if (cmd.getAccountId() != null && _accountDao.findById(cmd.getAccountId()) == null) {
+            throw new InvalidParameterValueException("please specify a valid account id");
+        }
+
+        ServiceOfferingAuthorizationVO serviceOfferingAuthorizationVO = new ServiceOfferingAuthorizationVO(offeringHandle.getId(), cmd.getDomainId(), cmd.getAccountId());
+        return _serviceOfferingAuthorizationDao.persist(serviceOfferingAuthorizationVO);
+    }
 }
