@@ -8,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import com.cloud.offering.ServiceOffering;
+import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -15,10 +17,15 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.utils.PropertiesUtil;
 
+import javax.inject.Inject;
+
 public class RestrictionServiceImpl implements RestrictionService {
     private static final Logger s_logger = Logger.getLogger(RestrictionServiceImpl.class);
 
     private static final String DEFAULTFILENAME = "restrictions.yaml";
+
+    @Inject
+    ServiceOfferingAuthorizationDao serviceOfferingAuthorizationDao;
 
     // Working directly with the map of restrictions
     private volatile Map<String, List<Restriction>> restrictions = null;
@@ -58,6 +65,18 @@ public class RestrictionServiceImpl implements RestrictionService {
     }
 
     @Override
+    public boolean isAuthorized(ServiceOffering serviceOffering, Long domainId, Long accountId) {
+        if (serviceOffering.isRestricted() && serviceOfferingAuthorizationDao.count(serviceOffering.getId(), domainId, accountId) > 0) {
+            return true;
+        } else if (serviceOffering.isRestricted()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    // TODO Expose JMX bean to be able to call this method on the servers
     public void reloadRestrictions() {
         s_logger.debug("Reloading restrictions file");
         Map<String, List<Restriction>> newRestrictions = loadRestrictions(DEFAULTFILENAME);

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.exo</groupId>
   <artifactId>cloudstack-restrictions</artifactId>
-  <name>cloudstack-restrictions</name>
+  <name>Exoscale Cloudstack Restrictions</name>
   <description>YAML restrictions for cloudstack</description>
   <parent>
     <groupId>org.apache.cloudstack</groupId>
@@ -18,6 +18,11 @@
     <dependency>
       <groupId>org.apache.cloudstack</groupId>
       <artifactId>cloud-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cloudstack</groupId>
+      <artifactId>cloud-engine-schema</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

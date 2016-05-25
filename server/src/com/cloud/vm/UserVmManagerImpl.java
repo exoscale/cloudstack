@@ -2659,6 +2659,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             validateCustomParameters(offering, customParameters);
             offering = _offeringDao.getcomputeOffering(offering, customParameters);
         }
+        if (offering.isRestricted()) {
+            if (!restrictionService.isAuthorized(offering, owner.getDomainId(), owner.getAccountId())) {
+                throw new PermissionDeniedException("This account or domain is not authorized to use this service offering");
+            }
+        }
         // check if account/domain is with in resource limits to create a new vm
         boolean isIso = Storage.ImageFormat.ISO == template.getFormat();
         // For baremetal, size can be null
@@ -2688,6 +2693,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.volume, (isIso || diskOfferingId == null ? 1 : 2));
         _resourceLimitMgr.checkResourceLimit(owner, ResourceType.primary_storage, size);
+
+        // Enforce restrictions on templates
+        // enforce exoscale restrictions
+        restrictionService.validate((offering == null ? null : offering.getName()), template.getName(), size);
 
         // verify security group ids
         if (securityGroupIdList != null) {
@@ -3022,7 +3031,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
                 Long rootDiskSize = null;
                 VMTemplateVO templateVO = _templateDao.findById(template.getId());
-                ServiceOfferingVO serviceOffering = _offeringDao.findById(vm.getId(), vm.getServiceOfferingId());
 
                 if (templateVO == null) {
                     throw new InvalidParameterValueException("Unable to look up template by id " + template.getId());
@@ -3056,12 +3064,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     s_logger.debug("found root disk size of " + rootDiskSize);
                     customParameters.remove("rootdisksize");
 
-                    // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
-                } else {
-                    // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), (templateVO == null ? null : templateVO.getSize()));
-
+                    // enforce exoscale restrictions with custom disk size
+                    restrictionService.validate((offering == null ? null : offering.getName()), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
                 }
 
                 if (isDisplayVm != null) {
