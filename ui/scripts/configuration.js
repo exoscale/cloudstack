@@ -302,6 +302,13 @@
                                         isChecked: true,
                                         docID: 'helpComputeOfferingPublic'
                                     },
+                                    isRestricted: {
+                                        label: 'label.restricted',
+                                        isBoolean: true,
+                                        isReverse: true,
+                                        isChecked: false,
+                                        docID: 'helpComputeOfferingPublic'
+                                    },
 
                                     isVolatile: {
                                         label: 'label.volatile',
@@ -500,6 +507,7 @@
                             action: function(args) {
                                 var data = {
                                     issystem: false,
+                                    restricted: false,
                                     name: args.data.name,
                                     displaytext: args.data.description,
                                     storageType: args.data.storageType,
@@ -629,6 +637,10 @@
                                         domainid: args.data.domainId
                                     });
                                 }
+
+                                $.extend(data, {
+                                    restricted: (args.data.isRestricted == "on")
+                                });
 
                                 $.ajax({
                                     url: createURL('createServiceOffering' + array1.join("")),
@@ -787,6 +799,10 @@
                                     },
                                     iscustomizediops: {
                                         label: 'label.custom.disk.iops',
+                                        converter: cloudStack.converters.toBooleanText
+                                    },
+                                    restricted: {
+                                        label: 'label.restricted',
                                         converter: cloudStack.converters.toBooleanText
                                     },
                                     miniops: {
