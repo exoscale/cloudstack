@@ -2659,10 +2659,8 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             validateCustomParameters(offering, customParameters);
             offering = _offeringDao.getcomputeOffering(offering, customParameters);
         }
-        if (offering.isRestricted()) {
-            if (!restrictionService.isAuthorized(offering, owner.getDomainId(), owner.getAccountId())) {
-                throw new PermissionDeniedException("This account or domain is not authorized to use this service offering");
-            }
+        if (offering.isRestricted() && !restrictionService.isAuthorized(offering, owner.getDomainId(), owner.getAccountId())) {
+            throw new PermissionDeniedException("The account or domain is not authorized to use this service offering");
         }
         // check if account/domain is with in resource limits to create a new vm
         boolean isIso = Storage.ImageFormat.ISO == template.getFormat();
@@ -4440,6 +4438,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         DomainVO domain = _domainDao.findById(cmd.getDomainId());
         _accountMgr.checkAccess(newAccount, domain);
 
+        // VV 6: check if the service offering is restricted and the new owner can use it
+        if (offering.isRestricted() && !restrictionService.isAuthorized(offering, newAccount.getDomainId(), newAccount.getAccountId())) {
+            throw new PermissionDeniedException("New owner is not authorized to use this virtual machine service offering");
+        }
+
         final Nic nic = _networkModel.getDefaultNic(cmd.getVmId());
         final Map<Long, DiskOffering> diskOfferings = new HashMap<>();
 
@@ -4762,6 +4765,9 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     throw new InvalidParameterValueException("Invalid template id provided to restore the VM ");
                 }
             }
+            // Ensure restrictions on the new template
+            final ServiceOffering so = _serviceOfferingDao.findById(vm.getServiceOfferingId());
+            restrictionService.validate(so.getName(), template.getName(), template.getSize());
         } else {
             if (isISO && templateId == null) {
                 throw new CloudRuntimeException("Cannot restore the VM since there is no ISO attached to VM");

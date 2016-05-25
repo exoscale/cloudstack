@@ -40,8 +40,10 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.exception.PermissionDeniedException;
 import com.cloud.offering.NetworkOffering;
 import com.cloud.offerings.dao.NetworkOfferingDao;
+import io.exo.cloudstack.restrictions.RestrictionService;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.affinity.dao.AffinityGroupVMMapDao;
@@ -285,6 +287,8 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
     protected VGPUTypesDao _vgpuTypesDao;
     @Inject
     protected EntityManager _entityMgr;
+    @Inject
+    protected RestrictionService restrictionService;
 
     @Inject
     ConfigDepot _configDepot;
@@ -3380,6 +3384,15 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
          * ". Please select a service offering with the same guest IP type as the VM's current service offering (" +
          * currentServiceOffering.getGuestIpType() + ")."; throw new InvalidParameterValueException(errorMsg); }
          */
+
+        // if the new service offering is restricted, ensure the current owner of the VM can do the upgrade
+        if (newServiceOffering.isRestricted() && !restrictionService.isAuthorized(newServiceOffering, vmInstance.getDomainId(), vmInstance.getAccountId())) {
+            throw new PermissionDeniedException("The new service offering is not authorized for the account/domain owner of the virtual machine");
+        }
+
+        // Disk size won't change, so don't need to get it
+        final VirtualMachineTemplate vmTemplate = _templateDao.findById(vmInstance.getTemplateId());
+        restrictionService.validate(newServiceOffering.getName(), vmTemplate.getName(), null);
 
         // Check that the service offering being upgraded to has the same storage pool preference as the VM's current service
         // offering
