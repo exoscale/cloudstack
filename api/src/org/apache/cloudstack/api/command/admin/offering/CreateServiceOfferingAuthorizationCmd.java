@@ -16,7 +16,6 @@
 // under the License.
 package org.apache.cloudstack.api.command.admin.offering;
 
-import com.cloud.exception.InvalidParameterValueException;
 import com.cloud.offering.ServiceOfferingAuthorization;
 import com.cloud.user.Account;
 import org.apache.cloudstack.api.APICommand;
@@ -92,12 +91,8 @@ public class CreateServiceOfferingAuthorizationCmd extends BaseCmd {
 
     @Override
     public void execute() {
-        if (getDomainId() != null && getAccountId() != null) {
-            throw new InvalidParameterValueException("You cannot specify both a domain and an account");
-        }
         ServiceOfferingAuthorization result = _configService.createServiceOfferingAuthorization(this);
         if (result != null) {
-
             ServiceOfferingAuthorizationResponse response = _responseGenerator.createServiceOfferingAuthorizationResponse(result);
             response.setResponseName(getCommandName());
             this.setResponseObject(response);

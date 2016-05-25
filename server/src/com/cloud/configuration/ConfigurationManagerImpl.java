@@ -35,6 +35,7 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
+import javax.persistence.EntityExistsException;
 
 import com.cloud.offering.ServiceOfferingAuthorization;
 import com.cloud.service.ServiceOfferingAuthorizationVO;
@@ -5010,26 +5011,43 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
     @ActionEvent(eventType = EventTypes.EVENT_SERVICE_OFFERING_AUTHORIZATION_CREATE, eventDescription = "creating service offering authorization")
     public ServiceOfferingAuthorization createServiceOfferingAuthorization(CreateServiceOfferingAuthorizationCmd cmd) {
         // Verify input parameters
-        ServiceOffering offeringHandle = _entityMgr.findById(ServiceOffering.class, cmd.getServiceOfferingId());
+        Long serviceOfferingId = cmd.getServiceOfferingId();
+        ServiceOffering offeringHandle = _entityMgr.findById(ServiceOffering.class, serviceOfferingId);
         if (offeringHandle == null) {
-            throw new InvalidParameterValueException("unable to find service offering " + cmd.getServiceOfferingId());
+            throw new InvalidParameterValueException("unable to find service offering " + serviceOfferingId);
         }
 
         // Only restricted service offering can have an authorization list
         if (!offeringHandle.isRestricted()) {
-            throw new InvalidParameterValueException("this service offering is not restricted " + cmd.getServiceOfferingId());
+            throw new InvalidParameterValueException("this service offering is not restricted: " + offeringHandle.getUuid());
         }
 
         // check if domain is valid
-        if (cmd.getDomainId() != null && _domainDao.findById(cmd.getDomainId()) == null) {
+        Long domainId = cmd.getDomainId();
+        if (domainId != null && _domainDao.findById(domainId) == null) {
             throw new InvalidParameterValueException("please specify a valid domain id");
         }
         // check if account is valid
-        if (cmd.getAccountId() != null && _accountDao.findById(cmd.getAccountId()) == null) {
+        Long accountId = cmd.getAccountId();
+        if (accountId != null && _accountDao.findById(accountId) == null) {
             throw new InvalidParameterValueException("please specify a valid account id");
         }
 
-        ServiceOfferingAuthorizationVO serviceOfferingAuthorizationVO = new ServiceOfferingAuthorizationVO(offeringHandle.getId(), cmd.getDomainId(), cmd.getAccountId());
-        return _serviceOfferingAuthorizationDao.persist(serviceOfferingAuthorizationVO);
+        if (domainId != null && accountId != null) {
+            throw new InvalidParameterValueException("You cannot specify both a domain and an account id");
+        }
+
+        ServiceOfferingAuthorizationVO serviceOfferingAuthorizationVO = new ServiceOfferingAuthorizationVO(serviceOfferingId, domainId, accountId);
+        ServiceOfferingAuthorizationVO result = null;
+        try {
+            result = _serviceOfferingAuthorizationDao.persist(serviceOfferingAuthorizationVO);
+        } catch (EntityExistsException e) {
+            if (domainId != null) {
+                result = _serviceOfferingAuthorizationDao.findOneByDomain(serviceOfferingId, domainId);
+            } else {
+                result = _serviceOfferingAuthorizationDao.findOneByAccount(serviceOfferingId, accountId);
+            }
+        }
+        return result;
     }
 }
