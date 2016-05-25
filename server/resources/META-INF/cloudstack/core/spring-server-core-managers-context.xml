@@ -232,8 +232,4 @@
     <bean id="certServiceImpl" class="org.apache.cloudstack.network.lb.CertServiceImpl" />
 
     <bean id="restrictionService" class="io.exo.cloudstack.restrictions.RestrictionServiceImpl"/>
-    <!-- Perform reload of restrictions file every 5 minutes -->
-    <task:scheduled-tasks>
-        <task:scheduled ref="restrictionService" method="reloadRestrictions" cron="0 */5 * * * *"/>
-    </task:scheduled-tasks>
 </beans>
