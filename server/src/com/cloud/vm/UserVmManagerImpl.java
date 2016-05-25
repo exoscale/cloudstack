@@ -816,7 +816,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                restrictionService.validate(newServiceOffering.getName(), owner.getUuid(), null, volume.getSize());
+                restrictionService.validate(newServiceOffering.getName(), null, volume.getSize());
             }
         }
 
@@ -3046,7 +3046,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                         s_logger.debug("rootdisksize of " + (rootDiskSize << 30) + " was larger than template size of " + templateVO.getSize());
                     }
 
-                    // rotdisksize must not be larger than maxvolumesize settings
+                    // rootdisksize must not be larger than maxvolumesize settings
                     String maxVolumeSizeInGbString = _configDao.getValue(Config.MaxVolumeSize.key());
                     _maxVolumeSizeInGb = NumbersUtil.parseInt(maxVolumeSizeInGbString, Integer.parseInt(Config.MaxVolumeSize.getDefaultValue()));
                     if (rootDiskSize > _maxVolumeSizeInGb) {
@@ -3057,10 +3057,10 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
                 } else {
                     // enforce exoscale restrictions
-                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), owner.getUuid(), (templateVO == null ? null : templateVO.getName()), (templateVO == null ? null : templateVO.getSize()));
+                    restrictionService.validate((serviceOffering == null ? null : serviceOffering.getName()), (templateVO == null ? null : templateVO.getName()), (templateVO == null ? null : templateVO.getSize()));
 
                 }
 

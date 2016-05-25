@@ -67,7 +67,7 @@ public class RestrictionServiceImpl implements RestrictionService {
     }
 
     @Override
-    public void validate(String serviceOfferingName, String accountUuid, String templateName, Long templateSize) throws InvalidParameterValueException {
+    public void validate(String serviceOfferingName, String templateName, Long templateSize) throws InvalidParameterValueException {
 
         s_logger.debug("Enforce restrictions on serviceOfferingName=" + (serviceOfferingName == null ? "null" : serviceOfferingName) + ", templateName=" + (templateName == null ? "null" : templateName) + ", templateSize=" + (templateSize == null ? "null" : templateSize));
 
@@ -84,10 +84,6 @@ public class RestrictionServiceImpl implements RestrictionService {
 
                 if (restriction.getMaxTemplateSize() != null && templateSize != null && templateSize > restriction.getMaxTemplateSize() ) {
                     throw new InvalidParameterValueException("This service offering cannot be used with this disk size.");
-                }
-
-                if (restriction.getAuthorizedOrgs() != null && !restriction.getAuthorizedOrgs().contains(accountUuid)) {
-                    throw new InvalidParameterValueException("This service offering cannot be used with this account.");
                 }
             }
         }

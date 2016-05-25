@@ -1,6 +1,5 @@
 package io.exo.cloudstack.restrictions;
 
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -11,7 +10,6 @@ public class Restriction {
     private Long maxTemplateSize = null;
     private String unauthorizedTemplateName = null;
     private Pattern templateNamePattern = null;
-    private List<String> authorizedOrgs = null;
 
     public String getServiceOfferingName() {
         return serviceOfferingName;
@@ -52,14 +50,6 @@ public class Restriction {
         return templateNamePattern;
     }
 
-    public void setAuthorizedOrgs(List<String> authorizedOrgs) {
-        this.authorizedOrgs = authorizedOrgs;
-    }
-
-    public List<String> getAuthorizedOrgs() {
-        return authorizedOrgs;
-    }
-
     public String toString() {
         StringBuilder sb = new StringBuilder("Restriction {");
         if (serviceOfferingName != null) {
@@ -75,11 +65,6 @@ public class Restriction {
         if(maxTemplateSize != null) {
             sb.append("maxTemplateSize: ");
             sb.append(maxTemplateSize);
-            sb.append(", ");
-        }
-        if (authorizedOrgs != null) {
-            sb.append("authorizedOrgs: ");
-            sb.append(authorizedOrgs.size());
             sb.append(", ");
         }
         sb.replace(sb.length()-2, sb.length(), "");

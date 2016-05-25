@@ -840,9 +840,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
         }
 
         //Exoscale restrictions
-        Account owner = _accountService.getActiveAccountById(cmd.getEntityOwnerId());
         ServiceOfferingVO serviceOffering = _offeringDao.findById(userVm.getId(), userVm.getServiceOfferingId());
-        restrictionService.validate(serviceOffering.getName(), owner.getUuid(), null, newSize);
+        restrictionService.validate(serviceOffering.getName(), null, newSize);
 
         if (!shrinkOk) {
             /* Check resource limit for this account on primary storage resource */

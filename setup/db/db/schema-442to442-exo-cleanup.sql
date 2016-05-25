@@ -115,7 +115,7 @@ AS SELECT
    `disk_offering`.`removed`,
    `disk_offering`.`use_local_storage`,
    `disk_offering`.`system_use`,
-   `disk_offering`.`customized_iops`,
+   `disk_offering`.`customized_iops`,§
    `disk_offering`.`min_iops`,
    `disk_offering`.`max_iops`,
    `disk_offering`.`hv_ss_reserve`,
@@ -159,7 +159,6 @@ CREATE TABLE `cloud`.`service_offering_authorizations` (
   UNIQUE KEY `uc_service_offering_authorizations__domain` (`service_offering_id`, `domain_id`),
   UNIQUE KEY `uc_service_offering_authorizations__account` (`service_offering_id`, `account_id`),
   KEY `i_service_offering_authorizations__service_offering_id` (`service_offering_id`),
-  -- TODO others keys to create depending on DAO implementation
   CONSTRAINT `fk_service_offering_authorizations_join_map__service_offering_id` FOREIGN KEY (`service_offering_id`) REFERENCES `service_offering` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_service_offering_authorizations_join_map__account_id` FOREIGN KEY (`account_id`) REFERENCES `account` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_service_offering_authorizations_join_map__domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE
