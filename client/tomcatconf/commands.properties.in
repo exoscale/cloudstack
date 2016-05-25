@@ -126,6 +126,7 @@ createServiceOffering=1
 deleteServiceOffering=1
 updateServiceOffering=1
 listServiceOfferings=15
+listServiceOfferingAuthorizations=1
 
 #### disk offering commands
 createDiskOffering=1

@@ -27,6 +27,8 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import com.cloud.domain.Domain;
+import com.cloud.offering.ServiceOfferingAuthorization;
 import org.apache.cloudstack.affinity.AffinityGroup;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
 import org.apache.cloudstack.affinity.dao.AffinityGroupDao;
@@ -48,6 +50,7 @@ import org.apache.cloudstack.api.response.ProjectInvitationResponse;
 import org.apache.cloudstack.api.response.ProjectResponse;
 import org.apache.cloudstack.api.response.ResourceTagResponse;
 import org.apache.cloudstack.api.response.SecurityGroupResponse;
+import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingResponse;
 import org.apache.cloudstack.api.response.StoragePoolResponse;
 import org.apache.cloudstack.api.response.TemplateResponse;
@@ -1792,6 +1795,27 @@ public class ApiDBUtils {
 
     public static ServiceOfferingResponse newServiceOfferingResponse(ServiceOfferingJoinVO offering) {
         return s_serviceOfferingJoinDao.newServiceOfferingResponse(offering);
+    }
+
+    public static ServiceOfferingAuthorizationResponse newServiceOfferingAuthorizationResponse(ServiceOfferingAuthorization serviceOfferingAuthorization) {
+        ServiceOfferingAuthorizationResponse response = new ServiceOfferingAuthorizationResponse();
+        response.setObjectName("serviceofferingauthorization");
+        response.setId(serviceOfferingAuthorization.getUuid());
+        response.setServiceOfferingId(s_serviceOfferingDao.findById(serviceOfferingAuthorization.getResourceId()).getUuid());
+        Long accountId = serviceOfferingAuthorization.getAccountId();
+        Long domainId = serviceOfferingAuthorization.getDomainId();
+
+        if (accountId != null) {
+            Account account = s_accountDao.findById(accountId);
+            response.setAccountId(account.getUuid());
+        }
+
+        if (domainId != null) {
+            Domain domain = s_domainDao.findById(domainId);
+            response.setDomainId(domain.getUuid());
+        }
+
+        return response;
     }
 
     public static ServiceOfferingJoinVO newServiceOfferingView(ServiceOffering offering) {

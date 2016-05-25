@@ -26,6 +26,10 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import com.cloud.api.ApiDBUtils;
+import com.cloud.service.ServiceOfferingAuthorizationVO;
+import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
+import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
+import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -294,6 +298,9 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
 
     @Inject
     private ServiceOfferingDao _srvOfferingDao;
+
+    @Inject
+    private ServiceOfferingAuthorizationDao _srvOfferingAuthorizationDao;
 
     @Inject
     private DataCenterJoinDao _dcJoinDao;
@@ -2432,11 +2439,11 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
                     ServiceOfferingVO offeringVO = _srvOfferingDao.findByIdIncludingRemoved(serviceOfferingJoinVO.getId());
                     resp.setAuthorized(offeringVO.getAuthorizedAccounts().contains(new Long(caller.getCallingAccountId())) || offeringVO.getAuthorizedDomains().contains(new Long(caller.getCallingAccount().getDomainId())));
                 }
+            } else {
+                resp.setAuthorized(true);
             }
             offeringResponses.add(resp);
         }
-//        List<ServiceOfferingResponse> offeringResponses =
-//            ViewResponseHelper.createServiceOfferingResponse(result.first().toArray(new ServiceOfferingJoinVO[result.first().size()]));
         response.setResponses(offeringResponses, result.second());
         return response;
     }
@@ -2573,6 +2580,40 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         }
 
         return _srvOfferingJoinDao.searchAndCount(sc, searchFilter);
+    }
+
+    @Override
+    public ListResponse<ServiceOfferingAuthorizationResponse> searchForServiceOfferingAuthorizations(ListServiceOfferingAuthorizationsCmd cmd) {
+        Pair<List<ServiceOfferingAuthorizationVO>, Integer> result = searchForServiceOfferingAuthorizationsInternal(cmd);
+
+        ListResponse<ServiceOfferingAuthorizationResponse> response = new ListResponse<>();
+        List<ServiceOfferingAuthorizationResponse> authorizationsResponse = ViewResponseHelper.createServiceOfferingAuthorizationResponse(result.first().toArray(new ServiceOfferingAuthorizationVO[result.first().size()]));
+        response.setResponses(authorizationsResponse, result.second());
+        return response;
+    }
+
+    private Pair<List<ServiceOfferingAuthorizationVO>, Integer> searchForServiceOfferingAuthorizationsInternal(ListServiceOfferingAuthorizationsCmd cmd) {
+        SearchCriteria<ServiceOfferingAuthorizationVO> sc = _srvOfferingAuthorizationDao.createSearchCriteria();
+
+        Filter searchFilter = new Filter(ServiceOfferingAuthorizationVO.class, null, false, cmd.getStartIndex(), cmd.getPageSizeVal());
+
+        Long serviceOfferingId = cmd.getServiceOfferingId();
+        Long domainId = cmd.getDomainId();
+        Long accountId = cmd.getAccountId();
+
+        if (serviceOfferingId != null) {
+            sc.addAnd("resourceId", SearchCriteria.Op.EQ, serviceOfferingId);
+        }
+
+        if (domainId != null) {
+            sc.addAnd("domainId", SearchCriteria.Op.EQ, domainId);
+        }
+
+        if (accountId != null) {
+            sc.addAnd("accountId", SearchCriteria.Op.EQ, accountId);
+        }
+
+        return _srvOfferingAuthorizationDao.searchAndCount(sc, searchFilter);
     }
 
     @Override

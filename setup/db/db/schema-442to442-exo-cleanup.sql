@@ -150,13 +150,16 @@ WHERE (`disk_offering`.`state` = 'Active');
 DROP TABLE IF EXISTS `cloud`.`service_offering_authorizations`;
 CREATE TABLE `cloud`.`service_offering_authorizations` (
   `id` bigint unsigned UNIQUE NOT NULL AUTO_INCREMENT,
+  `uuid` varchar(40) DEFAULT NULL,
   `service_offering_id` bigint unsigned NOT NULL,
   `account_id` bigint unsigned NULL,
   `domain_id` bigint unsigned NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uc_service_offering_authorizations__uuid` (`uuid`),
+  UNIQUE KEY `uc_service_offering_authorizations__domain` (`service_offering_id`, `domain_id`),
+  UNIQUE KEY `uc_service_offering_authorizations__account` (`service_offering_id`, `account_id`),
   KEY `i_service_offering_authorizations__service_offering_id` (`service_offering_id`),
-  KEY `i_service_offering_authorizations__account_id` (`account_id`),
-  KEY `i_service_offering_authorizations__domain_id` (`domain_id`),
+  -- TODO others keys to create depending on DAO implementation
   CONSTRAINT `fk_service_offering_authorizations_join_map__service_offering_id` FOREIGN KEY (`service_offering_id`) REFERENCES `service_offering` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_service_offering_authorizations_join_map__account_id` FOREIGN KEY (`account_id`) REFERENCES `account` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_service_offering_authorizations_join_map__domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE

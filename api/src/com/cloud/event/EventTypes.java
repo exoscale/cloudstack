@@ -19,6 +19,7 @@ package com.cloud.event;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.cloud.offering.ServiceOfferingAuthorization;
 import org.apache.cloudstack.config.Configuration;
 
 import com.cloud.dc.DataCenter;
@@ -250,6 +251,8 @@ public class EventTypes {
     public static final String EVENT_SERVICE_OFFERING_CREATE = "SERVICE.OFFERING.CREATE";
     public static final String EVENT_SERVICE_OFFERING_EDIT = "SERVICE.OFFERING.EDIT";
     public static final String EVENT_SERVICE_OFFERING_DELETE = "SERVICE.OFFERING.DELETE";
+    public static final String EVENT_SERVICE_OFFERING_AUTHORIZATION_CREATE = "SERVICE.OFFERING.AUTH.CREATE";
+    public static final String EVENT_SERVICE_OFFERING_AUTHORIZATION_DELETE = "SERVICE.OFFERING.AUTH.DELETE";
 
     // Disk Offerings
     public static final String EVENT_DISK_OFFERING_CREATE = "DISK.OFFERING.CREATE";
@@ -662,6 +665,8 @@ public class EventTypes {
         entityEventDetails.put(EVENT_SERVICE_OFFERING_CREATE, ServiceOffering.class);
         entityEventDetails.put(EVENT_SERVICE_OFFERING_EDIT, ServiceOffering.class);
         entityEventDetails.put(EVENT_SERVICE_OFFERING_DELETE, ServiceOffering.class);
+        entityEventDetails.put(EVENT_SERVICE_OFFERING_AUTHORIZATION_CREATE, ServiceOfferingAuthorization.class);
+        entityEventDetails.put(EVENT_SERVICE_OFFERING_AUTHORIZATION_DELETE, ServiceOfferingAuthorization.class);
 
         // Disk Offerings
         entityEventDetails.put(EVENT_DISK_OFFERING_CREATE, DiskOffering.class);

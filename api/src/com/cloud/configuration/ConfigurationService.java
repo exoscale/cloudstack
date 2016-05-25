@@ -18,10 +18,12 @@ package com.cloud.configuration;
 
 import java.util.List;
 
+import com.cloud.offering.ServiceOfferingAuthorization;
 import org.apache.cloudstack.api.command.admin.config.UpdateCfgCmd;
 import org.apache.cloudstack.api.command.admin.network.CreateNetworkOfferingCmd;
 import org.apache.cloudstack.api.command.admin.network.DeleteNetworkOfferingCmd;
 import org.apache.cloudstack.api.command.admin.network.UpdateNetworkOfferingCmd;
+import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.CreateDiskOfferingCmd;
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingCmd;
 import org.apache.cloudstack.api.command.admin.offering.DeleteDiskOfferingCmd;
@@ -265,4 +267,6 @@ public interface ConfigurationService {
     List<? extends PortableIpRange> listPortableIpRanges(ListPortableIpRangesCmd cmd);
 
     List<? extends PortableIp> listPortableIps(long id);
+
+    ServiceOfferingAuthorization createServiceOfferingAuthorization(CreateServiceOfferingAuthorizationCmd cmd);
 }
