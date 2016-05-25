@@ -27,6 +27,7 @@ import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAut
 import org.apache.cloudstack.api.command.admin.offering.CreateDiskOfferingCmd;
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingCmd;
 import org.apache.cloudstack.api.command.admin.offering.DeleteDiskOfferingCmd;
+import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingCmd;
 import org.apache.cloudstack.api.command.admin.offering.UpdateDiskOfferingCmd;
 import org.apache.cloudstack.api.command.admin.offering.UpdateServiceOfferingCmd;
@@ -269,4 +270,6 @@ public interface ConfigurationService {
     List<? extends PortableIp> listPortableIps(long id);
 
     ServiceOfferingAuthorization createServiceOfferingAuthorization(CreateServiceOfferingAuthorizationCmd cmd);
+
+    boolean deleteServiceOfferingAuthorization(DeleteServiceOfferingAuthorizationCmd cmd);
 }

@@ -43,6 +43,7 @@ import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import com.cloud.storage.StorageManager;
 
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
+import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.apache.log4j.Logger;
 import org.apache.cloudstack.acl.SecurityChecker;
 import org.apache.cloudstack.affinity.AffinityGroup;
@@ -5049,5 +5050,39 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             }
         }
         return result;
+    }
+
+    @Override
+    @DB
+    @ActionEvent(eventType = EventTypes.EVENT_SERVICE_OFFERING_AUTHORIZATION_DELETE, eventDescription = "deleting service offering authorization")
+    public boolean deleteServiceOfferingAuthorization(DeleteServiceOfferingAuthorizationCmd cmd) {
+        ServiceOfferingAuthorizationVO vo = null;
+        Long authorizationId = cmd.getId();
+        Long serviceOfferingId = cmd.getServiceOfferingId();
+        Long domainId = cmd.getDomainId();
+        Long accountId = cmd.getAccountId();
+
+        // Verify we have a correct set of parameters authId, or pair servId/domainId, servId/accountId
+        if (authorizationId == null && (serviceOfferingId == null || (domainId == null && accountId == null))) {
+            throw new InvalidParameterValueException("please specify a valid set of parameter: service offering authorization id, or a pair of service offering id / domain id, service offering id / account id");
+        }
+
+        if (domainId != null && accountId != null) {
+            throw new InvalidParameterValueException("you cannot specify both a domain id and an account id");
+        }
+
+        if (authorizationId != null) {
+            vo = _serviceOfferingAuthorizationDao.findById(authorizationId);
+        } else if (domainId != null) {
+            vo = _serviceOfferingAuthorizationDao.findOneByDomain(serviceOfferingId, domainId);
+        } else if (accountId != null) {
+            vo = _serviceOfferingAuthorizationDao.findOneByAccount(serviceOfferingId, accountId);
+        }
+
+        if (vo == null) {
+            throw new InvalidParameterValueException("please specify a valid set of parameter, no service offering authorization has been found");
+        }
+
+        return _serviceOfferingAuthorizationDao.expunge(vo.getId());
     }
 }

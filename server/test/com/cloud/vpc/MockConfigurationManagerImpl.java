@@ -25,6 +25,7 @@ import javax.naming.ConfigurationException;
 
 import com.cloud.offering.ServiceOfferingAuthorization;
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
+import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.springframework.stereotype.Component;
 
 import org.apache.cloudstack.api.command.admin.config.UpdateCfgCmd;
@@ -345,6 +346,11 @@ public class MockConfigurationManagerImpl extends ManagerBase implements Configu
     @Override
     public ServiceOfferingAuthorization createServiceOfferingAuthorization(CreateServiceOfferingAuthorizationCmd cmd) {
         return null;
+    }
+
+    @Override
+    public boolean deleteServiceOfferingAuthorization(DeleteServiceOfferingAuthorizationCmd cmd) {
+        return false;
     }
 
     /* (non-Javadoc)
