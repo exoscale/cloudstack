@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.cloud.event.dao.UsageEventDao;
+import io.exo.cloudstack.restrictions.RestrictionService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -148,6 +149,8 @@ public class UserVmManagerTest {
     PrimaryDataStoreDao _storagePoolDao;
     @Mock
     UsageEventDao _usageEventDao;
+    @Mock
+    RestrictionService _restrictionService;
 
     @Before
     public void setup() {
@@ -165,12 +168,13 @@ public class UserVmManagerTest {
         _userVmMgr._userDao = _userDao;
         _userVmMgr._accountMgr = _accountMgr;
         _userVmMgr._configMgr = _configMgr;
-        _userVmMgr._offeringDao = _offeringDao;
+        _userVmMgr._serviceOfferingDao = _offeringDao;
         _userVmMgr._capacityMgr = _capacityMgr;
         _userVmMgr._resourceLimitMgr = _resourceLimitMgr;
         _userVmMgr._scaleRetry = 2;
         _userVmMgr._entityMgr = _entityMgr;
         _userVmMgr._storagePoolDao = _storagePoolDao;
+        _userVmMgr.restrictionService = _restrictionService;
 
         doReturn(3L).when(_account).getId();
         doReturn(8L).when(_vmMock).getAccountId();
@@ -180,7 +184,8 @@ public class UserVmManagerTest {
         when(_vmMock.getId()).thenReturn(314L);
         when(_vmInstance.getId()).thenReturn(1L);
         when(_vmInstance.getServiceOfferingId()).thenReturn(2L);
-
+        when(_vmMock.getServiceOfferingId()).thenReturn(4L);
+        when(_offeringDao.findById(4L)).thenReturn(_offeringVo);
     }
 
     // Test restoreVm when VM state not in running/stopped case
