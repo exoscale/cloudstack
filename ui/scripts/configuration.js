@@ -698,7 +698,8 @@
                                     var data = {
                                         id: args.context.serviceOfferings[0].id,
                                         name: args.data.name,
-                                        displaytext: args.data.displaytext
+                                        displaytext: args.data.displaytext,
+                                        restricted: (args.data.isRestricted == "on")
                                     };
                                     $.ajax({
                                         url: createURL('updateServiceOffering'),
@@ -803,7 +804,8 @@
                                     },
                                     restricted: {
                                         label: 'label.restricted',
-                                        converter: cloudStack.converters.toBooleanText
+                                        converter: cloudStack.converters.toBooleanText,
+                                        isEditable: true
                                     },
                                     miniops: {
                                         label: 'label.disk.iops.min',
