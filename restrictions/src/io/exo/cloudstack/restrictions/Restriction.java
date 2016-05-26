@@ -19,6 +19,11 @@ public class Restriction {
         this.serviceOfferingName = serviceOfferingName;
     }
 
+    // For compatibility with existing configuration - FIXME to be removed
+    public void setServiceOfferingId(String serviceOfferingName) {
+        this.serviceOfferingName = serviceOfferingName;
+    }
+
     public Long getMaxTemplateSize() {
         return maxTemplateSize;
     }
