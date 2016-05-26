@@ -35,6 +35,7 @@ import org.apache.cloudstack.api.command.user.iso.ListIsosCmd;
 import org.apache.cloudstack.api.command.user.job.ListAsyncJobsCmd;
 import org.apache.cloudstack.api.command.user.offering.ListDiskOfferingsCmd;
 import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmd;
+import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
 import org.apache.cloudstack.api.command.user.project.ListProjectInvitationsCmd;
 import org.apache.cloudstack.api.command.user.project.ListProjectsCmd;
 import org.apache.cloudstack.api.command.user.securitygroup.ListSecurityGroupsCmd;
@@ -112,6 +113,8 @@ public interface QueryService {
     public ListResponse<AsyncJobResponse>  searchForAsyncJobs(ListAsyncJobsCmd cmd);
 
     public ListResponse<DiskOfferingResponse>  searchForDiskOfferings(ListDiskOfferingsCmd cmd);
+
+    public ListResponse<ServiceOfferingResponse>  searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmdByAdmin cmd);
 
     public ListResponse<ServiceOfferingResponse>  searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmd cmd);
 

@@ -29,6 +29,7 @@ import com.cloud.api.ApiDBUtils;
 import com.cloud.service.ServiceOfferingAuthorizationVO;
 import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
+import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -2427,8 +2428,17 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
     }
 
     @Override
+    public ListResponse<ServiceOfferingResponse> searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmdByAdmin cmd) {
+        return searchForServiceOfferings(view, cmd, cmd.getRestricted());
+    }
+
+    @Override
     public ListResponse<ServiceOfferingResponse> searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmd cmd) {
-        Pair<List<ServiceOfferingJoinVO>, Integer> result = searchForServiceOfferingsInternal(cmd);
+        return searchForServiceOfferings(view, cmd, null);
+    }
+
+    private ListResponse<ServiceOfferingResponse> searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmd cmd, Boolean restrictedOnly) {
+        Pair<List<ServiceOfferingJoinVO>, Integer> result = searchForServiceOfferingsInternal(view, cmd, restrictedOnly);
         ListResponse<ServiceOfferingResponse> response = new ListResponse<ServiceOfferingResponse>();
         List<ServiceOfferingResponse> offeringResponses = new ArrayList<>(result.first().size());
         CallContext caller = CallContext.current();
@@ -2446,7 +2456,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         return response;
     }
 
-    private Pair<List<ServiceOfferingJoinVO>, Integer> searchForServiceOfferingsInternal(ListServiceOfferingsCmd cmd) {
+    private Pair<List<ServiceOfferingJoinVO>, Integer> searchForServiceOfferingsInternal(ResponseView view, ListServiceOfferingsCmd cmd, Boolean restrictedOnly) {
         // Note
         // The list method for offerings is being modified in accordance with
         // discussion with Will/Kevin
@@ -2467,7 +2477,6 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         Long vmId = cmd.getVirtualMachineId();
         Long domainId = cmd.getDomainId();
         Boolean isSystem = cmd.getIsSystem();
-        Boolean restrictedOnly = cmd.getRestricted();
         String vmTypeStr = cmd.getSystemVmType();
 
         SearchCriteria<ServiceOfferingJoinVO> sc = _srvOfferingJoinDao.createSearchCriteria();
@@ -2570,7 +2579,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
             sc.addAnd("systemUse", SearchCriteria.Op.EQ, isSystem);
         }
 
-        if (restrictedOnly != null) {
+        if (restrictedOnly != null && view == ResponseView.Full) {
             sc.addAnd("restricted", SearchCriteria.Op.EQ, restrictedOnly);
         }
 
