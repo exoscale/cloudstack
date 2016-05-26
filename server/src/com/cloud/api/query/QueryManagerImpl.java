@@ -360,6 +360,8 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
     @Inject
     DataStoreManager dataStoreManager;
 
+    @Inject
+    protected ServiceOfferingAuthorizationDao serviceOfferingAuthorizationDao;
     /*
      * (non-Javadoc)
      *
@@ -2429,18 +2431,14 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
         Pair<List<ServiceOfferingJoinVO>, Integer> result = searchForServiceOfferingsInternal(cmd);
         ListResponse<ServiceOfferingResponse> response = new ListResponse<ServiceOfferingResponse>();
         List<ServiceOfferingResponse> offeringResponses = new ArrayList<>(result.first().size());
+        CallContext caller = CallContext.current();
         for(ServiceOfferingJoinVO serviceOfferingJoinVO : result.first()) {
             ServiceOfferingResponse resp = ApiDBUtils.newServiceOfferingResponse(view, serviceOfferingJoinVO);
-            if (serviceOfferingJoinVO.isRestricted()) {
-                CallContext caller = CallContext.current();
-                if (caller.getCallingAccount().getDomainId() == 1) { // ROOT
-                    resp.setAuthorized(true);
-                } else {
-                    ServiceOfferingVO offeringVO = _srvOfferingDao.findByIdIncludingRemoved(serviceOfferingJoinVO.getId());
-                    resp.setAuthorized(offeringVO.getAuthorizedAccounts().contains(new Long(caller.getCallingAccountId())) || offeringVO.getAuthorizedDomains().contains(new Long(caller.getCallingAccount().getDomainId())));
-                }
-            } else {
-                resp.setAuthorized(true);
+            resp.setAuthorized(true);
+            // ROOT have always 1
+            if (caller.getCallingAccount().getDomainId() != 1 ||
+                    (serviceOfferingJoinVO.isRestricted() && serviceOfferingAuthorizationDao.count(serviceOfferingJoinVO.getId(), new Long(caller.getCallingAccountId()), new Long(caller.getCallingAccount().getDomainId())) == 0)) {
+                resp.setAuthorized(false);
             }
             offeringResponses.add(resp);
         }
