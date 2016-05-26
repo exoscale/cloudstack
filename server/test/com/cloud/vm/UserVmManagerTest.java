@@ -153,7 +153,7 @@ public class UserVmManagerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        _userVmMgr._vmDao = _vmDao;
+        _userVmMgr._userVmDao = _vmDao;
         _userVmMgr._vmInstanceDao = _vmInstanceDao;
         _userVmMgr._templateDao = _templateDao;
         _userVmMgr._volsDao = _volsDao;
@@ -467,7 +467,7 @@ public class UserVmManagerTest {
 
         doReturn(true).when(_itMgr).upgradeVmDb(anyLong(), anyLong());
 
-        //when(_vmDao.findById(anyLong())).thenReturn(_vmMock);
+        //when(_userVmDao.findById(anyLong())).thenReturn(_vmMock);
 
         Account account = new AccountVO("testaccount", 1L, "networkdomain", (short)0, UUID.randomUUID().toString());
         UserVO user = new UserVO(1, "testuser", "password", "firstname", "lastName", "email", "timezone", UUID.randomUUID().toString());

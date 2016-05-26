@@ -2803,7 +2803,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                         vm.setState(State.Stopped); // Setting the VM as stopped on the DB and clearing it from the host
                         vm.setLastHostId(vm.getHostId());
                         vm.setHostId(null);
-                        _vmDao.persist(vm);
+                        _userVmDao.persist(vm);
                  }*/
         }
 
