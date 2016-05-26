@@ -424,9 +424,9 @@ public class ApiResponseHelper implements ResponseGenerator {
     }
 
     @Override
-    public ServiceOfferingResponse createServiceOfferingResponse(ServiceOffering offering) {
+    public ServiceOfferingResponse createServiceOfferingResponse(ResponseView view, ServiceOffering offering) {
         ServiceOfferingJoinVO vOffering = ApiDBUtils.newServiceOfferingView(offering);
-        return ApiDBUtils.newServiceOfferingResponse(vOffering);
+        return ApiDBUtils.newServiceOfferingResponse(view, vOffering);
     }
 
     @Override

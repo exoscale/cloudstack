@@ -22,12 +22,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import org.apache.cloudstack.api.response.ServiceOfferingResponse;
-
-import com.cloud.api.ApiDBUtils;
 import com.cloud.api.query.vo.ServiceOfferingJoinVO;
 import com.cloud.offering.ServiceOffering;
-import com.cloud.server.ResourceTag.ResourceObjectType;
 import com.cloud.utils.db.GenericDaoBase;
 import com.cloud.utils.db.SearchBuilder;
 import com.cloud.utils.db.SearchCriteria;
@@ -48,46 +44,6 @@ public class ServiceOfferingJoinDaoImpl extends GenericDaoBase<ServiceOfferingJo
     }
 
     @Override
-    public ServiceOfferingResponse newServiceOfferingResponse(ServiceOfferingJoinVO offering) {
-
-        ServiceOfferingResponse offeringResponse = new ServiceOfferingResponse();
-        offeringResponse.setId(offering.getUuid());
-        offeringResponse.setName(offering.getName());
-        offeringResponse.setIsSystemOffering(offering.isSystemUse());
-        offeringResponse.setDefaultUse(offering.isDefaultUse());
-        offeringResponse.setSystemVmType(offering.getSystemVmType());
-        offeringResponse.setDisplayText(offering.getDisplayText());
-        offeringResponse.setCpuNumber(offering.getCpu());
-        offeringResponse.setCpuSpeed(offering.getSpeed());
-        offeringResponse.setMemory(offering.getRamSize());
-        offeringResponse.setCreated(offering.getCreated());
-        offeringResponse.setStorageType(offering.isUseLocalStorage() ? ServiceOffering.StorageType.local.toString() : ServiceOffering.StorageType.shared.toString());
-        offeringResponse.setOfferHa(offering.isOfferHA());
-        offeringResponse.setLimitCpuUse(offering.isLimitCpuUse());
-        offeringResponse.setVolatileVm(offering.getVolatileVm());
-        offeringResponse.setTags(offering.getTags());
-        offeringResponse.setDomain(offering.getDomainName());
-        offeringResponse.setDomainId(offering.getDomainUuid());
-        offeringResponse.setNetworkRate(offering.getRateMbps());
-        offeringResponse.setHostTag(offering.getHostTag());
-        offeringResponse.setDeploymentPlanner(offering.getDeploymentPlanner());
-        offeringResponse.setCustomizedIops(offering.isCustomizedIops());
-        offeringResponse.setMinIops(offering.getMinIops());
-        offeringResponse.setMaxIops(offering.getMaxIops());
-        offeringResponse.setHypervisorSnapshotReserve(offering.getHypervisorSnapshotReserve());
-        offeringResponse.setBytesReadRate(offering.getBytesReadRate());
-        offeringResponse.setBytesWriteRate(offering.getBytesWriteRate());
-        offeringResponse.setIopsReadRate(offering.getIopsReadRate());
-        offeringResponse.setIopsWriteRate(offering.getIopsWriteRate());
-        offeringResponse.setDetails(ApiDBUtils.getResourceDetails(offering.getId(), ResourceObjectType.ServiceOffering));
-        offeringResponse.setObjectName("serviceoffering");
-        offeringResponse.setIscutomized(offering.isDynamic());
-        offeringResponse.setRestricted(offering.isRestricted());
-
-        return offeringResponse;
-    }
-
-    @Override
     public ServiceOfferingJoinVO newServiceOfferingView(ServiceOffering offering) {
         SearchCriteria<ServiceOfferingJoinVO> sc = sofIdSearch.create();
         sc.setParameters("id", offering.getId());
@@ -95,5 +51,4 @@ public class ServiceOfferingJoinDaoImpl extends GenericDaoBase<ServiceOfferingJo
         assert offerings != null && offerings.size() == 1 : "No service offering found for offering id " + offering.getId();
         return offerings.get(0);
     }
-
 }

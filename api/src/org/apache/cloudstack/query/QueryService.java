@@ -19,6 +19,7 @@ package org.apache.cloudstack.query;
 import java.util.List;
 
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
+import org.apache.cloudstack.api.ResponseObject.ResponseView;
 import org.apache.cloudstack.api.command.admin.host.ListHostsCmd;
 import org.apache.cloudstack.api.command.admin.internallb.ListInternalLBVMsCmd;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
@@ -112,7 +113,7 @@ public interface QueryService {
 
     public ListResponse<DiskOfferingResponse>  searchForDiskOfferings(ListDiskOfferingsCmd cmd);
 
-    public ListResponse<ServiceOfferingResponse>  searchForServiceOfferings(ListServiceOfferingsCmd cmd);
+    public ListResponse<ServiceOfferingResponse>  searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmd cmd);
 
     public ListResponse<ServiceOfferingAuthorizationResponse> searchForServiceOfferingAuthorizations(ListServiceOfferingAuthorizationsCmd cmd);
 

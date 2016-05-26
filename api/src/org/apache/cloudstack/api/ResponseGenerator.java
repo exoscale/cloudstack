@@ -211,7 +211,7 @@ public interface ResponseGenerator {
 
     ResourceCountResponse createResourceCountResponse(ResourceCount resourceCount);
 
-    ServiceOfferingResponse createServiceOfferingResponse(ServiceOffering offering);
+    ServiceOfferingResponse createServiceOfferingResponse(ResponseView view, ServiceOffering offering);
 
     ServiceOfferingAuthorizationResponse createServiceOfferingAuthorizationResponse(ServiceOfferingAuthorization serviceOfferingAuthorization);
 

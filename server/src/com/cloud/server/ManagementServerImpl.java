@@ -40,6 +40,7 @@ import javax.naming.ConfigurationException;
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
+import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
 import org.apache.cloudstack.api.command.user.snapshot.UpdateSnapshotPolicyCmd;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
@@ -2995,6 +2996,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(UpdateVPCCmdByAdmin.class);
         cmdList.add(UpdateLBStickinessPolicyCmd.class);
         cmdList.add(UpdateLBHealthCheckPolicyCmd.class);
+        cmdList.add(ListServiceOfferingsCmdByAdmin.class);
 
         return cmdList;
     }

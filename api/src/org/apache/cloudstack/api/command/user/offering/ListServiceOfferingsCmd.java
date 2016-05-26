@@ -16,6 +16,7 @@
 // under the License.
 package org.apache.cloudstack.api.command.user.offering;
 
+import org.apache.cloudstack.api.ResponseObject.ResponseView;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.api.APICommand;
@@ -28,7 +29,7 @@ import org.apache.cloudstack.api.response.ServiceOfferingResponse;
 import org.apache.cloudstack.api.response.UserVmResponse;
 
 @APICommand(name = "listServiceOfferings", description = "Lists all available service offerings.", responseObject = ServiceOfferingResponse.class,
-        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
+        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, responseView = ResponseView.Restricted)
 public class ListServiceOfferingsCmd extends BaseListCmd {
     public static final Logger s_logger = Logger.getLogger(ListServiceOfferingsCmd.class.getName());
 
@@ -113,7 +114,7 @@ public class ListServiceOfferingsCmd extends BaseListCmd {
 
     @Override
     public void execute() {
-        ListResponse<ServiceOfferingResponse> response = _queryService.searchForServiceOfferings(this);
+        ListResponse<ServiceOfferingResponse> response = _queryService.searchForServiceOfferings(ResponseView.Restricted, this);
         response.setResponseName(getCommandName());
         this.setResponseObject(response);
 

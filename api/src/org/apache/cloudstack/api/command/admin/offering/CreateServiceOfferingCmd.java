@@ -26,6 +26,7 @@ import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.ApiErrorCode;
 import org.apache.cloudstack.api.BaseCmd;
 import org.apache.cloudstack.api.Parameter;
+import org.apache.cloudstack.api.ResponseObject.ResponseView;
 import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.response.DomainResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingResponse;
@@ -35,7 +36,7 @@ import com.cloud.offering.ServiceOffering;
 import com.cloud.user.Account;
 
 @APICommand(name = "createServiceOffering", description = "Creates a service offering.", responseObject = ServiceOfferingResponse.class,
-        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
+        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, responseView = ResponseView.Full)
 public class CreateServiceOfferingCmd extends BaseCmd {
     public static final Logger s_logger = Logger.getLogger(CreateServiceOfferingCmd.class.getName());
     private static final String s_name = "createserviceofferingresponse";
@@ -277,7 +278,7 @@ public class CreateServiceOfferingCmd extends BaseCmd {
     public void execute() {
         ServiceOffering result = _configService.createServiceOffering(this);
         if (result != null) {
-            ServiceOfferingResponse response = _responseGenerator.createServiceOfferingResponse(result);
+            ServiceOfferingResponse response = _responseGenerator.createServiceOfferingResponse(ResponseView.Full, result);
             response.setResponseName(getCommandName());
             this.setResponseObject(response);
         } else {

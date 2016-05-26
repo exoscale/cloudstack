@@ -2425,13 +2425,13 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
     }
 
     @Override
-    public ListResponse<ServiceOfferingResponse> searchForServiceOfferings(ListServiceOfferingsCmd cmd) {
+    public ListResponse<ServiceOfferingResponse> searchForServiceOfferings(ResponseView view, ListServiceOfferingsCmd cmd) {
         Pair<List<ServiceOfferingJoinVO>, Integer> result = searchForServiceOfferingsInternal(cmd);
         ListResponse<ServiceOfferingResponse> response = new ListResponse<ServiceOfferingResponse>();
         List<ServiceOfferingResponse> offeringResponses = new ArrayList<>(result.first().size());
         for(ServiceOfferingJoinVO serviceOfferingJoinVO : result.first()) {
-            ServiceOfferingResponse resp = ApiDBUtils.newServiceOfferingResponse(serviceOfferingJoinVO);
-            if (resp.isRestricted()) {
+            ServiceOfferingResponse resp = ApiDBUtils.newServiceOfferingResponse(view, serviceOfferingJoinVO);
+            if (serviceOfferingJoinVO.isRestricted()) {
                 CallContext caller = CallContext.current();
                 if (caller.getCallingAccount().getDomainId() == 1) { // ROOT
                     resp.setAuthorized(true);
