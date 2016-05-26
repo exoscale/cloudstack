@@ -231,5 +231,5 @@
         
     <bean id="certServiceImpl" class="org.apache.cloudstack.network.lb.CertServiceImpl" />
 
-    <bean id="restrictionService" class="io.exo.cloudstack.restrictions.RestrictionServiceImpl"/>
+    <bean id="serviceOfferingService" class="io.exo.cloudstack.restrictions.ServiceOfferingServiceImpl"/>
 </beans>

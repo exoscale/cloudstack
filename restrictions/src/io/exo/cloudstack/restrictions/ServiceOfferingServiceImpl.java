@@ -19,8 +19,8 @@ import com.cloud.utils.PropertiesUtil;
 
 import javax.inject.Inject;
 
-public class RestrictionServiceImpl implements RestrictionService {
-    private static final Logger s_logger = Logger.getLogger(RestrictionServiceImpl.class);
+public class ServiceOfferingServiceImpl implements ServiceOfferingService {
+    private static final Logger s_logger = Logger.getLogger(ServiceOfferingServiceImpl.class);
 
     private static final String DEFAULTFILENAME = "restrictions.yaml";
 
@@ -30,11 +30,11 @@ public class RestrictionServiceImpl implements RestrictionService {
     // Working directly with the map of restrictions
     private volatile Map<String, List<Restriction>> restrictions = null;
 
-    public RestrictionServiceImpl() {
+    public ServiceOfferingServiceImpl() {
         this(DEFAULTFILENAME);
     }
 
-    public RestrictionServiceImpl(String filename) {
+    public ServiceOfferingServiceImpl(String filename) {
         restrictions = loadRestrictions(filename);
     }
 
@@ -76,8 +76,7 @@ public class RestrictionServiceImpl implements RestrictionService {
     }
 
     @Override
-    // TODO Expose JMX bean to be able to call this method on the servers
-    public void reloadRestrictions() {
+    public void reloadStaticRestrictions() {
         s_logger.debug("Reloading restrictions file");
         Map<String, List<Restriction>> newRestrictions = loadRestrictions(DEFAULTFILENAME);
         if (newRestrictions != null) {
@@ -91,7 +90,7 @@ public class RestrictionServiceImpl implements RestrictionService {
         s_logger.debug("Enforce restrictions on serviceOfferingName=" + (serviceOfferingName == null ? "null" : serviceOfferingName) + ", templateName=" + (templateName == null ? "null" : templateName) + ", templateSize=" + (templateSize == null ? "null" : templateSize));
 
         if (serviceOfferingName == null) {
-            s_logger.warn("Missing service offering in restriction call");
+            s_logger.error("Missing service offering in restriction call");
             return;
         }
 

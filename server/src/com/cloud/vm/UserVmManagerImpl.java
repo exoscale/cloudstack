@@ -36,7 +36,7 @@ import javax.naming.ConfigurationException;
 
 import com.cloud.offering.DiskOffering;
 import com.cloud.server.ManagementService;
-import io.exo.cloudstack.restrictions.RestrictionService;
+import io.exo.cloudstack.restrictions.ServiceOfferingService;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
@@ -391,7 +391,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     @Inject
     protected ResourceTagDao _resourceTagDao;
     @Inject
-    protected RestrictionService restrictionService;
+    protected ServiceOfferingService serviceOfferingService;
     @Inject
     protected RulesManager _rulesMgr;
     @Inject
@@ -810,7 +810,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                restrictionService.validate(newServiceOffering.getName(), null, volume.getSize());
+                serviceOfferingService.validate(newServiceOffering.getName(), null, volume.getSize());
             }
         }
 
@@ -2653,7 +2653,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             validateCustomParameters(offering, customParameters);
             offering = _serviceOfferingDao.getcomputeOffering(offering, customParameters);
         }
-        if (offering.isRestricted() && !restrictionService.isAuthorized(offering, owner.getDomainId(), owner.getAccountId())) {
+        if (offering.isRestricted() && !serviceOfferingService.isAuthorized(offering, owner.getDomainId(), owner.getAccountId())) {
             throw new PermissionDeniedException("The account or domain is not authorized to use this service offering");
         }
         // check if account/domain is with in resource limits to create a new vm
@@ -2688,7 +2688,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         // Enforce restrictions on templates
         // enforce exoscale restrictions
-        restrictionService.validate((offering == null ? null : offering.getName()), template.getName(), size);
+        serviceOfferingService.validate((offering == null ? null : offering.getName()), template.getName(), size);
 
         // verify security group ids
         if (securityGroupIdList != null) {
@@ -3057,7 +3057,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions with custom disk size
-                    restrictionService.validate((offering == null ? null : offering.getName()), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
+                    serviceOfferingService.validate((offering == null ? null : offering.getName()), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
                 }
 
                 if (isDisplayVm != null) {
@@ -4433,7 +4433,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         _accountMgr.checkAccess(newAccount, domain);
 
         // VV 6: check if the service offering is restricted and the new owner can use it
-        if (offering.isRestricted() && !restrictionService.isAuthorized(offering, newAccount.getDomainId(), newAccount.getAccountId())) {
+        if (offering.isRestricted() && !serviceOfferingService.isAuthorized(offering, newAccount.getDomainId(), newAccount.getAccountId())) {
             throw new PermissionDeniedException("New owner is not authorized to use this virtual machine service offering");
         }
 
@@ -4761,7 +4761,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             }
             // Ensure restrictions on the new template
             final ServiceOffering so = _serviceOfferingDao.findById(vm.getServiceOfferingId());
-            restrictionService.validate(so.getName(), template.getName(), template.getSize());
+            serviceOfferingService.validate(so.getName(), template.getName(), template.getSize());
         } else {
             if (isISO && templateId == null) {
                 throw new CloudRuntimeException("Cannot restore the VM since there is no ISO attached to VM");

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.cloud.event.dao.UsageEventDao;
-import io.exo.cloudstack.restrictions.RestrictionService;
+import io.exo.cloudstack.restrictions.ServiceOfferingService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -150,7 +150,7 @@ public class UserVmManagerTest {
     @Mock
     UsageEventDao _usageEventDao;
     @Mock
-    RestrictionService _restrictionService;
+    ServiceOfferingService _serviceOfferingService;
 
     @Before
     public void setup() {
@@ -174,7 +174,7 @@ public class UserVmManagerTest {
         _userVmMgr._scaleRetry = 2;
         _userVmMgr._entityMgr = _entityMgr;
         _userVmMgr._storagePoolDao = _storagePoolDao;
-        _userVmMgr.restrictionService = _restrictionService;
+        _userVmMgr.serviceOfferingService = _serviceOfferingService;
 
         doReturn(3L).when(_account).getId();
         doReturn(8L).when(_vmMock).getAccountId();
