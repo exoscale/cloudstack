@@ -994,6 +994,7 @@ dictionary = {
 'label.restart.required': '<fmt:message key="label.restart.required" />',
 'label.restart.vpc': '<fmt:message key="label.restart.vpc" />',
 'label.restore': '<fmt:message key="label.restore" />',
+'label.restricted': '<fmt:message key="label.restricted" />',
 'label.review': '<fmt:message key="label.review" />',
 'label.revoke.project.invite': '<fmt:message key="label.revoke.project.invite" />',
 'label.role': '<fmt:message key="label.role" />',
