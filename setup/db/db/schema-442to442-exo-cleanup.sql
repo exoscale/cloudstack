@@ -65,3 +65,13 @@ ALTER TABLE `cloud`.`user_vm_details` ADD INDEX `i_name_vm_id` (`vm_id` ASC, `na
 -- Fix Snapshots size column
 UPDATE `cloud`.`snapshot_store_ref` SET `physical_size` = `size`
 WHERE `physical_size` = 0 AND `store_role` = 'Image' AND `size` > 0;
+
+-- 2016.05.30 Update URL fields to 2048 bits
+ALTER TABLE `cloud`.`volume_host_ref` MODIFY COLUMN `url` varchar(2048);
+ALTER TABLE `cloud`.`object_datastore_ref` MODIFY COLUMN `url` varchar(2048);
+ALTER TABLE `cloud`.`image_store` MODIFY COLUMN `url` varchar(2048);
+ALTER TABLE `cloud`.`template_store_ref` MODIFY COLUMN `url` varchar(2048);
+ALTER TABLE `cloud`.`volume_store_ref` MODIFY COLUMN `url` varchar(2048);
+ALTER TABLE `cloud`.`volume_store_ref` MODIFY COLUMN `download_url` varchar(2048);
+ALTER TABLE `cloud`.`upload` MODIFY COLUMN `url` varchar(2048);
+

@@ -339,7 +339,7 @@ public class HostVO implements Host {
     @Column(name = "cpus")
     private Integer cpus;
 
-    @Column(name = "url")
+    @Column(name = "url", length = 2048)
     private String storageUrl;
 
     @Column(name = "speed")
