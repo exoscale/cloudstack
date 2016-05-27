@@ -2446,8 +2446,9 @@ public class QueryManagerImpl extends ManagerBase implements QueryService {
             ServiceOfferingResponse resp = ApiDBUtils.newServiceOfferingResponse(view, serviceOfferingJoinVO);
             resp.setAuthorized(true);
             // ROOT have always 1
-            if (caller.getCallingAccount().getDomainId() != 1 ||
-                    (serviceOfferingJoinVO.isRestricted() && serviceOfferingAuthorizationDao.count(serviceOfferingJoinVO.getId(), new Long(caller.getCallingAccountId()), new Long(caller.getCallingAccount().getDomainId())) == 0)) {
+            if (caller.getCallingAccount().getDomainId() != 1 &&
+                    serviceOfferingJoinVO.isRestricted() &&
+                    serviceOfferingAuthorizationDao.count(serviceOfferingJoinVO.getId(), new Long(caller.getCallingAccountId()), new Long(caller.getCallingAccount().getDomainId())) == 0) {
                 resp.setAuthorized(false);
             }
             offeringResponses.add(resp);
