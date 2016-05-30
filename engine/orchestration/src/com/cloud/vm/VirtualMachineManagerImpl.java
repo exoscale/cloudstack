@@ -3392,14 +3392,13 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
         final VirtualMachineTemplate vmTemplate = _templateDao.findById(vmInstance.getTemplateId());
         final List<VolumeVO> volumes = _volsDao.findByInstance(vmInstance.getId());
-        Long rootVolumeSize = null;
         for (VolumeVO volume : volumes) {
             if (volume.getVolumeType() == Type.ROOT) {
-                rootVolumeSize = volume.getSize();
+                serviceOfferingService.validate(newServiceOffering.getName(), vmTemplate.getName(), volume.getSize());
                 break;
             }
         }
-        serviceOfferingService.validate(newServiceOffering.getName(), vmTemplate.getName(), rootVolumeSize);
+
 
         // Check that the service offering being upgraded to has the same storage pool preference as the VM's current service
         // offering

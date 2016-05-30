@@ -806,14 +806,6 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
         // Check that the specified service offering ID is valid
         _itMgr.checkIfCanUpgrade(vmInstance, newServiceOffering);
 
-        //Exoscale restrictions
-        List<VolumeVO> volumes = _volsDao.findByInstance(vmId);
-        for (VolumeVO volume : volumes) {
-            if (volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                serviceOfferingService.validate(newServiceOffering.getName(), null, volume.getSize());
-            }
-        }
-
         // remove diskAndMemory VM snapshots
         List<VMSnapshotVO> vmSnapshots = _vmSnapshotDao.findByVm(vmId);
         for (VMSnapshotVO vmSnapshotVO : vmSnapshots) {
@@ -2688,7 +2680,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
 
         // Enforce restrictions on templates
         // enforce exoscale restrictions
-        serviceOfferingService.validate((offering == null ? null : offering.getName()), template.getName(), size);
+        serviceOfferingService.validate(offering.getName(), template.getName(), size);
 
         // verify security group ids
         if (securityGroupIdList != null) {
@@ -3057,7 +3049,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                     customParameters.remove("rootdisksize");
 
                     // enforce exoscale restrictions with custom disk size
-                    serviceOfferingService.validate((offering == null ? null : offering.getName()), (templateVO == null ? null : templateVO.getName()), (rootDiskSize * 1024 * 1024 * 1024));
+                    serviceOfferingService.validate(offering.getName(), templateVO.getName(), (rootDiskSize * 1024 * 1024 * 1024));
                 }
 
                 if (isDisplayVm != null) {
