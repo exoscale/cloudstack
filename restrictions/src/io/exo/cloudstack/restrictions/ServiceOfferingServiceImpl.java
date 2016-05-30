@@ -66,10 +66,14 @@ public class ServiceOfferingServiceImpl implements ServiceOfferingService {
 
     @Override
     public boolean isAuthorized(ServiceOffering serviceOffering, Long domainId, Long accountId) {
-        if (serviceOffering.isRestricted() && serviceOfferingAuthorizationDao.count(serviceOffering.getId(), domainId, accountId) > 0) {
-            return true;
-        } else if (serviceOffering.isRestricted()) {
-            return false;
+        if (serviceOffering.isRestricted()) {
+            final int count = serviceOfferingAuthorizationDao.count(serviceOffering.getId(), domainId, accountId);
+            s_logger.debug("Found " + count + " authorization matching for service offering " + serviceOffering.getName() + " on domainId=" + (domainId == null ? "null" : domainId) + ", accountId=" + (accountId == null ? "null" : accountId));
+            if (count > 0) {
+                return true;
+            } else {
+                return false;
+            }
         } else {
             return true;
         }

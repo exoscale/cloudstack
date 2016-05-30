@@ -48,12 +48,19 @@ public class ServiceOfferingAuthorizationDaoImpl extends GenericDaoBase<ServiceO
             sc.addAnd("resourceId", SearchCriteria.Op.EQ, serviceOfferingId);
         }
 
-        if (domainId != null) {
-            sc.addAnd("domainId", SearchCriteria.Op.EQ, domainId);
-        }
+        if (domainId != null && accountId != null) {
+            SearchCriteria<ServiceOfferingAuthorizationVO> ssc = createSearchCriteria();
+            ssc.addOr("domainId", SearchCriteria.Op.EQ, domainId);
+            ssc.addOr("accountId", SearchCriteria.Op.EQ, accountId);
+            sc.addAnd("domainId", SearchCriteria.Op.SC, ssc);
+        } else {
+            if (domainId != null) {
+                sc.addAnd("domainId", SearchCriteria.Op.EQ, domainId);
+            }
 
-        if (accountId != null) {
-            sc.addAnd("accountId", SearchCriteria.Op.EQ, accountId);
+            if (accountId != null) {
+                sc.addAnd("accountId", SearchCriteria.Op.EQ, accountId);
+            }
         }
 
         Integer result = getCount(sc);
