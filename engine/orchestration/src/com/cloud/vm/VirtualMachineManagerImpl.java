@@ -3390,9 +3390,16 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             throw new PermissionDeniedException("The new service offering is not authorized for the account/domain owner of the virtual machine");
         }
 
-        // Disk size won't change, so don't need to get it
         final VirtualMachineTemplate vmTemplate = _templateDao.findById(vmInstance.getTemplateId());
-        serviceOfferingService.validate(newServiceOffering.getName(), vmTemplate.getName(), null);
+        final List<VolumeVO> volumes = _volsDao.findByInstance(vmInstance.getId());
+        Long rootVolumeSize = null;
+        for (VolumeVO volume : volumes) {
+            if (volume.getVolumeType() == Type.ROOT) {
+                rootVolumeSize = volume.getSize();
+                break;
+            }
+        }
+        serviceOfferingService.validate(newServiceOffering.getName(), vmTemplate.getName(), rootVolumeSize);
 
         // Check that the service offering being upgraded to has the same storage pool preference as the VM's current service
         // offering
