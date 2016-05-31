@@ -118,4 +118,5 @@ public interface ServiceOffering extends DiskOffering, InfrastructureEntity, Int
     String getDeploymentPlanner();
 
     boolean isDynamic();
+
 }

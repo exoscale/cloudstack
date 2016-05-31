@@ -1,0 +1,5 @@
+---
+restrictions:
+  - serviceOfferingName: Micro
+    maxTemplateSize: 214748364801
+    unauthorizedTemplateName: Windows

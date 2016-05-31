@@ -1,0 +1,8 @@
+# Only one entry is valid in this file
+---
+restrictions:
+  - serviceOferingName: Micro
+    maxTemplateSize: 214748364801
+    anotherKey: Windows
+  - serviceOfferingName: Micro
+    maxTemplateSize: 214748364801

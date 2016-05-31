@@ -16,6 +16,7 @@
 // under the License.
 package org.apache.cloudstack.api.command.admin.offering;
 
+import org.apache.cloudstack.api.ResponseObject.ResponseView;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.api.APICommand;
@@ -30,7 +31,7 @@ import com.cloud.offering.ServiceOffering;
 import com.cloud.user.Account;
 
 @APICommand(name = "updateServiceOffering", description = "Updates a service offering.", responseObject = ServiceOfferingResponse.class,
-        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false)
+        requestHasSensitiveInfo = false, responseHasSensitiveInfo = false, responseView = ResponseView.Full)
 public class UpdateServiceOfferingCmd extends BaseCmd {
     public static final Logger s_logger = Logger.getLogger(UpdateServiceOfferingCmd.class.getName());
     private static final String s_name = "updateserviceofferingresponse";
@@ -54,6 +55,9 @@ public class UpdateServiceOfferingCmd extends BaseCmd {
     @Parameter(name = ApiConstants.SORT_KEY, type = CommandType.INTEGER, description = "sort key of the service offering, integer")
     private Integer sortKey;
 
+    @Parameter(name = ApiConstants.RESTRICTED, type = CommandType.BOOLEAN, required = false, description = "is this offering restricted", since = "4.4.2-exo")
+    private Boolean restricted;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -72,6 +76,10 @@ public class UpdateServiceOfferingCmd extends BaseCmd {
 
     public Integer getSortKey() {
         return sortKey;
+    }
+
+    public Boolean isRestricted() {
+        return restricted;
     }
 
     /////////////////////////////////////////////////////
@@ -94,7 +102,7 @@ public class UpdateServiceOfferingCmd extends BaseCmd {
         //Once an offering is created, we cannot update the domainId field (keeping consistent with zones logic)
         ServiceOffering result = _configService.updateServiceOffering(this);
         if (result != null) {
-            ServiceOfferingResponse response = _responseGenerator.createServiceOfferingResponse(result);
+            ServiceOfferingResponse response = _responseGenerator.createServiceOfferingResponse(ResponseView.Full, result);
             response.setResponseName(getCommandName());
             this.setResponseObject(response);
         } else {

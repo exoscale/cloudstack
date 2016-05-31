@@ -134,6 +134,9 @@ public class DiskOfferingVO implements DiskOffering {
     @Column(name = "hv_ss_reserve")
     Integer hypervisorSnapshotReserve;
 
+    @Column(name = "restricted")
+    boolean restricted = false;
+
     public DiskOfferingVO() {
         uuid = UUID.randomUUID().toString();
     }
@@ -192,7 +195,7 @@ public class DiskOfferingVO implements DiskOffering {
     // domain specific offerings constructor (null domainId implies public
     // offering)
     public DiskOfferingVO(String name, String displayText, boolean mirrored, String tags, boolean recreatable, boolean useLocalStorage, boolean systemUse,
-            boolean customized, Long domainId) {
+            boolean customized, Long domainId, boolean restricted) {
         type = Type.Service;
         this.name = name;
         this.displayText = displayText;
@@ -202,12 +205,14 @@ public class DiskOfferingVO implements DiskOffering {
         this.systemUse = systemUse;
         this.customized = customized;
         this.domainId = domainId;
+        this.restricted = restricted;
         uuid = UUID.randomUUID().toString();
         state = State.Active;
     }
 
     public DiskOfferingVO(long id, String name, String displayText, boolean mirrored, String tags, boolean recreatable,
-            boolean useLocalStorage, boolean systemUse, boolean customized, boolean customizedIops, Long domainId) {
+            boolean useLocalStorage, boolean systemUse, boolean customized, boolean customizedIops, Long domainId,
+            boolean restricted) {
         this.id = id;
         type = Type.Service;
         this.name = name;
@@ -219,6 +224,7 @@ public class DiskOfferingVO implements DiskOffering {
         this.customized = customized;
         this.customizedIops = customizedIops;
         this.domainId = domainId;
+        this.restricted = restricted;
         uuid = UUID.randomUUID().toString();
         state = State.Active;
     }
@@ -501,5 +507,14 @@ public class DiskOfferingVO implements DiskOffering {
     @Override
     public Integer getHypervisorSnapshotReserve() {
         return hypervisorSnapshotReserve;
+    }
+
+    public void setRestricted(boolean restricted) {
+        this.restricted = restricted;
+    }
+
+    @Override
+    public boolean isRestricted() {
+        return restricted;
     }
 }

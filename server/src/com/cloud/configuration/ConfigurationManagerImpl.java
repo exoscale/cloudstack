@@ -35,9 +35,15 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
+import javax.persistence.EntityExistsException;
 
+import com.cloud.offering.ServiceOfferingAuthorization;
+import com.cloud.service.ServiceOfferingAuthorizationVO;
+import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import com.cloud.storage.StorageManager;
 
+import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
+import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.apache.log4j.Logger;
 import org.apache.cloudstack.acl.SecurityChecker;
 import org.apache.cloudstack.affinity.AffinityGroup;
@@ -233,6 +239,8 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
     ServiceOfferingDao _serviceOfferingDao;
     @Inject
     ServiceOfferingDetailsDao _serviceOfferingDetailsDao;
+    @Inject
+    ServiceOfferingAuthorizationDao _serviceOfferingAuthorizationDao;
     @Inject
     DiskOfferingDao _diskOfferingDao;
     @Inject
@@ -2010,6 +2018,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         Boolean offerHA = cmd.getOfferHa();
         Boolean limitCpuUse = cmd.GetLimitCpuUse();
         Boolean volatileVm = cmd.getVolatileVm();
+        Boolean restricted = cmd.isRestricted();
 
         String vmTypeString = cmd.getSystemVmType();
         VirtualMachine.Type vmType = null;
@@ -2050,16 +2059,16 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         return createServiceOffering(userId, cmd.getIsSystem(), vmType, cmd.getServiceOfferingName(), cpuNumber, memory, cpuSpeed, cmd.getDisplayText(), localStorageRequired,
                 offerHA, limitCpuUse, volatileVm, cmd.getTags(), cmd.getDomainId(), cmd.getHostTag(), cmd.getNetworkRate(), cmd.getDeploymentPlanner(), cmd.getDetails(),
                 cmd.isCustomizedIops(), cmd.getMinIops(), cmd.getMaxIops(), cmd.getBytesReadRate(), cmd.getBytesWriteRate(), cmd.getIopsReadRate(), cmd.getIopsWriteRate(),
-                cmd.getHypervisorSnapshotReserve());
+                cmd.getHypervisorSnapshotReserve(), restricted);
     }
 
     protected ServiceOfferingVO createServiceOffering(long userId, boolean isSystem, VirtualMachine.Type vmType, String name, Integer cpu, Integer ramSize, Integer speed,
             String displayText, boolean localStorageRequired, boolean offerHA, boolean limitResourceUse, boolean volatileVm, String tags, Long domainId, String hostTag,
             Integer networkRate, String deploymentPlanner, Map<String, String> details, Boolean isCustomizedIops, Long minIops, Long maxIops,
-            Long bytesReadRate, Long bytesWriteRate, Long iopsReadRate, Long iopsWriteRate, Integer hypervisorSnapshotReserve) {
+            Long bytesReadRate, Long bytesWriteRate, Long iopsReadRate, Long iopsWriteRate, Integer hypervisorSnapshotReserve, boolean restricted) {
         tags = StringUtils.cleanupTags(tags);
         ServiceOfferingVO offering = new ServiceOfferingVO(name, cpu, ramSize, speed, networkRate, null, offerHA, limitResourceUse, volatileVm, displayText, localStorageRequired,
-                false, tags, isSystem, vmType, domainId, hostTag, deploymentPlanner);
+                false, tags, isSystem, vmType, domainId, restricted, hostTag, deploymentPlanner);
 
         if (isCustomizedIops != null) {
             bytesReadRate = null;
@@ -2167,6 +2176,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         Long id = cmd.getId();
         String name = cmd.getServiceOfferingName();
         Integer sortKey = cmd.getSortKey();
+        Boolean restricted = cmd.isRestricted();
         Long userId = CallContext.current().getCallingUserId();
 
         if (userId == null) {
@@ -2180,7 +2190,7 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
             throw new InvalidParameterValueException("unable to find service offering " + id);
         }
 
-        boolean updateNeeded = (name != null || displayText != null || sortKey != null);
+        boolean updateNeeded = (name != null || displayText != null || sortKey != null || restricted != null);
         if (!updateNeeded) {
             return _serviceOfferingDao.findById(id);
         }
@@ -2197,6 +2207,10 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
 
         if (sortKey != null) {
             offering.setSortKey(sortKey);
+        }
+
+        if (restricted != null) {
+            offering.setRestricted(restricted);
         }
 
         // Note: tag editing commented out for now; keeping the code intact,
@@ -4993,4 +5007,82 @@ public class ConfigurationManagerImpl extends ManagerBase implements Configurati
         _secChecker = secChecker;
     }
 
+    @Override
+    @DB
+    @ActionEvent(eventType = EventTypes.EVENT_SERVICE_OFFERING_AUTHORIZATION_CREATE, eventDescription = "creating service offering authorization")
+    public ServiceOfferingAuthorization createServiceOfferingAuthorization(CreateServiceOfferingAuthorizationCmd cmd) {
+        // Verify input parameters
+        Long serviceOfferingId = cmd.getServiceOfferingId();
+        ServiceOffering offeringHandle = _entityMgr.findById(ServiceOffering.class, serviceOfferingId);
+        if (offeringHandle == null) {
+            throw new InvalidParameterValueException("unable to find service offering " + serviceOfferingId);
+        }
+
+        // Only restricted service offering can have an authorization list
+        if (!offeringHandle.isRestricted()) {
+            throw new InvalidParameterValueException("this service offering is not restricted: " + offeringHandle.getUuid());
+        }
+
+        // check if domain is valid
+        Long domainId = cmd.getDomainId();
+        if (domainId != null && _domainDao.findById(domainId) == null) {
+            throw new InvalidParameterValueException("please specify a valid domain id");
+        }
+        // check if account is valid
+        Long accountId = cmd.getAccountId();
+        if (accountId != null && _accountDao.findById(accountId) == null) {
+            throw new InvalidParameterValueException("please specify a valid account id");
+        }
+
+        if (domainId != null && accountId != null) {
+            throw new InvalidParameterValueException("You cannot specify both a domain and an account id");
+        }
+
+        ServiceOfferingAuthorizationVO serviceOfferingAuthorizationVO = new ServiceOfferingAuthorizationVO(serviceOfferingId, domainId, accountId);
+        ServiceOfferingAuthorizationVO result = null;
+        try {
+            result = _serviceOfferingAuthorizationDao.persist(serviceOfferingAuthorizationVO);
+        } catch (EntityExistsException e) {
+            if (domainId != null) {
+                result = _serviceOfferingAuthorizationDao.findOneByDomain(serviceOfferingId, domainId);
+            } else {
+                result = _serviceOfferingAuthorizationDao.findOneByAccount(serviceOfferingId, accountId);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    @DB
+    @ActionEvent(eventType = EventTypes.EVENT_SERVICE_OFFERING_AUTHORIZATION_DELETE, eventDescription = "deleting service offering authorization")
+    public boolean deleteServiceOfferingAuthorization(DeleteServiceOfferingAuthorizationCmd cmd) {
+        ServiceOfferingAuthorizationVO vo = null;
+        Long authorizationId = cmd.getId();
+        Long serviceOfferingId = cmd.getServiceOfferingId();
+        Long domainId = cmd.getDomainId();
+        Long accountId = cmd.getAccountId();
+
+        // Verify we have a correct set of parameters authId, or pair servId/domainId, servId/accountId
+        if (authorizationId == null && (serviceOfferingId == null || (domainId == null && accountId == null))) {
+            throw new InvalidParameterValueException("please specify a valid set of parameter: service offering authorization id, or a pair of service offering id / domain id, service offering id / account id");
+        }
+
+        if (domainId != null && accountId != null) {
+            throw new InvalidParameterValueException("you cannot specify both a domain id and an account id");
+        }
+
+        if (authorizationId != null) {
+            vo = _serviceOfferingAuthorizationDao.findById(authorizationId);
+        } else if (domainId != null) {
+            vo = _serviceOfferingAuthorizationDao.findOneByDomain(serviceOfferingId, domainId);
+        } else if (accountId != null) {
+            vo = _serviceOfferingAuthorizationDao.findOneByAccount(serviceOfferingId, accountId);
+        }
+
+        if (vo == null) {
+            throw new InvalidParameterValueException("please specify a valid set of parameter, no service offering authorization has been found");
+        }
+
+        return _serviceOfferingAuthorizationDao.expunge(vo.getId());
+    }
 }

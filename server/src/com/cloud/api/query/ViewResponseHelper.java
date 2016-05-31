@@ -22,6 +22,8 @@ import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.cloud.service.ServiceOfferingAuthorizationVO;
+import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
@@ -42,7 +44,6 @@ import org.apache.cloudstack.api.response.ProjectInvitationResponse;
 import org.apache.cloudstack.api.response.ProjectResponse;
 import org.apache.cloudstack.api.response.ResourceTagResponse;
 import org.apache.cloudstack.api.response.SecurityGroupResponse;
-import org.apache.cloudstack.api.response.ServiceOfferingResponse;
 import org.apache.cloudstack.api.response.StoragePoolResponse;
 import org.apache.cloudstack.api.response.TemplateResponse;
 import org.apache.cloudstack.api.response.UserResponse;
@@ -67,7 +68,6 @@ import com.cloud.api.query.vo.ProjectInvitationJoinVO;
 import com.cloud.api.query.vo.ProjectJoinVO;
 import com.cloud.api.query.vo.ResourceTagJoinVO;
 import com.cloud.api.query.vo.SecurityGroupJoinVO;
-import com.cloud.api.query.vo.ServiceOfferingJoinVO;
 import com.cloud.api.query.vo.StoragePoolJoinVO;
 import com.cloud.api.query.vo.TemplateJoinVO;
 import com.cloud.api.query.vo.UserAccountJoinVO;
@@ -348,10 +348,10 @@ public class ViewResponseHelper {
         return respList;
     }
 
-    public static List<ServiceOfferingResponse> createServiceOfferingResponse(ServiceOfferingJoinVO... offerings) {
-        List<ServiceOfferingResponse> respList = new ArrayList<ServiceOfferingResponse>();
-        for (ServiceOfferingJoinVO vt : offerings) {
-            respList.add(ApiDBUtils.newServiceOfferingResponse(vt));
+    public static List<ServiceOfferingAuthorizationResponse> createServiceOfferingAuthorizationResponse(ServiceOfferingAuthorizationVO... authorizations) {
+        List<ServiceOfferingAuthorizationResponse> respList = new ArrayList<>(authorizations.length);
+        for (ServiceOfferingAuthorizationVO vt : authorizations) {
+            respList.add(ApiDBUtils.newServiceOfferingAuthorizationResponse(vt));
         }
         return respList;
     }

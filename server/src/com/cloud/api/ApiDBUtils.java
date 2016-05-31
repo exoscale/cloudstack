@@ -27,12 +27,15 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
+import com.cloud.domain.Domain;
+import com.cloud.offering.ServiceOfferingAuthorization;
 import org.apache.cloudstack.affinity.AffinityGroup;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
 import org.apache.cloudstack.affinity.dao.AffinityGroupDao;
 import org.apache.cloudstack.api.ApiCommandJobType;
 import org.apache.cloudstack.api.ApiConstants.HostDetails;
 import org.apache.cloudstack.api.ApiConstants.VMDetails;
+import org.apache.cloudstack.api.ResponseObject;
 import org.apache.cloudstack.api.ResponseObject.ResponseView;
 import org.apache.cloudstack.api.response.AccountResponse;
 import org.apache.cloudstack.api.response.AsyncJobResponse;
@@ -48,6 +51,7 @@ import org.apache.cloudstack.api.response.ProjectInvitationResponse;
 import org.apache.cloudstack.api.response.ProjectResponse;
 import org.apache.cloudstack.api.response.ResourceTagResponse;
 import org.apache.cloudstack.api.response.SecurityGroupResponse;
+import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingResponse;
 import org.apache.cloudstack.api.response.StoragePoolResponse;
 import org.apache.cloudstack.api.response.TemplateResponse;
@@ -1790,8 +1794,66 @@ public class ApiDBUtils {
         return s_diskOfferingJoinDao.newDiskOfferingView(offering);
     }
 
-    public static ServiceOfferingResponse newServiceOfferingResponse(ServiceOfferingJoinVO offering) {
-        return s_serviceOfferingJoinDao.newServiceOfferingResponse(offering);
+    public static ServiceOfferingResponse newServiceOfferingResponse(ResponseView view, ServiceOfferingJoinVO offering) {
+        ServiceOfferingResponse offeringResponse = new ServiceOfferingResponse();
+        offeringResponse.setId(offering.getUuid());
+        offeringResponse.setName(offering.getName());
+        offeringResponse.setIsSystemOffering(offering.isSystemUse());
+        offeringResponse.setDefaultUse(offering.isDefaultUse());
+        offeringResponse.setSystemVmType(offering.getSystemVmType());
+        offeringResponse.setDisplayText(offering.getDisplayText());
+        offeringResponse.setCpuNumber(offering.getCpu());
+        offeringResponse.setCpuSpeed(offering.getSpeed());
+        offeringResponse.setMemory(offering.getRamSize());
+        offeringResponse.setCreated(offering.getCreated());
+        offeringResponse.setStorageType(offering.isUseLocalStorage() ? ServiceOffering.StorageType.local.toString() : ServiceOffering.StorageType.shared.toString());
+        offeringResponse.setOfferHa(offering.isOfferHA());
+        offeringResponse.setLimitCpuUse(offering.isLimitCpuUse());
+        offeringResponse.setVolatileVm(offering.getVolatileVm());
+        offeringResponse.setTags(offering.getTags());
+        offeringResponse.setDomain(offering.getDomainName());
+        offeringResponse.setDomainId(offering.getDomainUuid());
+        offeringResponse.setNetworkRate(offering.getRateMbps());
+        offeringResponse.setHostTag(offering.getHostTag());
+        offeringResponse.setDeploymentPlanner(offering.getDeploymentPlanner());
+        offeringResponse.setCustomizedIops(offering.isCustomizedIops());
+        offeringResponse.setMinIops(offering.getMinIops());
+        offeringResponse.setMaxIops(offering.getMaxIops());
+        offeringResponse.setHypervisorSnapshotReserve(offering.getHypervisorSnapshotReserve());
+        offeringResponse.setBytesReadRate(offering.getBytesReadRate());
+        offeringResponse.setBytesWriteRate(offering.getBytesWriteRate());
+        offeringResponse.setIopsReadRate(offering.getIopsReadRate());
+        offeringResponse.setIopsWriteRate(offering.getIopsWriteRate());
+        offeringResponse.setDetails(ApiDBUtils.getResourceDetails(offering.getId(), ResourceObjectType.ServiceOffering));
+        offeringResponse.setObjectName("serviceoffering");
+        offeringResponse.setIscutomized(offering.isDynamic());
+
+        if (view == ResponseObject.ResponseView.Full) {
+            offeringResponse.setRestricted(offering.isRestricted());
+        }
+
+        return offeringResponse;
+    }
+
+    public static ServiceOfferingAuthorizationResponse newServiceOfferingAuthorizationResponse(ServiceOfferingAuthorization serviceOfferingAuthorization) {
+        ServiceOfferingAuthorizationResponse response = new ServiceOfferingAuthorizationResponse();
+        response.setObjectName("serviceofferingauthorization");
+        response.setId(serviceOfferingAuthorization.getUuid());
+        response.setServiceOfferingId(s_serviceOfferingDao.findById(serviceOfferingAuthorization.getResourceId()).getUuid());
+        Long accountId = serviceOfferingAuthorization.getAccountId();
+        Long domainId = serviceOfferingAuthorization.getDomainId();
+
+        if (accountId != null) {
+            Account account = s_accountDao.findById(accountId);
+            response.setAccountId(account.getUuid());
+        }
+
+        if (domainId != null) {
+            Domain domain = s_domainDao.findById(domainId);
+            response.setDomainId(domain.getUuid());
+        }
+
+        return response;
     }
 
     public static ServiceOfferingJoinVO newServiceOfferingView(ServiceOffering offering) {

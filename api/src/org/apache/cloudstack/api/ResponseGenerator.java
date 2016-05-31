@@ -21,6 +21,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import com.cloud.offering.ServiceOfferingAuthorization;
 import org.apache.cloudstack.affinity.AffinityGroup;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
 import org.apache.cloudstack.api.ApiConstants.HostDetails;
@@ -85,6 +86,7 @@ import org.apache.cloudstack.api.response.ResourceCountResponse;
 import org.apache.cloudstack.api.response.ResourceLimitResponse;
 import org.apache.cloudstack.api.response.ResourceTagResponse;
 import org.apache.cloudstack.api.response.SecurityGroupResponse;
+import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingResponse;
 import org.apache.cloudstack.api.response.ServiceResponse;
 import org.apache.cloudstack.api.response.Site2SiteCustomerGatewayResponse;
@@ -209,7 +211,9 @@ public interface ResponseGenerator {
 
     ResourceCountResponse createResourceCountResponse(ResourceCount resourceCount);
 
-    ServiceOfferingResponse createServiceOfferingResponse(ServiceOffering offering);
+    ServiceOfferingResponse createServiceOfferingResponse(ResponseView view, ServiceOffering offering);
+
+    ServiceOfferingAuthorizationResponse createServiceOfferingAuthorizationResponse(ServiceOfferingAuthorization serviceOfferingAuthorization);
 
     ConfigurationResponse createConfigurationResponse(Configuration cfg);
 

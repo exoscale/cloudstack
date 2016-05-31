@@ -302,6 +302,13 @@
                                         isChecked: true,
                                         docID: 'helpComputeOfferingPublic'
                                     },
+                                    isRestricted: {
+                                        label: 'label.restricted',
+                                        isBoolean: true,
+                                        isReverse: true,
+                                        isChecked: false,
+                                        docID: 'helpComputeOfferingPublic'
+                                    },
 
                                     isVolatile: {
                                         label: 'label.volatile',
@@ -500,6 +507,7 @@
                             action: function(args) {
                                 var data = {
                                     issystem: false,
+                                    restricted: false,
                                     name: args.data.name,
                                     displaytext: args.data.description,
                                     storageType: args.data.storageType,
@@ -630,6 +638,10 @@
                                     });
                                 }
 
+                                $.extend(data, {
+                                    restricted: (args.data.isRestricted == "on")
+                                });
+
                                 $.ajax({
                                     url: createURL('createServiceOffering' + array1.join("")),
                                     data: data,
@@ -686,7 +698,8 @@
                                     var data = {
                                         id: args.context.serviceOfferings[0].id,
                                         name: args.data.name,
-                                        displaytext: args.data.displaytext
+                                        displaytext: args.data.displaytext,
+                                        restricted: (args.data.isRestricted == "on")
                                     };
                                     $.ajax({
                                         url: createURL('updateServiceOffering'),
@@ -788,6 +801,11 @@
                                     iscustomizediops: {
                                         label: 'label.custom.disk.iops',
                                         converter: cloudStack.converters.toBooleanText
+                                    },
+                                    restricted: {
+                                        label: 'label.restricted',
+                                        converter: cloudStack.converters.toBooleanText,
+                                        isEditable: true
                                     },
                                     miniops: {
                                         label: 'label.disk.iops.min',

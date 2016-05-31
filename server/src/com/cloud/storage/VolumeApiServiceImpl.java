@@ -28,7 +28,9 @@ import javax.inject.Inject;
 
 import com.cloud.offering.DiskOffering;
 import com.cloud.template.VirtualMachineTemplate;
+import com.cloud.user.AccountService;
 import com.cloud.utils.DateUtil;
+import io.exo.cloudstack.restrictions.ServiceOfferingService;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.api.command.user.volume.AttachVolumeCmd;
@@ -149,8 +151,6 @@ import com.cloud.vm.dao.VMInstanceDao;
 import com.cloud.vm.snapshot.VMSnapshotVO;
 import com.cloud.vm.snapshot.dao.VMSnapshotDao;
 
-import io.exo.csrestrictions.RestrictionListManager;
-
 public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiService, VmWorkJobHandler {
     private final static Logger s_logger = Logger.getLogger(VolumeApiServiceImpl.class);
 
@@ -171,6 +171,8 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
     private SnapshotManager _snapshotMgr;
     @Inject
     private AccountManager _accountMgr;
+    @Inject
+    protected AccountService _accountService;
     @Inject
     private ConfigurationManager _configMgr;
     @Inject
@@ -231,6 +233,9 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
     @Inject
     protected VmWorkJobDao _workJobDao;
+
+    @Inject
+    ServiceOfferingService serviceOfferingService;
 
     VmWorkJobHandlerProxy _jobHandlerProxy = new VmWorkJobHandlerProxy(this);
 
@@ -836,10 +841,7 @@ public class VolumeApiServiceImpl extends ManagerBase implements VolumeApiServic
 
         //Exoscale restrictions
         ServiceOfferingVO serviceOffering = _offeringDao.findById(userVm.getId(), userVm.getServiceOfferingId());
-        String vmServiceOfferingName = String.valueOf(serviceOffering.getName());
-        RestrictionListManager.enforceRestrictions(vmServiceOfferingName,
-                                                   null,
-                                                   newSize);
+        serviceOfferingService.validate(serviceOffering.getName(), null, newSize);
 
         if (!shrinkOk) {
             /* Check resource limit for this account on primary storage resource */

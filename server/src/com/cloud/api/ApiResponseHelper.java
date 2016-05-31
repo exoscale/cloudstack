@@ -30,6 +30,8 @@ import java.util.TimeZone;
 
 import javax.inject.Inject;
 
+import com.cloud.offering.ServiceOfferingAuthorization;
+import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.acl.ControlledEntity;
@@ -422,9 +424,14 @@ public class ApiResponseHelper implements ResponseGenerator {
     }
 
     @Override
-    public ServiceOfferingResponse createServiceOfferingResponse(ServiceOffering offering) {
+    public ServiceOfferingResponse createServiceOfferingResponse(ResponseView view, ServiceOffering offering) {
         ServiceOfferingJoinVO vOffering = ApiDBUtils.newServiceOfferingView(offering);
-        return ApiDBUtils.newServiceOfferingResponse(vOffering);
+        return ApiDBUtils.newServiceOfferingResponse(view, vOffering);
+    }
+
+    @Override
+    public ServiceOfferingAuthorizationResponse createServiceOfferingAuthorizationResponse(ServiceOfferingAuthorization serviceOfferingAuthorization) {
+        return ApiDBUtils.newServiceOfferingAuthorizationResponse(serviceOfferingAuthorization);
     }
 
     @Override

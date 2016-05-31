@@ -110,4 +110,6 @@ public interface DiskOffering extends InfrastructureEntity, Identity, InternalId
     DiskCacheMode getCacheMode();
 
     void setCacheMode(DiskCacheMode cacheMode);
+
+    boolean isRestricted();
 }
