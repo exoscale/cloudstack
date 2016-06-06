@@ -115,7 +115,7 @@ AS SELECT
    `disk_offering`.`removed`,
    `disk_offering`.`use_local_storage`,
    `disk_offering`.`system_use`,
-   `disk_offering`.`customized_iops`,§
+   `disk_offering`.`customized_iops`,
    `disk_offering`.`min_iops`,
    `disk_offering`.`max_iops`,
    `disk_offering`.`hv_ss_reserve`,
