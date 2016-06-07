@@ -38,7 +38,6 @@ import org.apache.cloudstack.framework.events.EventTopic;
 import com.cloud.utils.component.ManagerBase;
 
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import com.cloud.utils.PropertiesUtil;
@@ -81,7 +80,7 @@ public class KafkaEventBus extends ManagerBase implements EventBus {
             throw new ConfigurationException("Could not read kafka properties");
         }
 
-        _producer = new KafkaProducer<String,String>(props);
+        _producer = new KafkaRetryingProducer<String,String>(props);
         _name = name;
 
         return true;
