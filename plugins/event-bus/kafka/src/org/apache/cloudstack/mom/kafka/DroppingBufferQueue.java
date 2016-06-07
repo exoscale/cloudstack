@@ -173,5 +173,10 @@ public class DroppingBufferQueue<E> extends AbstractQueue<E> {
             pos = pos + 1;
             return elem;
         }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }
