@@ -16,6 +16,7 @@
 // under the License.
 package org.apache.cloudstack.api.response;
 
+import com.cloud.capacity.CapacityType;
 import com.google.gson.annotations.SerializedName;
 
 import org.apache.cloudstack.api.ApiConstants;
@@ -27,6 +28,10 @@ public class CapacityResponse extends BaseResponse {
     @SerializedName(ApiConstants.TYPE)
     @Param(description = "the capacity type")
     private Short capacityType;
+
+    @SerializedName(ApiConstants.TYPE_NAME)
+    @Param(description = "the capacity type name")
+    private String capacityTypeName;
 
     @SerializedName(ApiConstants.ZONE_ID)
     @Param(description = "the Zone ID")
@@ -70,6 +75,10 @@ public class CapacityResponse extends BaseResponse {
 
     public void setCapacityType(Short capacityType) {
         this.capacityType = capacityType;
+    }
+
+    public String getCapacityTypeName() {
+        return CapacityType.valueOf(this.capacityType).toString();
     }
 
     public String getZoneId() {
