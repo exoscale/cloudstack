@@ -226,6 +226,7 @@ public class ApiConstants {
     public static final String SENT_BYTES = "sentbytes";
     public static final String SERVICE_OFFERING_ID = "serviceofferingid";
     public static final String SESSIONKEY = "sessionkey";
+    public static final String SHARED_ONLY = "sharedonly";
     public static final String SHOW_CAPACITIES = "showcapacities";
     public static final String SHOW_REMOVED = "showremoved";
     public static final String SIGNATURE = "signature";
@@ -254,6 +255,7 @@ public class ApiConstants {
     public static final String TIMEOUT = "timeout";
     public static final String TIMEZONE = "timezone";
     public static final String TYPE = "type";
+    public static final String TYPE_NAME = "typename";
     public static final String TRUST_STORE = "truststore";
     public static final String TRUST_STORE_PASSWORD = "truststorepass";
     public static final String URL = "url";

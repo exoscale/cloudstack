@@ -2483,13 +2483,14 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         Long podId = cmd.getPodId();
         Long clusterId = cmd.getClusterId();
         Boolean fetchLatest = cmd.getFetchLatest();
+        boolean sharedOnly = cmd.getSharedOnly();
 
         zoneId = _accountMgr.checkAccessAndSpecifyAuthority(CallContext.current().getCallingAccount(), zoneId);
         if (fetchLatest != null && fetchLatest) {
             _alertMgr.recalculateCapacity();
         }
 
-        List<SummedCapacity> summedCapacities = _capacityDao.findCapacityBy(capacityType, zoneId, podId, clusterId);
+        List<SummedCapacity> summedCapacities = _capacityDao.findCapacityBy(capacityType, zoneId, podId, clusterId, sharedOnly);
         List<CapacityVO> capacities = new ArrayList<CapacityVO>();
 
         for (SummedCapacity summedCapacity : summedCapacities) {

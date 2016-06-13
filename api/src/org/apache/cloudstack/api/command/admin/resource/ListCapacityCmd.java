@@ -71,6 +71,9 @@ public class ListCapacityCmd extends BaseListCmd {
     @Parameter(name = ApiConstants.SORT_BY, type = CommandType.STRING, since = "3.0.0", description = "Sort the results. Available values: Usage")
     private String sortBy;
 
+    @Parameter(name = ApiConstants.SHARED_ONLY, type = CommandType.BOOLEAN, since = "4.4.2-exo", description = "True to list only shared capacities, False or null to list all.")
+    private Boolean sharedOnly;
+
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
     /////////////////////////////////////////////////////
@@ -105,6 +108,10 @@ public class ListCapacityCmd extends BaseListCmd {
         }
 
         return null;
+    }
+
+    public Boolean getSharedOnly() {
+        return sharedOnly == null ? Boolean.FALSE : sharedOnly;
     }
 
     /////////////////////////////////////////////////////
