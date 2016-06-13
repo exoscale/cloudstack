@@ -75,10 +75,11 @@ public class CapacityResponse extends BaseResponse {
 
     public void setCapacityType(Short capacityType) {
         this.capacityType = capacityType;
+        this.capacityTypeName = CapacityType.valueOf(this.capacityType).toString();
     }
 
     public String getCapacityTypeName() {
-        return CapacityType.valueOf(this.capacityType).toString();
+        return this.capacityTypeName;
     }
 
     public String getZoneId() {
