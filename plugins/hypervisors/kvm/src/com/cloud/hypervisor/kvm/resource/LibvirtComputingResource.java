@@ -28,6 +28,8 @@ import com.cloud.agent.api.AttachVolumeAnswer;
 import com.cloud.agent.api.AttachVolumeCommand;
 import com.cloud.agent.api.BackupSnapshotAnswer;
 import com.cloud.agent.api.BackupSnapshotCommand;
+import com.cloud.agent.api.CancelMigrationAnswer;
+import com.cloud.agent.api.CancelMigrationCommand;
 import com.cloud.agent.api.CheckHealthAnswer;
 import com.cloud.agent.api.CheckHealthCommand;
 import com.cloud.agent.api.CheckNetworkAnswer;
@@ -1425,6 +1427,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((OvsVpcRoutingPolicyConfigCommand) cmd);
             } else if (cmd instanceof MigrateWithStorageCommand) {
                 return execute((MigrateWithStorageCommand) cmd);
+            } else if (cmd instanceof CancelMigrationCommand) {
+                return execute((CancelMigrationCommand) cmd);
             } else {
                 s_logger.warn("Unsupported command ");
                 return Answer.createUnsupportedCommandAnswer(cmd);
@@ -3270,6 +3274,33 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
         return result;
+    }
+
+    private Answer execute(CancelMigrationCommand cmd) {
+        Connect conn = null;
+        Domain domain = null;
+        final String vmName = cmd.getVmName();
+        int result= 0;
+
+        try {
+            conn = LibvirtConnection.getConnectionByVmName(vmName);
+            domain = conn.domainLookupByName(vmName);
+
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Cancel migration for vm " + vmName);
+            }
+            result = domain.abortJob();
+
+        } catch (LibvirtException e) {
+            s_logger.error("Exception while cancelling the migration job, maybe it was finished just before trying to abort it. You must check the logs!");
+            return new CancelMigrationAnswer(cmd, e);
+        }
+
+        if (result == 1) {
+            return new CancelMigrationAnswer(cmd, true, null);
+        } else {
+            return new CancelMigrationAnswer(cmd, false, "Failed to abort vm migration");
+        }
     }
 
     private synchronized Answer execute(PrepareForMigrationCommand cmd) {

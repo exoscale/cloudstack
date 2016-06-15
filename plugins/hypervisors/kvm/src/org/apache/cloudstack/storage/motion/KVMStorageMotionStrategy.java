@@ -3,6 +3,8 @@ package org.apache.cloudstack.storage.motion;
 
 import com.cloud.agent.AgentManager;
 import com.cloud.agent.api.Answer;
+import com.cloud.agent.api.CancelMigrationAnswer;
+import com.cloud.agent.api.CancelMigrationCommand;
 import com.cloud.agent.api.MigrateWithStorageAnswer;
 import com.cloud.agent.api.MigrateWithStorageCommand;
 import com.cloud.agent.api.storage.CreateAnswer;
@@ -156,7 +158,18 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
             return answer;
         } catch (OperationTimedoutException e) {
             s_logger.error("Error while migrating vm " + vm + " to host " + destHost, e);
-            throw new AgentUnavailableException("Operation timed out on storage motion for " + vm, destHost.getId());
+            CancelMigrationAnswer cancelMigrationAnswer = null;
+            try {
+                CancelMigrationCommand cancelMigrationCommand = new CancelMigrationCommand(vm.getInstanceName());
+                cancelMigrationAnswer = (CancelMigrationAnswer) agentMgr.send(srcHost.getId(), cancelMigrationCommand);
+            } catch (OperationTimedoutException e1) {
+                s_logger.error("Error while trying to abort the migration job", e);
+            }
+            if (cancelMigrationAnswer.getResult()) {
+                throw new AgentUnavailableException("Operation timed out on storage motion for " + vm + " and migration job has been aborted successfully", destHost.getId());
+            } else {
+                throw new AgentUnavailableException("Operation timed out on storage motion for " + vm + " but migration job could not be aborted. Manual intervention required!", destHost.getId());
+            }
         }
     }
 
