@@ -22,10 +22,12 @@ import org.apache.cloudstack.storage.to.VolumeObjectTO;
 
 public class MigrateWithStorageAnswer extends Answer {
 
-    List<VolumeObjectTO> volumeTos;
+    final List<VolumeObjectTO> volumeTos;
+    boolean aborted = false;
 
-    public MigrateWithStorageAnswer(MigrateWithStorageCommand cmd, Exception ex) {
+    public MigrateWithStorageAnswer(MigrateWithStorageCommand cmd, boolean aborted, Exception ex) {
         super(cmd, ex);
+        this.aborted = aborted;
         volumeTos = null;
     }
 
@@ -36,5 +38,9 @@ public class MigrateWithStorageAnswer extends Answer {
 
     public List<VolumeObjectTO> getVolumeTos() {
         return volumeTos;
+    }
+
+    public boolean isAborted() {
+        return aborted;
     }
 }

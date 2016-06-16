@@ -2218,10 +2218,10 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
         } finally {
             if (!migrated) {
-                s_logger.info("Migration was unsuccessful.  Cleaning up: " + vm);
+                s_logger.info("Migration was unsuccessful for " + vm);
                 _alertMgr.sendAlert(alertType, srcHost.getDataCenterId(), srcHost.getPodId(),
                         "Unable to migrate vm " + vm.getInstanceName() + " from host " + srcHost.getName() + " in zone " + dc.getName() + " and pod " + dc.getName(),
-                        "Migrate Command failed.  Please check logs.");
+                        "Migrate Command failed. Please check logs.");
                 vm.setHostId(srcHostId);
                 _vmDao.update(vm.getId(), vm);
                 try {
