@@ -3290,13 +3290,17 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 s_logger.debug("Cancel migration for vm " + vmName);
             }
             result = domain.abortJob();
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Canceled migration for vm " + vmName + " with result=" + result);
+            }
+
 
         } catch (LibvirtException e) {
             s_logger.error("Exception while cancelling the migration job, maybe it was finished just before trying to abort it. You must check the logs!");
             return new CancelMigrationAnswer(cmd, e);
         }
 
-        if (result == 1) {
+        if (result == 0) {
             return new CancelMigrationAnswer(cmd, true, null);
         } else {
             return new CancelMigrationAnswer(cmd, false, "Failed to abort vm migration");
