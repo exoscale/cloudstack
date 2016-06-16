@@ -60,6 +60,7 @@ public class DedicatedResourceDaoImpl extends GenericDaoBase<DedicatedResourceVO
     protected SearchBuilder<DedicatedResourceVO> ListByAffinityGroupId;
     protected SearchBuilder<DedicatedResourceVO> ZoneByDomainIdsSearch;
 
+    protected GenericSearchBuilder<DedicatedResourceVO, Long> ListZonesSearch;
     protected GenericSearchBuilder<DedicatedResourceVO, Long> ListPodsSearch;
     protected GenericSearchBuilder<DedicatedResourceVO, Long> ListClustersSearch;
     protected GenericSearchBuilder<DedicatedResourceVO, Long> ListHostsSearch;
@@ -182,6 +183,11 @@ public class DedicatedResourceDaoImpl extends GenericDaoBase<DedicatedResourceVO
         ZoneByDomainIdsSearch.and("zoneId", ZoneByDomainIdsSearch.entity().getDataCenterId(), SearchCriteria.Op.NNULL);
         ZoneByDomainIdsSearch.and("domainId", ZoneByDomainIdsSearch.entity().getDomainId(), SearchCriteria.Op.NIN);
         ZoneByDomainIdsSearch.done();
+
+        ListZonesSearch = createSearchBuilder(Long.class);
+        ListZonesSearch.select(null, Func.DISTINCT, ListZonesSearch.entity().getDataCenterId());
+        ListZonesSearch.and("zoneId", ListZonesSearch.entity().getDataCenterId(), Op.NNULL);
+        ListZonesSearch.done();
 
         ListPodsSearch = createSearchBuilder(Long.class);
         ListPodsSearch.select(null, Func.DISTINCT, ListPodsSearch.entity().getPodId());
@@ -342,6 +348,12 @@ public class DedicatedResourceDaoImpl extends GenericDaoBase<DedicatedResourceVO
         boolean result = super.remove(id);
         txn.commit();
         return result;
+    }
+
+    @Override
+    public List<Long> listAllZones() {
+        SearchCriteria<Long> sc = ListZonesSearch.create();
+        return customSearch(sc, null);
     }
 
     @Override

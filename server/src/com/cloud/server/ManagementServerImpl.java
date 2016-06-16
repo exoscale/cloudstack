@@ -37,6 +37,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.dc.dao.DedicatedResourceDao;
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
@@ -781,6 +782,8 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
     private ServiceOfferingDao _offeringDao;
     @Inject
     private DeploymentPlanningManager _dpMgr;
+    @Inject
+    private DedicatedResourceDao dedicatedResourceDao;
 
     private LockMasterListener _lockMasterListener;
     private final ScheduledExecutorService _eventExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("EventChecker"));
@@ -2483,13 +2486,14 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         Long podId = cmd.getPodId();
         Long clusterId = cmd.getClusterId();
         Boolean fetchLatest = cmd.getFetchLatest();
+        boolean sharedOnly = cmd.getSharedOnly();
 
         zoneId = _accountMgr.checkAccessAndSpecifyAuthority(CallContext.current().getCallingAccount(), zoneId);
         if (fetchLatest != null && fetchLatest) {
             _alertMgr.recalculateCapacity();
         }
 
-        List<SummedCapacity> summedCapacities = _capacityDao.findCapacityBy(capacityType, zoneId, podId, clusterId);
+        List<SummedCapacity> summedCapacities = _capacityDao.findCapacityBy(capacityType, zoneId, podId, clusterId, sharedOnly);
         List<CapacityVO> capacities = new ArrayList<CapacityVO>();
 
         for (SummedCapacity summedCapacity : summedCapacities) {
@@ -2501,29 +2505,33 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         // op_host_Capacity contains only allocated stats and the real time
         // stats are stored "in memory".
         // Show Sec. Storage only when the api is invoked for the zone layer.
-        List<DataCenterVO> dcList = new ArrayList<DataCenterVO>();
+        List<Long> dataCenterIdsList = new ArrayList<>();
         if (zoneId == null && podId == null && clusterId == null) {
-            dcList = ApiDBUtils.listZones();
-        } else if (zoneId != null) {
-            dcList.add(ApiDBUtils.findZoneById(zoneId));
-        } else {
-            if (clusterId != null) {
-                zoneId = ApiDBUtils.findClusterById(clusterId).getDataCenterId();
-            } else {
-                zoneId = ApiDBUtils.findPodById(podId).getDataCenterId();
+            for(DataCenterVO dcVO : ApiDBUtils.listZones()) {
+                dataCenterIdsList.add(dcVO.getId());
             }
-            if (capacityType == null || capacityType == Capacity.CAPACITY_TYPE_STORAGE) {
-                capacities.add(_storageMgr.getStoragePoolUsedStats(null, clusterId, podId, zoneId));
+        } else if (zoneId != null) {
+            dataCenterIdsList.add(zoneId);
+        } else if (clusterId != null) {
+            dataCenterIdsList.add(ApiDBUtils.findClusterById(clusterId).getDataCenterId());
+        } else {
+            dataCenterIdsList.add(ApiDBUtils.findPodById(podId).getDataCenterId());
+        }
+
+        boolean getStorageCapacity = true;
+        if (sharedOnly) {
+            dataCenterIdsList.removeAll(dedicatedResourceDao.listAllZones());
+            if ((clusterId != null && dedicatedResourceDao.listAllClusters().indexOf(clusterId) >= 0) || (podId != null && dedicatedResourceDao.listAllPods().indexOf(podId) >= 0)) {
+                getStorageCapacity = false;
             }
         }
 
-        for (DataCenterVO zone : dcList) {
-            zoneId = zone.getId();
+        for (Long dcId : dataCenterIdsList) {
             if ((capacityType == null || capacityType == Capacity.CAPACITY_TYPE_SECONDARY_STORAGE) && podId == null && clusterId == null) {
-                capacities.add(_storageMgr.getSecondaryStorageUsedStats(null, zoneId));
+                capacities.add(_storageMgr.getSecondaryStorageUsedStats(null, dcId));
             }
-            if (capacityType == null || capacityType == Capacity.CAPACITY_TYPE_STORAGE) {
-                capacities.add(_storageMgr.getStoragePoolUsedStats(null, clusterId, podId, zoneId));
+            if (getStorageCapacity && (capacityType == null || capacityType == Capacity.CAPACITY_TYPE_STORAGE)) {
+                capacities.add(_storageMgr.getStoragePoolUsedStats(null, clusterId, podId, dcId));
             }
         }
         return capacities;
