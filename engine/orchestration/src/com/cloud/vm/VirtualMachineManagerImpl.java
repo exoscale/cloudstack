@@ -2203,9 +2203,6 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             // Migrate the vm and its volume.
             volumeMgr.migrateVolumes(vm, to, srcHost, destHost, volumeToPoolMap);
 
-            // Put the vm back to running state.
-            moveVmOutofMigratingStateOnSuccess(vm, destHost.getId(), work);
-
             try {
                 if (!checkVmOnHost(vm, destHostId)) {
                     s_logger.error("Vm not found on destination host. Unable to complete migration for " + vm);
@@ -2217,6 +2214,9 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             }
 
         } finally {
+            // Put the vm back to running state.
+            moveVmOutofMigratingStateOnSuccess(vm, destHost.getId(), work);
+
             if (!migrated) {
                 s_logger.info("Migration was unsuccessful for " + vm);
                 _alertMgr.sendAlert(alertType, srcHost.getDataCenterId(), srcHost.getPodId(),

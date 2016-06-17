@@ -114,6 +114,7 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
 
         CopyCommandResult result = new CopyCommandResult(null, answer);
         result.setResult(errMsg);
+        result.setSuccess(answer.getResult());
         callback.complete(result);
 
     }
