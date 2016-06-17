@@ -189,7 +189,7 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                     DataStore destDataStore = dataStoreManager.getDataStore(destStoragePool.getId(), DataStoreRole.Primary);
                     volumeTO.setDataStore(destDataStore.getTO());
                     DeleteCommand dtCommand = new DeleteCommand(volumeTO);
-                    EndPoint ep = endPointSelector.select((DataStore)destStoragePool);
+                    EndPoint ep = endPointSelector.select(destDataStore);
                     if (ep != null) {
                         Answer answer = ep.sendMessage(dtCommand);
                         if (answer.getResult()) {
@@ -197,6 +197,8 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                         } else {
                             s_logger.warn("Could not remove the volume at the migration destination.");
                         }
+                    } else {
+                        s_logger.error("Could not find an endpoint to send the delete command");
                     }
                 } else {
                     s_logger.fatal("Could not abort the migration, manual intervention is required!");
