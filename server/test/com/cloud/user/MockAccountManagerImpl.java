@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.naming.ConfigurationException;
 
+import org.apache.cloudstack.api.response.AccountStatsResponse;
 import org.springframework.stereotype.Component;
 
 import org.apache.cloudstack.acl.ControlledEntity;
@@ -226,6 +227,11 @@ public class MockAccountManagerImpl extends ManagerBase implements Manager, Acco
     @Override
     public UserAccount getUserAccountById(Long userId) {
         // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public AccountStatsResponse getAccountStats() {
         return null;
     }
 

@@ -72,4 +72,8 @@ public interface AccountDao extends GenericDao<AccountVO, Long> {
      */
     long getDomainIdForGivenAccountId(long id);
 
+    long countDisabledAccounts();
+
+    long countEnabledAccounts();
+
 }

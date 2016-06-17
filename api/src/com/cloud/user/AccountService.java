@@ -25,6 +25,7 @@ import org.apache.cloudstack.api.command.admin.user.RegisterCmd;
 
 import com.cloud.domain.Domain;
 import com.cloud.exception.PermissionDeniedException;
+import org.apache.cloudstack.api.response.AccountStatsResponse;
 
 public interface AccountService {
 
@@ -118,5 +119,7 @@ public interface AccountService {
      * @return useraccount object if it exists else null
      */
     UserAccount getUserAccountById(Long userId);
+
+    AccountStatsResponse getAccountStats();
 
 }

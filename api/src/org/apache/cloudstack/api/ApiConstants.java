@@ -87,6 +87,7 @@ public class ApiConstants {
     public static final String DNS2 = "dns2";
     public static final String IP6_DNS1 = "ip6dns1";
     public static final String IP6_DNS2 = "ip6dns2";
+    public static final String DISABLED = "disabled";
     public static final String DOMAIN = "domain";
     public static final String DOMAIN_ID = "domainid";
     public static final String DOMAIN__ID = "domainId";
@@ -254,6 +255,7 @@ public class ApiConstants {
     public static final String ISO_ID = "isoid";
     public static final String TIMEOUT = "timeout";
     public static final String TIMEZONE = "timezone";
+    public static final String TOTAL = "total";
     public static final String TYPE = "type";
     public static final String TYPE_NAME = "typename";
     public static final String TRUST_STORE = "truststore";

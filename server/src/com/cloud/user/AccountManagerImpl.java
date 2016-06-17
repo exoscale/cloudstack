@@ -128,6 +128,7 @@ import org.apache.cloudstack.api.command.admin.account.UpdateAccountCmd;
 import org.apache.cloudstack.api.command.admin.user.DeleteUserCmd;
 import org.apache.cloudstack.api.command.admin.user.RegisterCmd;
 import org.apache.cloudstack.api.command.admin.user.UpdateUserCmd;
+import org.apache.cloudstack.api.response.AccountStatsResponse;
 import org.apache.cloudstack.context.CallContext;
 import org.apache.cloudstack.engine.orchestration.service.NetworkOrchestrationService;
 import org.apache.cloudstack.framework.config.dao.ConfigurationDao;
@@ -2626,5 +2627,16 @@ public class AccountManagerImpl extends ManagerBase implements AccountManager, M
     @Override
     public UserAccount getUserAccountById(Long userId) {
         return _userAccountDao.findById(userId);
+    }
+
+    @Override
+    public AccountStatsResponse getAccountStats() {
+        AccountStatsResponse result = new AccountStatsResponse();
+        long disabledAccounts = _accountDao.countDisabledAccounts();
+        long enabledAccounts = _accountDao.countEnabledAccounts();
+        result.setAccountDisabledTotal(disabledAccounts);
+        result.setAccountEnabledTotal(enabledAccounts);
+        result.setAccountTotal(disabledAccounts + enabledAccounts);
+        return result;
     }
 }
