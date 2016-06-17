@@ -3120,9 +3120,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
 
-        executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), _migrateWithStorageFlags);
+        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), _migrateWithStorageFlags);
 
-        return new MigrateWithStorageAnswer(cmd, volumes);
+        return new MigrateWithStorageAnswer(cmd, volumes, result != null, result);
     }
 
     private Answer execute(MigrateCommand cmd) {
@@ -3286,8 +3286,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             conn = LibvirtConnection.getConnectionByVmName(vmName);
             domain = conn.domainLookupByName(vmName);
 
-            if (s_logger.isDebugEnabled()) {
-                s_logger.debug("Cancel migration for vm " + vmName);
+            if (s_logger.isInfoEnabled()) {
+                s_logger.info("Cancel migration for vm " + vmName);
             }
             result = domain.abortJob();
             if (s_logger.isDebugEnabled()) {

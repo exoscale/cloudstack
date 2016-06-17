@@ -31,9 +31,10 @@ public class MigrateWithStorageAnswer extends Answer {
         volumeTos = null;
     }
 
-    public MigrateWithStorageAnswer(MigrateWithStorageCommand cmd, List<VolumeObjectTO> volumeTos) {
-        super(cmd, true, null);
+    public MigrateWithStorageAnswer(MigrateWithStorageCommand cmd, List<VolumeObjectTO> volumeTos, boolean aborted, String details) {
+        super(cmd, !aborted, details);
         this.volumeTos = volumeTos;
+        this.aborted = aborted;
     }
 
     public List<VolumeObjectTO> getVolumeTos() {

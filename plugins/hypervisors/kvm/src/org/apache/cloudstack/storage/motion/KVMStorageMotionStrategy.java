@@ -34,6 +34,7 @@ import org.apache.cloudstack.engine.subsystem.api.storage.CopyCommandResult;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataMotionStrategy;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataObject;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
+import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
 import org.apache.cloudstack.engine.subsystem.api.storage.EndPoint;
 import org.apache.cloudstack.engine.subsystem.api.storage.EndPointSelector;
 import org.apache.cloudstack.engine.subsystem.api.storage.StrategyPriority;
@@ -74,6 +75,8 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
     StorageManager storageManager;
     @Inject
     EndPointSelector endPointSelector;
+    @Inject
+    DataStoreManager dataStoreManager;
 
     @Override
     public StrategyPriority canHandle(DataObject srcData, DataObject destData) {
@@ -183,7 +186,8 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                     s_logger.info("Migration aborted successfully");
                     // We can safely delete the previously created disk at the destination
                     VolumeObjectTO volumeTO = new VolumeObjectTO(rootVolumeInfo);
-                    volumeTO.setDataStore(((DataStore)destStoragePool).getTO());
+                    DataStore destDataStore = dataStoreManager.getDataStore(destStoragePool.getId(), DataStoreRole.Primary);
+                    volumeTO.setDataStore(destDataStore.getTO());
                     DeleteCommand dtCommand = new DeleteCommand(volumeTO);
                     EndPoint ep = endPointSelector.select((DataStore)destStoragePool);
                     if (ep != null) {
