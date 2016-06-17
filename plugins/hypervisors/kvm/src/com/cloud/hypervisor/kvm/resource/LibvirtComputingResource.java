@@ -3165,8 +3165,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 description for the instance to be used on the target host.
 
                 This is supported by libvirt-java from version 0.50.0
+
+                CVE-2015-3252: Get XML with sensitive information suitable for migration by using
+                VIR_DOMAIN_XML_MIGRATABLE flag (value = 8)
+                https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainXMLFlags
              */
-            xmlDesc = dm.getXMLDesc(0).replace(_privateIp, destHost);
+            xmlDesc = dm.getXMLDesc(8).replace(_privateIp, destHost);
 
             if(_migrateBy == MigrationBy.HOSTNAME) {
                 InetAddress destAddress = null;
@@ -4827,7 +4831,10 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String msg = null;
         try {
             dm = conn.domainLookupByName(vmName);
-            String vmDef = dm.getXMLDesc(0);
+            // Get XML Dump including the secure information such as VNC password
+            // By passing 1, or VIR_DOMAIN_XML_SECURE flag
+            // https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainXMLFlags
+            String vmDef = dm.getXMLDesc(1);
             LibvirtDomainXMLParser parser = new LibvirtDomainXMLParser();
             parser.parseDomainXML(vmDef);
             for (InterfaceDef nic : parser.getInterfaces()) {
