@@ -101,6 +101,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
         AccountStateSeach = createSearchBuilder();
         AccountStateSeach.selectFields(AccountStateSeach.entity().getId());
         AccountStateSeach.and("state", AccountStateSeach.entity().getState(), Op.EQ);
+        AccountStateSeach.and("removed", AccountStateSeach.entity().getRemoved(), Op.NULL);
         AccountStateSeach.done();
     }
 
