@@ -946,8 +946,11 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         AsyncCallFuture<CommandResult> future = volService.migrateVolumes(volumeMap, vmTo, srcHost, destHost);
         try {
             CommandResult result = future.get();
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Got result: " + (result.isSuccess() ? "ok" : "failed, reason: " + result.getResult()));
+            }
             if (result.isFailed()) {
-                s_logger.debug("Failed to migrated vm " + vm + " along with its volumes. " + result.getResult());
+                s_logger.debug("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
                 throw new CloudRuntimeException("Failed to migrated vm " + vm + " along with its volumes. " + result.getResult());
             }
         } catch (InterruptedException e) {

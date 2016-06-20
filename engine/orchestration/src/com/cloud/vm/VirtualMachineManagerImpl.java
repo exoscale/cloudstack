@@ -2202,20 +2202,18 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         try {
             // Migrate the vm and its volume.
             volumeMgr.migrateVolumes(vm, to, srcHost, destHost, volumeToPoolMap);
+            migrated = true;
 
             try {
-                if (!checkVmOnHost(vm, destHostId)) {
+                if (migrated && !checkVmOnHost(vm, destHostId)) {
                     s_logger.error("Vm not found on destination host. Unable to complete migration for " + vm);
-                } else {
-                    migrated = true;
+                    migrated = false;
                 }
             } catch (OperationTimedoutException e) {
                 s_logger.warn("Error while checking the vm " + vm + " is on host " + destHost, e);
             }
 
         } finally {
-            // Put the vm back to running state.
-            moveVmOutofMigratingStateOnSuccess(vm, destHost.getId(), work);
 
             if (!migrated) {
                 s_logger.info("Migration was unsuccessful for " + vm);
@@ -2230,9 +2228,16 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
                 } catch (NoTransitionException e) {
                     s_logger.error("Error while transitioning vm from migrating to running state.", e);
                 }
+            } else {
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("Migration was successful, committing it.");
+                }
+                // Put the vm back to running state.
+                moveVmOutofMigratingStateOnSuccess(vm, destHost.getId(), work);
             }
 
             volumeMgr.confirmMigration(profile, srcHostId, destHostId, migrated);
+
 
             work.setStep(Step.Done);
             _workDao.update(work.getId(), work);

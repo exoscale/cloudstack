@@ -25,8 +25,8 @@ public class MigrateWithStorageAnswer extends Answer {
     final List<VolumeObjectTO> volumeTos;
     boolean aborted = false;
 
-    public MigrateWithStorageAnswer(MigrateWithStorageCommand cmd, boolean aborted, Exception ex) {
-        super(cmd, ex);
+    public MigrateWithStorageAnswer(MigrateWithStorageCommand cmd, boolean result, boolean aborted, Exception ex) {
+        super(cmd, result, ex.toString());
         this.aborted = aborted;
         volumeTos = null;
     }

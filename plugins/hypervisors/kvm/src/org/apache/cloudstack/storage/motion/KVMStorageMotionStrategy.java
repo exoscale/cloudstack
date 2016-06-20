@@ -108,15 +108,18 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                 throw new CloudRuntimeException("Unsupported operation requested for moving data.");
             }
         } catch (Exception e) {
-            s_logger.error("copy failed", e);
+            s_logger.error("copyAsync failed", e);
             errMsg = e.toString();
+        }
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Got answer from migration, result: " + (answer.getResult() ? "ok" : "failed, reason: " + answer.getDetails()));
         }
 
         CopyCommandResult result = new CopyCommandResult(null, answer);
         result.setResult(errMsg);
         result.setSuccess(answer.getResult());
         callback.complete(result);
-
     }
 
     private Answer migrateVmWithVolumes(VMInstanceVO vm, VirtualMachineTO to, Host srcHost, Host destHost, Map<VolumeInfo, DataStore> volumeToPool) throws AgentUnavailableException {
@@ -175,7 +178,7 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
             return answer;
 
         } catch (OperationTimedoutException e) {
-            s_logger.error("Timeout error while migrating vm " + vm + " to host " + destHost + ", will to abort the migration.", e);
+            s_logger.error("Operation timeout error while migrating vm " + vm + " to host " + destHost + ", aborting the migration.", e);
             // Trying to abort the migration when we reach the timeout. It required to abort the job but we're not
             // sure it will work. Only when the command has been aborted successfully should we delete the remote
             // disk. Otherwise we leave everything as it is and leave it to a manual intervention to decide.
@@ -184,27 +187,29 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                 CancelMigrationAnswer cancelMigrationAnswer = (CancelMigrationAnswer) agentMgr.send(srcHost.getId(), cancelMigrationCommand);
 
                 if (cancelMigrationAnswer.getResult()) {
-                    s_logger.info("Migration aborted successfully");
+                    s_logger.info("Migration aborted successfully.");
                     // We can safely delete the previously created disk at the destination
                     VolumeObjectTO volumeTO = new VolumeObjectTO(rootVolumeInfo);
                     DataStore destDataStore = dataStoreManager.getDataStore(destStoragePool.getId(), DataStoreRole.Primary);
+                    s_logger.info("Requesting volume deletion on destination host " + destDataStore.getId());
                     volumeTO.setDataStore(destDataStore.getTO());
                     DeleteCommand dtCommand = new DeleteCommand(volumeTO);
                     EndPoint ep = endPointSelector.select(destDataStore);
                     if (ep != null) {
                         Answer answer = ep.sendMessage(dtCommand);
                         if (answer.getResult()) {
-                            s_logger.info("Volume at the migration destination has been removed.");
+                            s_logger.info("Volume on the migration destination has been removed.");
                         } else {
-                            s_logger.warn("Could not remove the volume at the migration destination.");
+                            s_logger.warn("Could not remove the volume on the migration destination.");
                         }
                     } else {
                         s_logger.error("Could not find an endpoint to send the delete command");
                     }
+
                 } else {
                     s_logger.fatal("Could not abort the migration, manual intervention is required!");
                 }
-                return new MigrateWithStorageAnswer(command, cancelMigrationAnswer.getResult(), e);
+                return new MigrateWithStorageAnswer(command, false, cancelMigrationAnswer.getResult(), e);
             } catch (OperationTimedoutException e1) {
                 s_logger.error("Timeout error while trying to abort the migration job", e);
                 throw new AgentUnavailableException("Operation timed out on storage motion for " + vm + " but migration job could not be aborted. Manual intervention required!", destHost.getId());

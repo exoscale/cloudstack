@@ -1169,7 +1169,7 @@ public class VolumeServiceImpl implements VolumeService {
             motionSrv.copyAsync(volumeMap, vmTo, srcHost, destHost, caller);
 
         } catch (Exception e) {
-            s_logger.debug("Failed to copy volume", e);
+            s_logger.debug("Failed to migrate volume", e);
             res.setResult(e.toString());
             future.complete(res);
         }
@@ -1177,8 +1177,7 @@ public class VolumeServiceImpl implements VolumeService {
         return future;
     }
 
-    protected Void
-    migrateVmWithVolumesCallBack(AsyncCallbackDispatcher<VolumeServiceImpl, CopyCommandResult> callback, MigrateVmWithVolumesContext<CommandResult> context) {
+    protected Void migrateVmWithVolumesCallBack(AsyncCallbackDispatcher<VolumeServiceImpl, CopyCommandResult> callback, MigrateVmWithVolumesContext<CommandResult> context) {
         Map<VolumeInfo, DataStore> volumeToPool = context.volumeToPool;
         CopyCommandResult result = callback.getResult();
         AsyncCallFuture<CommandResult> future = context.future;
@@ -1199,7 +1198,7 @@ public class VolumeServiceImpl implements VolumeService {
                 future.complete(res);
             }
         } catch (Exception e) {
-            s_logger.error("Failed to process copy volume callback", e);
+            s_logger.error("Failed to process migration volume callback", e);
             res.setResult(e.toString());
             future.complete(res);
         }
