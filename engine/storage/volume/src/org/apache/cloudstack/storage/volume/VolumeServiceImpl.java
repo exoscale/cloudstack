@@ -1163,9 +1163,11 @@ public class VolumeServiceImpl implements VolumeService {
                 }
             }
 
+            s_logger.debug("MARCO: Inside migrateVolumes(), setting AsyncCallbacks");
             MigrateVmWithVolumesContext<CommandResult> context = new MigrateVmWithVolumesContext<CommandResult>(null, future, volumeMap);
             AsyncCallbackDispatcher<VolumeServiceImpl, CopyCommandResult> caller = AsyncCallbackDispatcher.create(this);
             caller.setCallback(caller.getTarget().migrateVmWithVolumesCallBack(null, null)).setContext(context);
+            s_logger.debug("MARCO: Going through motion service to send copyAsnc command");
             motionSrv.copyAsync(volumeMap, vmTo, srcHost, destHost, caller);
 
         } catch (Exception e) {
@@ -1174,16 +1176,21 @@ public class VolumeServiceImpl implements VolumeService {
             future.complete(res);
         }
 
+        s_logger.debug("MARCO: Exiting migrateVolumes, future is set as completed");
+
         return future;
     }
 
     protected Void migrateVmWithVolumesCallBack(AsyncCallbackDispatcher<VolumeServiceImpl, CopyCommandResult> callback, MigrateVmWithVolumesContext<CommandResult> context) {
+        s_logger.debug("MARCO: Inside migrateVmWithVolumesCallBack()");
         Map<VolumeInfo, DataStore> volumeToPool = context.volumeToPool;
+        s_logger.debug("MARCO: Get callback result");
         CopyCommandResult result = callback.getResult();
         AsyncCallFuture<CommandResult> future = context.future;
         CommandResult res = new CommandResult();
         try {
             if (result.isFailed()) {
+                s_logger.debug("MARCO: result is failed");
                 res.setResult(result.getResult());
                 for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
                     VolumeInfo volume = entry.getKey();
@@ -1191,6 +1198,7 @@ public class VolumeServiceImpl implements VolumeService {
                 }
                 future.complete(res);
             } else {
+                s_logger.debug("MARCO: result is success");
                 for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
                     VolumeInfo volume = entry.getKey();
                     volume.processEvent(Event.OperationSuccessed);
@@ -1202,6 +1210,8 @@ public class VolumeServiceImpl implements VolumeService {
             res.setResult(e.toString());
             future.complete(res);
         }
+
+        s_logger.debug("MARCO: Exiting migrateVmWithVolumesCallBack");
 
         return null;
     }

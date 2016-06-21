@@ -2203,6 +2203,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             // Migrate the vm and its volume.
             volumeMgr.migrateVolumes(vm, to, srcHost, destHost, volumeToPoolMap);
             migrated = true;
+            s_logger.debug("MARCO: volumeMgr.migrateVolumes() return without an exception, so migrated=true");
 
             try {
                 if (migrated && !checkVmOnHost(vm, destHostId)) {
