@@ -104,6 +104,7 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
             VMInstanceVO instance = instanceDao.findById(vmTo.getId());
             if (instance != null) {
                 answer = migrateVmWithVolumes(instance, vmTo, srcHost, destHost, volumeMap);
+                errMsg = answer.getDetails();
             } else {
                 throw new CloudRuntimeException("Unsupported operation requested for moving data.");
             }

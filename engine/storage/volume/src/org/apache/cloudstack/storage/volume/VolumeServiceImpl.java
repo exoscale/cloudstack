@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.cloud.agent.api.MigrateWithStorageAnswer;
 import org.apache.cloudstack.engine.cloud.entity.api.VolumeEntity;
 import org.apache.cloudstack.engine.subsystem.api.storage.ChapInfo;
 import org.apache.cloudstack.engine.subsystem.api.storage.CopyCommandResult;
@@ -1163,11 +1164,9 @@ public class VolumeServiceImpl implements VolumeService {
                 }
             }
 
-            s_logger.debug("MARCO: Inside migrateVolumes(), setting AsyncCallbacks");
             MigrateVmWithVolumesContext<CommandResult> context = new MigrateVmWithVolumesContext<CommandResult>(null, future, volumeMap);
             AsyncCallbackDispatcher<VolumeServiceImpl, CopyCommandResult> caller = AsyncCallbackDispatcher.create(this);
             caller.setCallback(caller.getTarget().migrateVmWithVolumesCallBack(null, null)).setContext(context);
-            s_logger.debug("MARCO: Going through motion service to send copyAsnc command");
             motionSrv.copyAsync(volumeMap, vmTo, srcHost, destHost, caller);
 
         } catch (Exception e) {
@@ -1175,8 +1174,6 @@ public class VolumeServiceImpl implements VolumeService {
             res.setResult(e.toString());
             future.complete(res);
         }
-
-        s_logger.debug("MARCO: Exiting migrateVolumes, future is set as completed");
 
         return future;
     }
@@ -1191,7 +1188,9 @@ public class VolumeServiceImpl implements VolumeService {
         try {
             if (result.isFailed()) {
                 s_logger.debug("MARCO: result is failed, reason: " + (result.getResult() == null ? "null" : result.getResult()));
+                MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer)result.getAnswer();
                 res.setSuccess(false);
+                res.setAborted(answer.isAborted());
                 res.setResult(result.getResult());
                 for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
                     VolumeInfo volume = entry.getKey();
