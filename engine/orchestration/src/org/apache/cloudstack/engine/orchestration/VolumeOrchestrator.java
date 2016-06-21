@@ -948,7 +948,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         try {
             s_logger.debug("MARCO: Waiting for the future...");
             CommandResult result = future.get();
-            s_logger.debug("MARCO: Got the future as a CommandResult");
+            s_logger.debug("MARCO: Got the future as a CommandResult: " + result);
             if (s_logger.isDebugEnabled()) {
                 s_logger.debug("MARCO: Got result: " + (result.isSuccess() ? "ok" : "failed, reason: " + result.getResult()));
             }

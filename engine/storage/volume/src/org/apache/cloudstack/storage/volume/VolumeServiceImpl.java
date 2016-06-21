@@ -1190,21 +1190,21 @@ public class VolumeServiceImpl implements VolumeService {
         CommandResult res = new CommandResult();
         try {
             if (result.isFailed()) {
-                s_logger.debug("MARCO: result is failed");
+                s_logger.debug("MARCO: result is failed, reason: " + (result.getResult() == null ? "null" : result.getResult()));
+                res.setSuccess(false);
                 res.setResult(result.getResult());
                 for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
                     VolumeInfo volume = entry.getKey();
                     volume.processEvent(Event.OperationFailed);
                 }
-                future.complete(res);
             } else {
                 s_logger.debug("MARCO: result is success");
                 for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
                     VolumeInfo volume = entry.getKey();
                     volume.processEvent(Event.OperationSuccessed);
                 }
-                future.complete(res);
             }
+            future.complete(res);
         } catch (Exception e) {
             s_logger.error("Failed to process migration volume callback", e);
             res.setResult(e.toString());
