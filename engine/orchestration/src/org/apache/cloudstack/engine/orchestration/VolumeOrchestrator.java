@@ -943,18 +943,12 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             volumeMap.put(volFactory.getVolume(volume.getId()), (DataStore)destPool);
         }
 
-        s_logger.debug("MARCO: Will call volService.migrateVolumes()");
         AsyncCallFuture<CommandResult> future = volService.migrateVolumes(volumeMap, vmTo, srcHost, destHost);
         try {
-            s_logger.debug("MARCO: Waiting for the future...");
             CommandResult result = future.get();
-            s_logger.debug("MARCO: Got the future as a CommandResult: " + result);
-            if (s_logger.isDebugEnabled()) {
-                s_logger.debug("MARCO: Got result: " + (result.isSuccess() ? "ok" : "failed, reason: " + result.getResult()));
-            }
             if (result.isFailed()) {
                 s_logger.debug("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
-                throw new CloudRuntimeException("Failed to migrated vm " + vm + " along with its volumes. " + result.getResult());
+                throw new CloudRuntimeException("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
             }
         } catch (InterruptedException e) {
             s_logger.debug("Failed to migrated vm " + vm + " along with its volumes.", e);
