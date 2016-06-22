@@ -54,7 +54,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     protected final SearchBuilder<AccountVO> CleanupForDisabledAccountsSearch;
     protected final SearchBuilder<AccountVO> NonProjectAccountSearch;
     protected final GenericSearchBuilder<AccountVO, Long> AccountIdsSearch;
-    protected final SearchBuilder<AccountVO> AccountStateSeach;
+    protected final SearchBuilder<AccountVO> AccountStateSearch;
 
     public AccountDaoImpl() {
         AllFieldsSearch = createSearchBuilder();
@@ -98,11 +98,11 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
         AccountIdsSearch.and("ids", AccountIdsSearch.entity().getDomainId(), Op.IN);
         AccountIdsSearch.done();
 
-        AccountStateSeach = createSearchBuilder();
-        AccountStateSeach.selectFields(AccountStateSeach.entity().getId());
-        AccountStateSeach.and("state", AccountStateSeach.entity().getState(), Op.EQ);
-        AccountStateSeach.and("removed", AccountStateSeach.entity().getRemoved(), Op.NULL);
-        AccountStateSeach.done();
+        AccountStateSearch = createSearchBuilder();
+        AccountStateSearch.selectFields(AccountStateSearch.entity().getId());
+        AccountStateSearch.and("state", AccountStateSearch.entity().getState(), Op.EQ);
+        AccountStateSearch.and("removed", AccountStateSearch.entity().getRemoved(), Op.NULL);
+        AccountStateSearch.done();
     }
 
     @Override
@@ -309,7 +309,7 @@ public class AccountDaoImpl extends GenericDaoBase<AccountVO, Long> implements A
     }
 
     private long countByState(State state) {
-        SearchCriteria<AccountVO> sc = AccountStateSeach.create();
+        SearchCriteria<AccountVO> sc = AccountStateSearch.create();
         sc.setParameters("state", state);
         Integer count = getCount(sc);
         return count.longValue();
