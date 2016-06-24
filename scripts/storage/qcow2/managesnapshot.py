@@ -328,22 +328,35 @@ if __name__ == "__main__":
 
         # No error, we send an ok riemann event
         service = "Cloudstack-Snapshot-%s" % (domain)
-        bclient.send({'host': host,
-                      'service': service,
-                      'state': 'ok',
-                      'tags': ['Cloudstack-Snapshot'],
-                      'ttl': 3800,
-                      'metric': 0})
+        # Wrap the rienmann call in a silent try except to avoid returning an error
+        try:
+            bclient.send({'host': host,
+                          'service': service,
+                          'state': 'ok',
+                          'tags': ['Cloudstack-Snapshot'],
+                          'ttl': 3800,
+                          'metric': 0})
+        except Exception as re:
+            logging.error("An error occurred while sending the ok riemann event.")
+            logging.error('%s', re)
+
     except Exception as e:
-        client = Client(dsn=sentryapikey)
-        client.captureException()
-        s = str(e)
-        service = "Cloudstack-Snapshot-%s" % (domain)
-        bclient.send({'host': host,
-                      'service': service,
-                      'description': s,
-                      'state': 'warning',
-                      'tags': ['Cloudstack-Snapshot'],
-                      'ttl': 3800,
-                      'metric': 1})
-        raise
+
+        try:
+            client = Client(dsn=sentryapikey)
+            client.captureException()
+            s = str(e)
+            service = "Cloudstack-Snapshot-%s" % (domain)
+            bclient.send({'host': host,
+                          'service': service,
+                          'description': s,
+                          'state': 'warning',
+                          'tags': ['Cloudstack-Snapshot'],
+                          'ttl': 3800,
+                          'metric': 1})
+        except Exception as ee:
+            logging.error("An error occurred while sending the exception to sentry and riemann.")
+            logging.error('%s', ee)
+
+        # Raise the original exception
+        raise e
