@@ -3,6 +3,8 @@ package org.apache.cloudstack.storage.motion;
 
 import com.cloud.agent.AgentManager;
 import com.cloud.agent.api.Answer;
+import com.cloud.agent.api.CancelMigrationAnswer;
+import com.cloud.agent.api.CancelMigrationCommand;
 import com.cloud.agent.api.MigrateWithStorageAnswer;
 import com.cloud.agent.api.MigrateWithStorageCommand;
 import com.cloud.agent.api.storage.CreateAnswer;
@@ -32,12 +34,16 @@ import org.apache.cloudstack.engine.subsystem.api.storage.CopyCommandResult;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataMotionStrategy;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataObject;
 import org.apache.cloudstack.engine.subsystem.api.storage.DataStore;
+import org.apache.cloudstack.engine.subsystem.api.storage.DataStoreManager;
+import org.apache.cloudstack.engine.subsystem.api.storage.EndPoint;
+import org.apache.cloudstack.engine.subsystem.api.storage.EndPointSelector;
 import org.apache.cloudstack.engine.subsystem.api.storage.StrategyPriority;
 import org.apache.cloudstack.engine.subsystem.api.storage.TemplateDataFactory;
 import org.apache.cloudstack.engine.subsystem.api.storage.TemplateInfo;
 import org.apache.cloudstack.engine.subsystem.api.storage.VolumeDataFactory;
 import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
 import org.apache.cloudstack.framework.async.AsyncCompletionCallback;
+import org.apache.cloudstack.storage.command.DeleteCommand;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.to.VolumeObjectTO;
 import org.apache.log4j.Logger;
@@ -67,6 +73,10 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
     TemplateDataFactory tmplFactory;
     @Inject
     StorageManager storageManager;
+    @Inject
+    EndPointSelector endPointSelector;
+    @Inject
+    DataStoreManager dataStoreManager;
 
     @Override
     public StrategyPriority canHandle(DataObject srcData, DataObject destData) {
@@ -94,40 +104,48 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
             VMInstanceVO instance = instanceDao.findById(vmTo.getId());
             if (instance != null) {
                 answer = migrateVmWithVolumes(instance, vmTo, srcHost, destHost, volumeMap);
+                errMsg = answer.getDetails();
             } else {
                 throw new CloudRuntimeException("Unsupported operation requested for moving data.");
             }
         } catch (Exception e) {
-            s_logger.error("copy failed", e);
+            s_logger.error("copyAsync failed", e);
             errMsg = e.toString();
+        }
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Got answer from migration, result: " + (answer.getResult() ? "ok" : "failed, reason: " + answer.getDetails()));
         }
 
         CopyCommandResult result = new CopyCommandResult(null, answer);
         result.setResult(errMsg);
+        result.setSuccess(answer.getResult());
         callback.complete(result);
-
     }
 
     private Answer migrateVmWithVolumes(VMInstanceVO vm, VirtualMachineTO to, Host srcHost, Host destHost, Map<VolumeInfo, DataStore> volumeToPool) throws AgentUnavailableException {
 
         // Initiate migration of a virtual machine with it's volumes.
-        try {
-            List<Pair<VolumeTO, StorageFilerTO>> volumeToFilerTo = new ArrayList<Pair<VolumeTO, StorageFilerTO>>();
-            VolumeVO rootVolume = null;
-            for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
-                VolumeInfo volume = entry.getKey();
-                VolumeTO volumeTo = new VolumeTO(volume, storagePoolDao.findById(volume.getPoolId()));
-                StorageFilerTO filerTo = new StorageFilerTO((StoragePool)entry.getValue());
-                volumeToFilerTo.add(new Pair<VolumeTO, StorageFilerTO>(volumeTo, filerTo));
-                if (volume.getType().equals(DataObjectType.VOLUME) && volume.getVolumeType().equals(Volume.Type.ROOT)) {
-                    rootVolume = volDao.findById(volume.getId());
-                }
+        List<Pair<VolumeTO, StorageFilerTO>> volumeToFilerTo = new ArrayList<Pair<VolumeTO, StorageFilerTO>>();
+        VolumeVO rootVolume = null;
+        VolumeInfo rootVolumeInfo = null;
+        for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
+            VolumeInfo volume = entry.getKey();
+            VolumeTO volumeTo = new VolumeTO(volume, storagePoolDao.findById(volume.getPoolId()));
+            StorageFilerTO filerTo = new StorageFilerTO((StoragePool)entry.getValue());
+            volumeToFilerTo.add(new Pair<VolumeTO, StorageFilerTO>(volumeTo, filerTo));
+            if (volume.getType().equals(DataObjectType.VOLUME) && volume.getVolumeType().equals(Volume.Type.ROOT)) {
+                rootVolume = volDao.findById(volume.getId());
+                rootVolumeInfo = volume;
             }
+        }
 
-            DiskOfferingVO diskOffering = diskOfferingDao.findById(rootVolume.getDiskOfferingId());
-            DiskProfile diskProfile = new DiskProfile(rootVolume, diskOffering, vm.getHypervisorType());
-            StoragePool destStoragePool = storageManager.findLocalStorageOnHost(destHost.getId());
-            TemplateInfo templateImage = tmplFactory.getTemplate(rootVolume.getTemplateId(), DataStoreRole.Image);
+        DiskOfferingVO diskOffering = diskOfferingDao.findById(rootVolume.getDiskOfferingId());
+        DiskProfile diskProfile = new DiskProfile(rootVolume, diskOffering, vm.getHypervisorType());
+        StoragePool destStoragePool = storageManager.findLocalStorageOnHost(destHost.getId());
+        TemplateInfo templateImage = tmplFactory.getTemplate(rootVolume.getTemplateId(), DataStoreRole.Image);
+
+        try {
             CreateCommand provisioningCommand = new CreateCommand(diskProfile, templateImage.getUuid(), destStoragePool, true);
             CreateAnswer provisioningAnwer = (CreateAnswer) agentMgr.send(destHost.getId(), provisioningCommand);
             if (provisioningAnwer == null) {
@@ -138,8 +156,13 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
                 throw new CloudRuntimeException("Error while provisioning root image for the vm " + vm + " during migration to host " + destHost +
                         ". " + provisioningAnwer.getDetails());
             }
+        } catch (OperationTimedoutException e) {
+            throw new AgentUnavailableException("Operation timed out while provisioning for migration for " + vm, destHost.getId());
+        }
 
-            MigrateWithStorageCommand command = new MigrateWithStorageCommand(to, volumeToFilerTo, destHost.getPrivateIpAddress());
+        MigrateWithStorageCommand command = null;
+        try {
+            command = new MigrateWithStorageCommand(to, volumeToFilerTo, destHost.getPrivateIpAddress());
             MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer) agentMgr.send(srcHost.getId(), command);
             if (answer == null) {
                 s_logger.error("Migration with storage of vm " + vm + " failed.");
@@ -154,9 +177,44 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
             }
 
             return answer;
+
         } catch (OperationTimedoutException e) {
-            s_logger.error("Error while migrating vm " + vm + " to host " + destHost, e);
-            throw new AgentUnavailableException("Operation timed out on storage motion for " + vm, destHost.getId());
+            s_logger.error("Operation timeout error while migrating vm " + vm + " to host " + destHost + ", aborting the migration.", e);
+            // Trying to abort the migration when we reach the timeout. It required to abort the job but we're not
+            // sure it will work. Only when the command has been aborted successfully should we delete the remote
+            // disk. Otherwise we leave everything as it is and leave it to a manual intervention to decide.
+            try {
+                CancelMigrationCommand cancelMigrationCommand = new CancelMigrationCommand(vm.getInstanceName());
+                CancelMigrationAnswer cancelMigrationAnswer = (CancelMigrationAnswer) agentMgr.send(srcHost.getId(), cancelMigrationCommand);
+
+                if (cancelMigrationAnswer.getResult()) {
+                    s_logger.info("Migration aborted successfully.");
+                    // We can safely delete the previously created disk at the destination
+                    VolumeObjectTO volumeTO = new VolumeObjectTO(rootVolumeInfo);
+                    DataStore destDataStore = dataStoreManager.getDataStore(destStoragePool.getId(), DataStoreRole.Primary);
+                    s_logger.info("Requesting volume deletion on destination host " + destDataStore.getId());
+                    volumeTO.setDataStore(destDataStore.getTO());
+                    DeleteCommand dtCommand = new DeleteCommand(volumeTO);
+                    EndPoint ep = endPointSelector.select(destDataStore);
+                    if (ep != null) {
+                        Answer answer = ep.sendMessage(dtCommand);
+                        if (answer.getResult()) {
+                            s_logger.info("Volume on the migration destination has been removed.");
+                        } else {
+                            s_logger.warn("Could not remove the volume on the migration destination.");
+                        }
+                    } else {
+                        s_logger.error("Could not find an endpoint to send the delete command");
+                    }
+
+                } else {
+                    s_logger.fatal("Could not abort the migration, manual intervention is required!");
+                }
+                return new MigrateWithStorageAnswer(command, false, cancelMigrationAnswer.getResult(), e);
+            } catch (OperationTimedoutException e1) {
+                s_logger.error("Timeout error while trying to abort the migration job", e);
+                throw new AgentUnavailableException("Operation timed out on storage motion for " + vm + " but migration job could not be aborted. Manual intervention required!", destHost.getId());
+            }
         }
     }
 

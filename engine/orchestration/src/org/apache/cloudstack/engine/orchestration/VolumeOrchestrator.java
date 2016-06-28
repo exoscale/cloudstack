@@ -933,7 +933,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             StoragePool destPool = (StoragePool)dataStoreMgr.getDataStore(storagePool.getId(), DataStoreRole.Primary);
 
             if (volume.getInstanceId() != vm.getId()) {
-                throw new CloudRuntimeException("Volume " + volume + " that has to be migrated doesn't belong to the" + " instance " + vm);
+                throw new CloudRuntimeException("Volume " + volume + " that has to be migrated doesn't belong to the instance " + vm);
             }
 
             if (destPool == null) {
@@ -947,8 +947,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         try {
             CommandResult result = future.get();
             if (result.isFailed()) {
-                s_logger.debug("Failed to migrated vm " + vm + " along with its volumes. " + result.getResult());
-                throw new CloudRuntimeException("Failed to migrated vm " + vm + " along with its volumes. " + result.getResult());
+                s_logger.debug("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
+                throw new CloudRuntimeException("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
             }
         } catch (InterruptedException e) {
             s_logger.debug("Failed to migrated vm " + vm + " along with its volumes.", e);
@@ -1028,10 +1028,10 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     }
 
     @Override
-    public void confirmMigration(VirtualMachineProfile vm, final long srcHostId, final long destHostId, boolean migrationSucessful) {
+    public void confirmMigration(VirtualMachineProfile vm, final long srcHostId, final long destHostId, boolean migrationSuccessful) {
         List<VolumeVO> vols = _volsDao.findUsableVolumesForInstance(vm.getId());
-        StoragePool poolToCleanup = storageManager.findLocalStorageOnHost((migrationSucessful ? srcHostId : destHostId));
-        StoragePool pool = storageManager.findLocalStorageOnHost((migrationSucessful ? destHostId : srcHostId));
+        StoragePool poolToCleanup = storageManager.findLocalStorageOnHost((migrationSuccessful ? srcHostId : destHostId));
+        StoragePool pool = storageManager.findLocalStorageOnHost((migrationSuccessful ? destHostId : srcHostId));
         Volume volume = null;
         for (VolumeVO vol : vols) {
             if (vm.getType() == VirtualMachine.Type.User && vol.getVolumeType().equals(Type.ROOT)) {
@@ -1044,11 +1044,15 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
                 _volsDao.update(vol.getId(), vol);
             }
         }
-        DataStore dataStoreToCleanup = dataStoreMgr.getDataStore(poolToCleanup.getId(), DataStoreRole.Primary);
-        if (s_logger.isDebugEnabled()) {
-            s_logger.debug("Will delete the volume " + volume.getName() + " on host " + dataStoreToCleanup.getName());
+
+        if (migrationSuccessful) {
+            DataStore dataStoreToCleanup = dataStoreMgr.getDataStore(poolToCleanup.getId(), DataStoreRole.Primary);
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Will delete the volume " + volume.getName() + " on host " + dataStoreToCleanup.getName());
+            }
+            volService.deleteVolumeOnDataStore(dataStoreToCleanup, volume.getId());
         }
-        volService.deleteVolumeOnDataStore(dataStoreToCleanup, volume.getId());
+        // When the migration is not successful, we decide to delete or not the volume in the motion strategy.
     }
 
     private Map<String, String> getDetails(VolumeInfo volumeInfo, DataStore dataStore) {

@@ -28,6 +28,8 @@ import com.cloud.agent.api.AttachVolumeAnswer;
 import com.cloud.agent.api.AttachVolumeCommand;
 import com.cloud.agent.api.BackupSnapshotAnswer;
 import com.cloud.agent.api.BackupSnapshotCommand;
+import com.cloud.agent.api.CancelMigrationAnswer;
+import com.cloud.agent.api.CancelMigrationCommand;
 import com.cloud.agent.api.CheckHealthAnswer;
 import com.cloud.agent.api.CheckHealthCommand;
 import com.cloud.agent.api.CheckNetworkAnswer;
@@ -1425,6 +1427,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((OvsVpcRoutingPolicyConfigCommand) cmd);
             } else if (cmd instanceof MigrateWithStorageCommand) {
                 return execute((MigrateWithStorageCommand) cmd);
+            } else if (cmd instanceof CancelMigrationCommand) {
+                return execute((CancelMigrationCommand) cmd);
             } else {
                 s_logger.warn("Unsupported command ");
                 return Answer.createUnsupportedCommandAnswer(cmd);
@@ -3116,9 +3120,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
 
-        executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), _migrateWithStorageFlags);
+        String result = executeMigrationWithFlags(vm.getName(), cmd.getTargetHost(), _migrateWithStorageFlags);
 
-        return new MigrateWithStorageAnswer(cmd, volumes);
+        return new MigrateWithStorageAnswer(cmd, volumes, result != null, result);
     }
 
     private Answer execute(MigrateCommand cmd) {
@@ -3161,8 +3165,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 description for the instance to be used on the target host.
 
                 This is supported by libvirt-java from version 0.50.0
+
+                CVE-2015-3252: Get XML with sensitive information suitable for migration by using
+                VIR_DOMAIN_XML_MIGRATABLE flag (value = 8)
+                https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainXMLFlags
              */
-            xmlDesc = dm.getXMLDesc(0).replace(_privateIp, destHost);
+            xmlDesc = dm.getXMLDesc(8).replace(_privateIp, destHost);
 
             if(_migrateBy == MigrationBy.HOSTNAME) {
                 InetAddress destAddress = null;
@@ -3270,6 +3278,37 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
         return result;
+    }
+
+    private Answer execute(CancelMigrationCommand cmd) {
+        Connect conn = null;
+        Domain domain = null;
+        final String vmName = cmd.getVmName();
+        int result= 0;
+
+        try {
+            conn = LibvirtConnection.getConnectionByVmName(vmName);
+            domain = conn.domainLookupByName(vmName);
+
+            if (s_logger.isInfoEnabled()) {
+                s_logger.info("Cancel migration for vm " + vmName);
+            }
+            result = domain.abortJob();
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Canceled migration for vm " + vmName + " with result=" + result);
+            }
+
+
+        } catch (LibvirtException e) {
+            s_logger.error("Exception while cancelling the migration job, maybe it was finished just before trying to abort it. You must check the logs!");
+            return new CancelMigrationAnswer(cmd, e);
+        }
+
+        if (result == 0) {
+            return new CancelMigrationAnswer(cmd, true, null);
+        } else {
+            return new CancelMigrationAnswer(cmd, false, "Failed to abort vm migration");
+        }
     }
 
     private synchronized Answer execute(PrepareForMigrationCommand cmd) {
@@ -4792,7 +4831,10 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String msg = null;
         try {
             dm = conn.domainLookupByName(vmName);
-            String vmDef = dm.getXMLDesc(0);
+            // Get XML Dump including the secure information such as VNC password
+            // By passing 1, or VIR_DOMAIN_XML_SECURE flag
+            // https://libvirt.org/html/libvirt-libvirt-domain.html#virDomainXMLFlags
+            String vmDef = dm.getXMLDesc(1);
             LibvirtDomainXMLParser parser = new LibvirtDomainXMLParser();
             parser.parseDomainXML(vmDef);
             for (InterfaceDef nic : parser.getInterfaces()) {
