@@ -301,10 +301,6 @@ public class KVMStoragePoolManager {
         return true;
     }
 
-    public KVMPhysicalDisk createDiskFromTemplate(KVMPhysicalDisk template, String name, KVMStoragePool destPool, int timeout) {
-        return createDiskFromTemplate(template, name, destPool, template.getSize(), timeout);
-    }
-
     public KVMPhysicalDisk createDiskFromTemplate(KVMPhysicalDisk template, String name, KVMStoragePool destPool, long size, int timeout) {
         StorageAdaptor adaptor = getStorageAdaptor(destPool.getType());
 

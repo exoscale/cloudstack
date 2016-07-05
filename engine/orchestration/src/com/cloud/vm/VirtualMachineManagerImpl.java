@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
 import com.cloud.exception.PermissionDeniedException;
+import com.cloud.exception.VirtualMachineMigrationException;
 import com.cloud.offering.NetworkOffering;
 import com.cloud.offerings.dao.NetworkOfferingDao;
 import io.exo.cloudstack.restrictions.ServiceOfferingService;
@@ -2102,7 +2103,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
     @Override
     public void migrateWithStorage(String vmUuid, long srcHostId, long destHostId, Map<Long, Long> volumeToPool)
-            throws ResourceUnavailableException, ConcurrentOperationException {
+            throws ResourceUnavailableException, ConcurrentOperationException, VirtualMachineMigrationException {
 
         AsyncJobExecutionContext jobContext = AsyncJobExecutionContext.getCurrentExecutionContext();
         if (!VmJobEnabled.value() || jobContext.isJobDispatchedBy(VmWorkConstants.VM_WORK_JOB_DISPATCHER)) {
@@ -2129,7 +2130,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
             } catch (InterruptedException e) {
                 throw new RuntimeException("Operation is interrupted", e);
             } catch (java.util.concurrent.ExecutionException e) {
-                throw new RuntimeException("Execution excetion", e);
+                throw new RuntimeException("Execution exception", e);
             }
 
             Object jobException = _jobMgr.unmarshallResultObject(outcome.getJob());
@@ -2147,19 +2148,15 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
     }
 
     private void orchestrateMigrateWithStorage(String vmUuid, long srcHostId, long destHostId, Map<Long, Long> volumeToPool) throws ResourceUnavailableException,
-    ConcurrentOperationException {
+    ConcurrentOperationException, VirtualMachineMigrationException {
 
         VMInstanceVO vm = _vmDao.findByUuid(vmUuid);
-
         HostVO srcHost = _hostDao.findById(srcHostId);
         HostVO destHost = _hostDao.findById(destHostId);
-        VirtualMachineGuru vmGuru = getVmGuru(vm);
-
         DataCenterVO dc = _dcDao.findById(destHost.getDataCenterId());
         HostPodVO pod = _podDao.findById(destHost.getPodId());
         Cluster cluster = _clusterDao.findById(destHost.getClusterId());
         DeployDestination destination = new DeployDestination(dc, pod, cluster, destHost);
-
         VirtualMachineProfile vmSrc = new VirtualMachineProfileImpl(vm);
         for (NicProfile nic : _networkMgr.getNicProfiles(vm)) {
             vmSrc.addNic(nic);
@@ -2201,7 +2198,7 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
         boolean migrated = false;
         try {
             // Migrate the vm and its volume.
-            volumeMgr.migrateVolumes(vm, to, srcHost, destHost, volumeToPoolMap);
+            volumeMgr.liveMigrateVolumes(vm, to, srcHost, destHost, volumeToPoolMap);
             migrated = true;
 
             try {
@@ -2238,9 +2235,12 @@ public class VirtualMachineManagerImpl extends ManagerBase implements VirtualMac
 
             volumeMgr.confirmMigration(profile, srcHostId, destHostId, migrated);
 
-
             work.setStep(Step.Done);
             _workDao.update(work.getId(), work);
+        }
+
+        if (!migrated) {
+            throw new VirtualMachineMigrationException("Migration failed");
         }
     }
 

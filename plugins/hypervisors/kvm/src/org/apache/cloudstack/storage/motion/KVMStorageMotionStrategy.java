@@ -105,21 +105,31 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
             if (instance != null) {
                 answer = migrateVmWithVolumes(instance, vmTo, srcHost, destHost, volumeMap);
                 errMsg = answer.getDetails();
+
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("Got answer from migration, result: " + (answer.getResult() ? "ok" : "failed, reason: " + (answer.getDetails() == null ? "<null>" : answer.getDetails())));
+                }
+
             } else {
                 throw new CloudRuntimeException("Unsupported operation requested for moving data.");
             }
         } catch (Exception e) {
             s_logger.error("copyAsync failed", e);
-            errMsg = e.toString();
+            errMsg = e.getMessage();
         }
 
-        if (s_logger.isDebugEnabled()) {
-            s_logger.debug("Got answer from migration, result: " + (answer.getResult() ? "ok" : "failed, reason: " + answer.getDetails()));
+        CopyCommandResult result = new CopyCommandResult("", answer);
+
+        if (answer != null) {
+            result.setSuccess(answer.getResult());
+            if (!answer.getResult()) {
+                result.setResult(errMsg);
+            }
+        } else {
+            result.setSuccess(false);
+            result.setResult(errMsg);
         }
 
-        CopyCommandResult result = new CopyCommandResult(null, answer);
-        result.setResult(errMsg);
-        result.setSuccess(answer.getResult());
         callback.complete(result);
     }
 
@@ -144,6 +154,10 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
         DiskProfile diskProfile = new DiskProfile(rootVolume, diskOffering, vm.getHypervisorType());
         StoragePool destStoragePool = storageManager.findLocalStorageOnHost(destHost.getId());
         TemplateInfo templateImage = tmplFactory.getTemplate(rootVolume.getTemplateId(), DataStoreRole.Image);
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Provisioning disk " + diskProfile.toString() + " on destination host");
+        }
 
         try {
             CreateCommand provisioningCommand = new CreateCommand(diskProfile, templateImage.getUuid(), destStoragePool, true);

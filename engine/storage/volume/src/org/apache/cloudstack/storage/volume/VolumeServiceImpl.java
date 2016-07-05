@@ -1183,28 +1183,22 @@ public class VolumeServiceImpl implements VolumeService {
         CopyCommandResult result = callback.getResult();
         AsyncCallFuture<CommandResult> future = context.future;
         CommandResult res = new CommandResult();
-        try {
-            if (result.isFailed()) {
-                MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer)result.getAnswer();
-                res.setSuccess(false);
+
+        if (result.isFailed()) {
+            res.setSuccess(false);
+            MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer)result.getAnswer();
+            if (answer != null) {
                 res.setAborted(answer.isAborted());
-                res.setResult(result.getResult());
-                for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
-                    VolumeInfo volume = entry.getKey();
-                    volume.processEvent(Event.OperationFailed);
-                }
-            } else {
-                for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
-                    VolumeInfo volume = entry.getKey();
-                    volume.processEvent(Event.OperationSuccessed);
-                }
             }
-            future.complete(res);
-        } catch (Exception e) {
-            s_logger.error("Failed to process migration volume callback", e);
-            res.setResult(e.toString());
-            future.complete(res);
+            res.setResult(result.getResult());
         }
+
+        for (Map.Entry<VolumeInfo, DataStore> entry : volumeToPool.entrySet()) {
+            VolumeInfo volume = entry.getKey();
+            volume.processEvent(result.isFailed() || result.isAborted() ? Event.OperationFailed : Event.OperationSuccessed);
+        }
+
+        future.complete(res);
 
         return null;
     }

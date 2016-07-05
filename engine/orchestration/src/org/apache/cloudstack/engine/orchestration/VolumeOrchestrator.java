@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.exception.VirtualMachineMigrationException;
 import com.cloud.storage.StorageManager;
 import com.cloud.storage.VMTemplateVO;
 import com.cloud.storage.dao.VMTemplateDao;
@@ -901,28 +902,8 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         }
     }
 
-    @DB
-    protected Volume liveMigrateVolume(Volume volume, StoragePool destPool) {
-        VolumeInfo vol = volFactory.getVolume(volume.getId());
-        AsyncCallFuture<VolumeApiResult> future = volService.migrateVolume(vol, (DataStore)destPool);
-        try {
-            VolumeApiResult result = future.get();
-            if (result.isFailed()) {
-                s_logger.debug("migrate volume failed:" + result.getResult());
-                return null;
-            }
-            return result.getVolume();
-        } catch (InterruptedException e) {
-            s_logger.debug("migrate volume failed", e);
-            return null;
-        } catch (ExecutionException e) {
-            s_logger.debug("migrate volume failed", e);
-            return null;
-        }
-    }
-
     @Override
-    public void migrateVolumes(VirtualMachine vm, VirtualMachineTO vmTo, Host srcHost, Host destHost, Map<Volume, StoragePool> volumeToPool) {
+    public void liveMigrateVolumes(VirtualMachine vm, VirtualMachineTO vmTo, Host srcHost, Host destHost, Map<Volume, StoragePool> volumeToPool) throws VirtualMachineMigrationException {
         // Check if all the vms being migrated belong to the vm.
         // Check if the storage pool is of the right type.
         // Create a VolumeInfo to DataStore map too.
@@ -948,7 +929,7 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             CommandResult result = future.get();
             if (result.isFailed()) {
                 s_logger.debug("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
-                throw new CloudRuntimeException("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
+                throw new VirtualMachineMigrationException("Failed to migrate vm " + vm + " along with its volumes. " + result.getResult());
             }
         } catch (InterruptedException e) {
             s_logger.debug("Failed to migrated vm " + vm + " along with its volumes.", e);

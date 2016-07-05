@@ -59,4 +59,9 @@ public class CommandResult {
             this.success = false;
         }
     }
+
+    @Override
+    public String toString() {
+        return "CommandResult={success: " + success + ", aborted: " + aborted + ", result: " + (result == null ? "<null>" : result) + "}";
+    }
 }
