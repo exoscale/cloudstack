@@ -43,6 +43,7 @@ import org.apache.cloudstack.engine.subsystem.api.storage.TemplateInfo;
 import org.apache.cloudstack.engine.subsystem.api.storage.VolumeDataFactory;
 import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
 import org.apache.cloudstack.framework.async.AsyncCompletionCallback;
+import org.apache.cloudstack.framework.config.ConfigKey;
 import org.apache.cloudstack.storage.command.DeleteCommand;
 import org.apache.cloudstack.storage.datastore.db.PrimaryDataStoreDao;
 import org.apache.cloudstack.storage.to.VolumeObjectTO;
@@ -57,6 +58,9 @@ import java.util.Map;
 @Component
 public class KVMStorageMotionStrategy  implements DataMotionStrategy {
     private static final Logger s_logger = Logger.getLogger(KVMStorageMotionStrategy.class);
+
+    protected final ConfigKey<Integer> MigrateWait = new ConfigKey<Integer>(Integer.class, "migratewait", "Advanced", "3600", "Time (in seconds) to wait for VM migrate finish.", true, ConfigKey.Scope.Global, null);
+
     @Inject
     AgentManager agentMgr;
     @Inject
@@ -177,6 +181,7 @@ public class KVMStorageMotionStrategy  implements DataMotionStrategy {
         MigrateWithStorageCommand command = null;
         try {
             command = new MigrateWithStorageCommand(to, volumeToFilerTo, destHost.getPrivateIpAddress());
+            command.setWait(MigrateWait.value());
             MigrateWithStorageAnswer answer = (MigrateWithStorageAnswer) agentMgr.send(srcHost.getId(), command);
             if (answer == null) {
                 s_logger.error("Migration with storage of vm " + vm + " failed.");
