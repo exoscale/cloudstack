@@ -211,7 +211,7 @@ public class UsageEventUtils {
     }
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, String resourceName, Long offeringId, String offeringUuid, Long templateId, String templateUuid,
-        String resourceType, String entityType, String entityUUID, Map<String, String> details, boolean displayResource) {
+        String resourceType, String entityType, String entityUUID, Map<String, String> details, boolean displayResource, String ipAddress) {
         if(displayResource){
             saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, offeringId, templateId, resourceType, details);
         }
@@ -219,6 +219,9 @@ public class UsageEventUtils {
         eventDescription.putAll(details);
         eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
         eventDescription.put("resourcename", resourceName);
+        if (ipAddress != null) {
+            eventDescription.put("ipaddress", ipAddress);
+        }
         if (offeringUuid != null) {
                 eventDescription.put("offeringid", offeringUuid);
         }
