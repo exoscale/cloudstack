@@ -3123,12 +3123,14 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 }
                 CallContext.current().setEventDetails("Vm Id: " + vm.getId());
 
+                Nic defaultNic = _networkModel.getDefaultNic(vm.getId());
+
                 if (!offering.isDynamic()) {
                     UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, accountId, zone.getId(), vm.getId(), vm.getHostName(), offering.getId(), offering.getUuid(), template.getId(), template.getUuid(),
-                            hypervisorType.toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm());
+                            hypervisorType.toString(), VirtualMachine.class.getName(), vm.getUuid(), vm.isDisplayVm(), defaultNic.getIp4Address());
                 } else {
                     UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VM_CREATE, accountId, zone.getId(), vm.getId(), vm.getHostName(), offering.getId(), offering.getUuid(), template.getId(), template.getUuid(),
-                            hypervisorType.toString(), VirtualMachine.class.getName(), vm.getUuid(), customParameters, vm.isDisplayVm());
+                            hypervisorType.toString(), VirtualMachine.class.getName(), vm.getUuid(), customParameters, vm.isDisplayVm(), defaultNic.getIp4Address());
                 }
 
                 //Update Resource Count for the given account
@@ -3142,10 +3144,11 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     public void generateUsageEvent(VirtualMachine vm, boolean isDisplay, String eventType){
         ServiceOfferingVO serviceOffering = _serviceOfferingDao.findById(vm.getId(), vm.getServiceOfferingId());
         VirtualMachineTemplate vmTemplate = _templateDao.findById(vm.getTemplateId());
+        Nic defaultNic = _networkModel.getDefaultNic(vm.getId());
         if (!serviceOffering.isDynamic()) {
             UsageEventUtils.publishUsageEvent(eventType, vm.getAccountId(), vm.getDataCenterId(), vm.getId(),
                     vm.getHostName(), serviceOffering.getId(), serviceOffering.getUuid(), vm.getTemplateId(), vmTemplate.getUuid(), vm.getHypervisorType().toString(),
-                    VirtualMachine.class.getName(), vm.getUuid(), isDisplay);
+                    VirtualMachine.class.getName(), vm.getUuid(), isDisplay, (defaultNic != null ? defaultNic.getIp4Address() : null));
         }
         else {
             Map<String, String> customParameters = new HashMap<String, String>();
@@ -3154,7 +3157,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             customParameters.put(UsageEventVO.DynamicParameters.memory.name(), serviceOffering.getRamSize().toString());
             UsageEventUtils.publishUsageEvent(eventType, vm.getAccountId(), vm.getDataCenterId(), vm.getId(),
                     vm.getHostName(), serviceOffering.getId(), serviceOffering.getUuid(), vm.getTemplateId(), vmTemplate.getUuid(), vm.getHypervisorType().toString(),
-                    VirtualMachine.class.getName(), vm.getUuid(), customParameters, isDisplay);
+                    VirtualMachine.class.getName(), vm.getUuid(), customParameters, isDisplay, (defaultNic != null ? defaultNic.getIp4Address() : null));
         }
     }
 
