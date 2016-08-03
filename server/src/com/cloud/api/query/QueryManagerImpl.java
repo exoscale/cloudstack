@@ -34,6 +34,8 @@ import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
+import com.cloud.vm.VMInstanceVO;
+import com.cloud.vm.dao.VMInstanceDao;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
 import org.apache.cloudstack.affinity.AffinityGroupDomainMapVO;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
@@ -244,6 +246,9 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
 
     @Inject
     private UserVmDao _userVmDao;
+
+    @Inject
+    private VMInstanceDao _vmInstanceDao;
 
     @Inject
     private SecurityGroupJoinDao _securityGroupJoinDao;
@@ -2499,7 +2504,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         }
 
         if (vmId != null) {
-            UserVmVO vmInstance = _userVmDao.findById(vmId);
+            VMInstanceVO vmInstance = _vmInstanceDao.findById(vmId);
             if ((vmInstance == null) || (vmInstance.getRemoved() != null)) {
                 InvalidParameterValueException ex = new InvalidParameterValueException("unable to find a virtual machine with specified id");
                 ex.addProxyObject(vmId.toString(), "vmId");

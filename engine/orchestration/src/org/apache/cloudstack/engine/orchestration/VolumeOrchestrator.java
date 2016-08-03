@@ -219,9 +219,14 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         VolumeVO newVol = new VolumeVO(oldVol.getVolumeType(), oldVol.getName(), oldVol.getDataCenterId(), oldVol.getDomainId(), oldVol.getAccountId(), oldVol.getDiskOfferingId(),
                 oldVol.getSize(), oldVol.getMinIops(), oldVol.getMaxIops(), oldVol.get_iScsiName());
         if (templateId != null) {
+            VMTemplateVO newTemplate = _tmpltDao.findById(templateId);
             newVol.setTemplateId(templateId);
+            newVol.setSize(newTemplate.getSize());
         } else {
+            VMTemplateVO oldTemplate = _tmpltDao.findById(oldVol.getTemplateId());
             newVol.setTemplateId(oldVol.getTemplateId());
+            // Set the size in case the root volume had a custom size.
+            newVol.setSize(oldTemplate.getSize());
         }
         newVol.setDeviceId(oldVol.getDeviceId());
         newVol.setInstanceId(oldVol.getInstanceId());
@@ -1358,6 +1363,9 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
             } else {
                 volService.destroyVolume(volume.getId());
             }
+            // publish usage event for the volume
+            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_VOLUME_DELETE, volume.getAccountId(), volume.getDataCenterId(), volume.getId(), volume.getName(),
+                    Volume.class.getName(), volume.getUuid(), volume.isDisplayVolume());
         } catch (Exception e) {
             s_logger.debug("Failed to destroy volume" + volume.getId(), e);
             throw new CloudRuntimeException("Failed to destroy volume" + volume.getId(), e);
