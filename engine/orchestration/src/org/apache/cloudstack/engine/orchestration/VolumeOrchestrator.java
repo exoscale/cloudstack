@@ -31,9 +31,12 @@ import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
 import com.cloud.exception.VirtualMachineMigrationException;
+import com.cloud.storage.SnapshotVO;
 import com.cloud.storage.StorageManager;
 import com.cloud.storage.VMTemplateVO;
+import com.cloud.storage.dao.SnapshotDao;
 import com.cloud.storage.dao.VMTemplateDao;
+import com.cloud.storage.snapshot.SnapshotApiService;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.engine.orchestration.service.VolumeOrchestrationService;
@@ -161,6 +164,10 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
     SnapshotService _snapshotSrv;
     @Inject
     StorageManager storageManager;
+    @Inject
+    SnapshotDao snapshotDao;
+    @Inject
+    SnapshotApiService snapshotApiService;
 
     private final StateMachine2<Volume.State, Volume.Event, Volume> _volStateMachine;
     protected List<StoragePoolAllocator> _storagePoolAllocators;
@@ -849,6 +856,12 @@ public class VolumeOrchestrator extends ManagerBase implements VolumeOrchestrati
         AsyncCallFuture<VolumeApiResult> future = null;
         for (VolumeVO expunge : toBeExpunged) {
             future = volService.expungeVolumeAsync(volFactory.getVolume(expunge.getId()));
+            // Remove volume snapshots if any
+            List<SnapshotVO> snapshots = snapshotDao.listByVolumeId(expunge.getId());
+            s_logger.debug("Found " + snapshots.size() + " snapshots on the volume " + expunge + " to delete as well.");
+            for (SnapshotVO snapshot : snapshots) {
+                snapshotApiService.deleteSnapshot(snapshot.getId());
+            }
             try {
                 future.get();
             } catch (InterruptedException e) {
