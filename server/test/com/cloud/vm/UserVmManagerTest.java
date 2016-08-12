@@ -33,10 +33,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import com.cloud.event.dao.UsageEventDao;
+import com.cloud.storage.SnapshotVO;
+import com.cloud.storage.dao.SnapshotDao;
 import io.exo.cloudstack.restrictions.ServiceOfferingService;
 import org.junit.Before;
 import org.junit.Test;
@@ -162,6 +165,8 @@ public class UserVmManagerTest {
     ServiceOfferingService _serviceOfferingService;
     @Mock
     VMSnapshotDao _vmSnapshotDao;
+    @Mock
+    SnapshotDao _snapshotDao;
 
     @Before
     public void setup() {
@@ -188,6 +193,7 @@ public class UserVmManagerTest {
         _userVmMgr._storagePoolDao = _storagePoolDao;
         _userVmMgr.serviceOfferingService = _serviceOfferingService;
         _userVmMgr._vmSnapshotDao = _vmSnapshotDao;
+        _userVmMgr._snapshotDao = _snapshotDao;
 
         doReturn(3L).when(_account).getId();
         doReturn(8L).when(_vmMock).getAccountId();
@@ -240,6 +246,8 @@ public class UserVmManagerTest {
         doNothing().when(_volsDao).attachVolume(anyLong(), anyLong(), anyLong());
         when(_volumeMock.getId()).thenReturn(3L);
         doNothing().when(_volsDao).detachVolume(anyLong());
+        List<SnapshotVO> mockSnapshotList = mock(List.class);
+        when(_snapshotDao.listByVolumeId(anyLong())).thenReturn(mockSnapshotList);
 
         when(_templateMock.getUuid()).thenReturn("e0552266-7060-11e2-bbaa-d55f5db67735");
 
@@ -277,6 +285,8 @@ public class UserVmManagerTest {
         doNothing().when(_volsDao).attachVolume(anyLong(), anyLong(), anyLong());
         when(_volumeMock.getId()).thenReturn(3L);
         doNothing().when(_volsDao).detachVolume(anyLong());
+        List<SnapshotVO> mockSnapshotList = mock(List.class);
+        when(_snapshotDao.listByVolumeId(anyLong())).thenReturn(mockSnapshotList);
 
         when(_templateMock.getUuid()).thenReturn("e0552266-7060-11e2-bbaa-d55f5db67735");
 
@@ -324,6 +334,8 @@ public class UserVmManagerTest {
         when(_vmSnapshotDao.findByVm(anyLong())).thenReturn(mockList);
         when(mockList.size()).thenReturn(0);
         when(_templateMock.getUuid()).thenReturn("b1a3626e-72e0-4697-8c7c-a110940cc55d");
+        List<SnapshotVO> mockSnapshotList = mock(List.class);
+        when(_snapshotDao.listByVolumeId(anyLong())).thenReturn(mockSnapshotList);
 
         Account account = new AccountVO("testaccount", 1L, "networkdomain", (short)0, "uuid");
         UserVO user = new UserVO(1, "testuser", "password", "firstname", "lastName", "email", "timezone", UUID.randomUUID().toString());
@@ -371,6 +383,8 @@ public class UserVmManagerTest {
         when(_vmSnapshotDao.findByVm(anyLong())).thenReturn(mockList);
         when(mockList.size()).thenReturn(0);
         when(_templateMock.getUuid()).thenReturn("b1a3626e-72e0-4697-8c7c-a110940cc55d");
+        List<SnapshotVO> mockSnapshotList = mock(List.class);
+        when(_snapshotDao.listByVolumeId(anyLong())).thenReturn(mockSnapshotList);
 
         Account account = new AccountVO("testaccount", 1L, "networkdomain", (short)0, "uuid");
         UserVO user = new UserVO(1, "testuser", "password", "firstname", "lastName", "email", "timezone", UUID.randomUUID().toString());
@@ -389,6 +403,34 @@ public class UserVmManagerTest {
         }
 
         verify(_vmMock, times(1)).setIsoId(14L);
+
+    }
+
+    // Test restoreVm when VM has root volume snapshots
+    @Test(expected = InvalidParameterValueException.class)
+    public void testRestoreVMF6() throws ResourceUnavailableException, InsufficientCapacityException, ServerApiException, ConcurrentOperationException,
+            ResourceAllocationException {
+
+        doReturn(VirtualMachine.State.Stopped).when(_vmMock).getState();
+        when(_vmDao.findById(anyLong())).thenReturn(_vmMock);
+        when(_volsDao.findByInstanceAndType(314L, Volume.Type.ROOT)).thenReturn(_rootVols);
+        doReturn(false).when(_rootVols).isEmpty();
+        when(_rootVols.get(eq(0))).thenReturn(_volumeMock);
+        when(_volumeMock.getId()).thenReturn(3L);
+        SnapshotVO snapshot = mock(SnapshotVO.class);
+        List<SnapshotVO> snapshotList = new ArrayList<>(1);
+        snapshotList.add(snapshot);
+        when(_snapshotDao.listByVolumeId(anyLong())).thenReturn(snapshotList);
+
+        Account account = new AccountVO("testaccount", 1L, "networkdomain", (short)0, "uuid");
+        UserVO user = new UserVO(1, "testuser", "password", "firstname", "lastName", "email", "timezone", UUID.randomUUID().toString());
+
+        CallContext.register(user, account);
+        try {
+            _userVmMgr.restoreVMInternal(_account, _vmMock, null);
+        } finally {
+            CallContext.unregister();
+        }
 
     }
 

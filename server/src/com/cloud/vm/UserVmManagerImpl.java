@@ -4772,6 +4772,12 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
                 throw new InvalidParameterValueException("Unable to restore VM, please specify a VM that does not have VM snapshots");
             }
 
+            // If target VM has associated root volume snapshots then don't allow restore of VM
+            List<SnapshotVO> snapshots = _snapshotDao.listByVolumeId(root.getId());
+            if (snapshots.size() > 0) {
+                throw new InvalidParameterValueException("Unable to restore VM, please delete the root volume snapshots before.");
+            }
+
             VMTemplateVO template = null;
             //newTemplateId can be either template or ISO id. In the following snippet based on the vm deployment (from template or ISO) it is handled accordingly
             if (newTemplateId != null) {
