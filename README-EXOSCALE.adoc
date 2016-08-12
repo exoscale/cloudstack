@@ -1,0 +1,100 @@
+# Cloudstack Reminder for Exoscale
+Marc-Aurèle Brothier, marco@exoscale.ch
+
+This document describes how to setup the development environment for Exoscale cloudstack.
+
+
+## Development
+
+Copy the files from `deps-cloudstack` into `cloudstack/deps` directory and run `install-non-oss.sh`. _Not needed anymore since I remove modules which required them._
+
+. Run `mvn -Pdeveloper,systemvm install -DskipTests` to build it for a first time.
+. Install the simulator package:
+. Run `mvn -Pdeveloper -pl developer -Ddeploydb` to install the database schema (either Mysql 5.6 or a mariadb 10.0 * prod @ exo)
+. Run `mvn -Pdeveloper -pl developer -Ddeploydb-simulator` to install the data for the simulator if you wish to run and test some API commands locally.
+. Compile the Marvin package (needed to install the simulator configuration): `mvn -P developer -pl :cloud-marvin`
+. Create a python virtualenvironment (2.7!): `virtualenv -p /usr/local/bin/python2.7 .venv`
+. Activate the virtual environment
+. Install python package: `pip install tools/marvin/dist/Marvin-*.tar.gz`
+. Run to install the default setup: `python tools/marvin/marvin/deployDataCenter.py -i setup/dev/advanced.cfg`
+. Go to http://localhost:8080/client/ and use the credentials `admin/password` to enter the application. You should see 1 zone, 1 pod, 2 clusters, 3 hosts.
+
+
+### List of commands
+
+[source,shell]
+----
+mvn -Pdeveloper -Dsimulator clean install -Dmaven.test.skip=true
+mvn -Pdeveloper -pl developer -Ddeploydb
+mvn -Pdeveloper -pl developer -Ddeploydb-simulator
+# Export debugging options to expose remote debug port
+export MAVEN_OPTS='-Xmx1024m -Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n -Djava.net.preferIPv4Stack=true'
+mvn -pl client jetty:run -Dsimulator
+# or
+mvn -pl :cloud-client-ui jetty:run
+----
+
+
+## Versioning
+
+There are 2 Jenkins builds for Cloudstack. The first one is `cloudstack-4.4` which builds only the `exoscale/master` branch and create a new release version each time. It does a full package and runs the tests. The second build `cloudstack-4.4-testing` builds any branch but does not create a new release. The JAR stays as SNAPSHOTS and the Debian package is uploaded on `test1`.
+
+* https://build.internal.exoscale.ch/job/cloudstack-4.4-testing/
+* https://build.internal.exoscale.ch/job/cloudstack-4.4/
+
+
+## Warp commands
+
+WARNING: You should never upgrade the production environment with the warp commands!
+
+To deploy a build from the `cloudstack-4.4-testing` build, run:
+
+....
+deploy-csmgmt to preprod with test1, engage!
+deploy-csagent to preprod with test1, engage!
+....
+
+To deploy a build from the `cloudstack-4.4` build, run:
+
+....
+deploy-csmgmt to preprod, engage!
+deploy-csagent to preprod, engage!
+....
+
+## JMX console
+
+First, open a SSH tunnel with 2 ports forwarded (one is needed for the connection and a second one to do all the work):
+
+....
+ssh -D 7777 virt-cdc-pp001.gv2.p.exoscale.net
+....
+
+The fire up the `jconsole` and set this URL to connect (it will complained about an insecure connection):
+
+....
+jconsole -J-DsocksProxyHost=localhost -J-DsocksProxyPort=7777 service:jmx:rmi:///jndi/rmi://localhost:45210/jmxrmi
+jconsole -J-DsocksProxyHost=localhost -J-DsocksProxyPort=7777 service:jmx:rmi:///jndi/rmi://localhost:45220/jmxrmi
+....
+
+## Links
+
+* https://cwiki.apache.org/confluence/display/CLOUDSTACK/How+to+build+CloudStack
+* https://cwiki.apache.org/confluence/display/CLOUDSTACK/Using+Eclipse+With+CloudStack
+* https://cwiki.apache.org/confluence/display/CLOUDSTACK/Validating+check-ins+for+your+local+changes%2C+using+Simulator
+
+
+Troubleshoting
+--------------
+
+Snapshots
+~~~~~~~~~
+
+To upload a snapshot that was not uploaded:
+....
+/usr/share/cloudstack-common/scripts/storage/qcow2/managesnapshot.py -b -diskpath <diskpath> -domain <domain> -p <snap_path> -t <snap_name>
+....
+
+To delete a snapshot:
+....
+/usr/share/cloudstack-common/scripts/storage/qcow2/managesnapshot.py -d -diskpath <diskpath> -domain <domain>
+....
