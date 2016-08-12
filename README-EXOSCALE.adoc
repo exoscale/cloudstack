@@ -8,7 +8,7 @@ This document describes how to setup the development environment for Exoscale cl
 
 Copy the files from `deps-cloudstack` into `cloudstack/deps` directory and run `install-non-oss.sh`. _Not needed anymore since I remove modules which required them._
 
-. Run `mvn -Pdeveloper,systemvm install -DskipTests` to build it for a first time.
+. Run `mvn -Pdeveloper,systemvm,exoscale install -DskipTests` to build it for a first time.
 . Install the simulator package:
 . Run `mvn -Pdeveloper -pl developer -Ddeploydb` to install the database schema (either Mysql 5.6 or a mariadb 10.0 * prod @ exo)
 . Run `mvn -Pdeveloper -pl developer -Ddeploydb-simulator` to install the data for the simulator if you wish to run and test some API commands locally.
@@ -27,7 +27,8 @@ Copy the files from `deps-cloudstack` into `cloudstack/deps` directory and run `
 
 [source,shell]
 ----
-mvn -Pdeveloper -Dsimulator clean install -Dmaven.test.skip=true
+mvn -P kvm,exoscale,developer -Dsimulator -Dmaven.test.skip=true clean install
+mvn -P kvm,exoscale,systemvm,developer -Dsimulator $1 clean install
 mvn -Pdeveloper -pl developer -Ddeploydb
 mvn -Pdeveloper -pl developer -Ddeploydb-simulator
 # Export debugging options to expose remote debug port
