@@ -59,7 +59,7 @@ public class ServiceOfferingServiceImpl implements ServiceOfferingService {
             }
             restrictionsMap = restrictionList.getRestrictionsMap();
         } catch (Exception e) {
-            s_logger.error("Could not load restrictions yaml file", e);
+            s_logger.warn("Could not load restrictions yaml file because of: " + e.getMessage());
         }
         return restrictionsMap;
     }
