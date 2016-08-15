@@ -18,7 +18,7 @@ Copy the files from `deps-cloudstack` into `cloudstack/deps` directory and run `
 . Activate the virtual environment
 . Install `mysql-connector-python` package: `pip install https://cdn.mysql.com/Downloads/Connector-Python/mysql-connector-python-2.1.3.tar.gz`
 . Install python package: `pip install tools/marvin/dist/Marvin-*.tar.gz`
-. Start your local server: `mvn -pl :cloud-client-ui jetty:run`
+. Start your local server: `mvn -pl client jetty:run -Dsimulator`
 . Run the DC installation script: `python tools/marvin/marvin/deployDataCenter.py -i setup/dev/advanced.cfg`
 . Go to http://localhost:8080/client/ and use the credentials `admin/password` to enter the application. You should see 1 zone, 1 pod, 2 clusters, 3 hosts.
 
@@ -33,8 +33,9 @@ mvn -Pdeveloper -pl developer -Ddeploydb
 mvn -Pdeveloper -pl developer -Ddeploydb-simulator
 # Export debugging options to expose remote debug port
 export MAVEN_OPTS='-Xmx1024m -Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n -Djava.net.preferIPv4Stack=true'
+# To start the server in somulator mode
 mvn -pl client jetty:run -Dsimulator
-# or
+# or to start in normal mode with a DB dump
 mvn -pl :cloud-client-ui jetty:run
 ----
 
