@@ -265,7 +265,7 @@ public class HighAvailabilityManagerImpl extends ManagerBase implements HighAvai
 
         for (VMInstanceVO vm : vms) {
             if (s_logger.isDebugEnabled()) {
-                s_logger.debug("Notifying HA Mgr of to restart vm " + vm.getId() + "-" + vm.getInstanceName());
+                s_logger.debug("Notifying HA Mgr of to restart vm " + vm.getId() + "-" + vm.getInstanceName() + " with investigate=" + investigate);
             }
             vm = _instanceDao.findByUuid(vm.getUuid());
             Long hostId = vm.getHostId();
@@ -274,7 +274,11 @@ public class HighAvailabilityManagerImpl extends ManagerBase implements HighAvai
                         + hostId + " VM HA is done");
                 continue;
             }
-            scheduleRestart(vm, investigate);
+            if (vm.isHaEnabled()) {
+                scheduleRestart(vm, investigate);
+            } else {
+                s_logger.debug("Skip schedule restart for VM " + vm + " since it does not have HA enable");
+            }
         }
     }
 
@@ -486,7 +490,7 @@ public class HighAvailabilityManagerImpl extends ManagerBase implements HighAvai
 
                 boolean fenced = false;
                 if (alive == null) {
-                    s_logger.debug("Fencing off VM that we don't know the state of");
+                    s_logger.debug("Fencing off VM " + vm + " that we don't know the state of");
                     for (FenceBuilder fb : fenceBuilders) {
                         Boolean result = fb.fenceOff(vm, host);
                         s_logger.info("Fencer " + fb.getName() + " returned " + result);
