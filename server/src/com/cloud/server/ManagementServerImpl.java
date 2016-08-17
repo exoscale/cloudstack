@@ -1817,7 +1817,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         if (forVirtualNetwork != null) {
             vlanType = forVirtualNetwork ? VlanType.VirtualNetwork : VlanType.DirectAttached;
         } else {
-            vlanType = VlanType.VirtualNetwork;
+            vlanType = VlanType.DirectAttached;
         }
 
         SearchCriteria<IPAddressVO> sc = sb.create();
