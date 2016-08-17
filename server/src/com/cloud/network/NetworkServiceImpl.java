@@ -548,7 +548,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                         if (s_logger.isDebugEnabled()) {
                             s_logger.debug("Associate IP address called by the user " + callerUserId + " account " + ipOwner.getId());
                         }
-                        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp);
+                        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp, networkId);
                     } else {
                         throw new InvalidParameterValueException("Associate IP address can only be called on the shared networks in the advanced zone"
                                 + " with Firewall/Source Nat/Static Nat/Port Forwarding/Load balancing services enabled");
@@ -559,7 +559,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             _accountMgr.checkAccess(caller, null, false, ipOwner);
         }
 
-        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp);
+        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp, networkId);
     }
 
     @Override

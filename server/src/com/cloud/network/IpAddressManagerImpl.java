@@ -404,7 +404,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         return true;
     }
 
-    private IpAddress allocateIP(Account ipOwner, boolean isSystem, long zoneId) throws ResourceAllocationException, InsufficientAddressCapacityException,
+    private IpAddress allocateIP(Account ipOwner, boolean isSystem, long zoneId, Long networkId) throws ResourceAllocationException, InsufficientAddressCapacityException,
         ConcurrentOperationException {
         Account caller = CallContext.current().getCallingAccount();
         long callerUserId = CallContext.current().getCallingUserId();
@@ -413,7 +413,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
         DataCenter zone = _entityMgr.findById(DataCenter.class, zoneId);
 
-        return allocateIp(ipOwner, isSystem, caller, callerUserId, zone, null);
+        return allocateIp(ipOwner, isSystem, caller, callerUserId, zone, null, networkId);
     }
 
     // An IP association is required in below cases
@@ -657,6 +657,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
     public PublicIp fetchNewPublicIp(final long dcId, final Long podId, final List<Long> vlanDbIds, final Account owner, final VlanType vlanUse, final Long guestNetworkId,
             final boolean sourceNat, final boolean assign, final String requestedIp, final boolean isSystem, final Long vpcId, final Boolean displayIp)
             throws InsufficientAddressCapacityException {
+
         IPAddressVO addr = Transaction.execute(new TransactionCallbackWithException<IPAddressVO, InsufficientAddressCapacityException>() {
             @Override
             public IPAddressVO doInTransaction(TransactionStatus status) throws InsufficientAddressCapacityException {
@@ -990,11 +991,16 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
     @DB
     @Override
-    public IpAddress allocateIp(final Account ipOwner, final boolean isSystem, Account caller, long callerUserId, final DataCenter zone, final Boolean displayIp)
+    public IpAddress allocateIp(final Account ipOwner, final boolean isSystem, Account caller, long callerUserId, final DataCenter zone, final Boolean displayIp, final Long guestNetworkId)
             throws ConcurrentOperationException,
         ResourceAllocationException, InsufficientAddressCapacityException {
 
-        final VlanType vlanType = VlanType.VirtualNetwork;
+        final VlanType vlanType;
+        if (zone.getNetworkType() == NetworkType.Basic) {
+            vlanType = VlanType.DirectAttached;
+        } else {
+            vlanType = VlanType.VirtualNetwork;
+        }
         final boolean assign = false;
 
         if (Grouping.AllocationState.Disabled == zone.getAllocationState() && !_accountMgr.isRootAdmin(caller.getId())) {
@@ -1024,7 +1030,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             ip = Transaction.execute(new TransactionCallbackWithException<PublicIp, InsufficientAddressCapacityException>() {
                 @Override
                 public PublicIp doInTransaction(TransactionStatus status) throws InsufficientAddressCapacityException {
-                    PublicIp ip = fetchNewPublicIp(zone.getId(), null, null, ipOwner, vlanType, null, false, assign, null, isSystem, null, displayIp);
+                    PublicIp ip = fetchNewPublicIp(zone.getId(), null, null, ipOwner, vlanType, guestNetworkId, false, assign, null, isSystem, null, displayIp);
 
             if (ip == null) {
                         InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("Unable to find available public IP addresses", DataCenter.class, zone
@@ -1787,7 +1793,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             try {
                 s_logger.debug("Allocating system IP address for load balancer rule...");
                 // allocate ip
-                ip = allocateIP(owner, true, guestNetwork.getDataCenterId());
+                ip = allocateIP(owner, true, guestNetwork.getDataCenterId(), guestNetwork.getId());
                 // apply ip associations
                 ip = associateIPToGuestNetwork(ip.getId(), networkId, true);
                 ;
