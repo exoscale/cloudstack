@@ -65,7 +65,6 @@ import com.cloud.dc.DataCenter;
 import com.cloud.dc.DataCenter.NetworkType;
 import com.cloud.dc.DataCenterVO;
 import com.cloud.dc.DataCenterVnetVO;
-import com.cloud.dc.Vlan.VlanType;
 import com.cloud.dc.VlanVO;
 import com.cloud.dc.dao.AccountVlanMapDao;
 import com.cloud.dc.dao.DataCenterDao;
@@ -916,11 +915,6 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
 
         if (ipVO.isSourceNat()) {
             throw new IllegalArgumentException("ip address is used for source nat purposes and can not be disassociated.");
-        }
-
-        VlanVO vlan = _vlanDao.findById(ipVO.getVlanId());
-        if (!vlan.getVlanType().equals(VlanType.VirtualNetwork)) {
-            throw new IllegalArgumentException("only ip addresses that belong to a virtual network may be disassociated.");
         }
 
         // don't allow releasing system ip address
