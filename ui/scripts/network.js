@@ -2272,7 +2272,8 @@
                         $.ajax({
                             url: createURL('listPublicIpAddresses'),
                             data: $.extend({}, data, {
-                                forvirtualnetwork: true //IPs are allocated on public network
+                                // Maybe better return ELB capabilites as true?
+                                //  forvirtualnetwork: true //IPs are allocated on public network
                             }),
                             dataType: "json",
                             async: false,
