@@ -144,6 +144,7 @@ public class UsageEventUtils {
 
     public static void publishUsageEvent(String usageType, long accountId, long zoneId, long resourceId, Long volumeSize, String resourceName, String status,  String entityType, String entityUUID) {
         Map<String, String> eventDescription = new HashMap<String, String>();
+        saveUsageEvent(usageType, accountId, zoneId, resourceId, resourceName, null, null, volumeSize);
         eventDescription.put("resourceid", Long.valueOf(resourceId).toString());
         eventDescription.put("resourcename", resourceName);
         eventDescription.put("status", status);
