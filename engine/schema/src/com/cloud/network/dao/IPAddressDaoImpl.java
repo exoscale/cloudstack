@@ -161,8 +161,24 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         address.setSourceNat(false);
         address.setOneToOneNat(false);
         address.setAssociatedWithVmId(null);
-        address.setState(State.Free);
+        address.setState(State.Allocating);
         address.setAssociatedWithNetworkId(null);
+        address.setVpcId(null);
+        address.setSystem(false);
+        address.setVmIp(null);
+        address.setDisplay(true);
+        //remove resource details for the ip
+        _detailsDao.removeDetails(ipAddressId);
+        update(ipAddressId, address);
+    }
+
+    @Override
+    public void detachIpAddress(long ipAddressId) {
+        IPAddressVO address = createForUpdate();
+        address.setSourceNat(false);
+        address.setOneToOneNat(false);
+        address.setAssociatedWithVmId(null);
+        address.setState(State.Allocating);
         address.setVpcId(null);
         address.setSystem(false);
         address.setVmIp(null);

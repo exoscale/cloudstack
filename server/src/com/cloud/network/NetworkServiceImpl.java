@@ -724,16 +724,18 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                     throw new InvalidParameterValueException("vm pod id is null in Basic zone; can't decide the range for ip allocation");
             }
             }
-
-            try {
-                ipaddr = _ipAddrMgr.allocatePublicIpForGuestNic(network, podId, ipOwner, requestedIp);
-                if (ipaddr == null) {
-                    throw new InvalidParameterValueException("Allocating ip to guest nic " + nicId + " failed");
-                }
-            } catch (InsufficientAddressCapacityException e) {
-                s_logger.error("Allocating ip to guest nic " + nicId + " failed");
-                return null;
-            }
+//
+//            try {
+//                ipaddr = _ipAddrMgr.allocatePublicIpForGuestNic(network, podId, ipOwner, requestedIp);
+//                if (ipaddr == null) {
+//                    throw new InvalidParameterValueException("Allocating ip to guest nic " + nicId + " failed");
+//                }
+//            } catch (InsufficientAddressCapacityException e) {
+//                s_logger.error("Allocating ip to guest nic " + nicId + " failed due to InsufficientAddressCapacityException");
+//                return null;
+//            }
+            // TODO do we need the pod here?
+            ipaddr = _ipAddrMgr.getAssociatedIpAddress(dc.getId(), network, podId, ipOwner, requestedIp);
         } else {
             s_logger.error("AddIpToVMNic is not supported in this network...");
             return null;
@@ -845,7 +847,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                     @Override
                     public void doInTransactionWithoutResult(TransactionStatus status) {
                 _ipAddrMgr.markIpAsUnavailable(ip.getId());
-                _ipAddressDao.unassignIpAddress(ip.getId());
+                _ipAddressDao.detachIpAddress(ip.getId());
                     }
                 });
             }

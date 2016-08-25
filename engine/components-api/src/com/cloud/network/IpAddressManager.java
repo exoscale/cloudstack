@@ -172,4 +172,6 @@ public interface IpAddressManager {
 
     String allocatePublicIpForGuestNic(Network network, Long podId, Account ipOwner, String requestedIp) throws InsufficientAddressCapacityException;
 
+    public String getAssociatedIpAddress(final long dcId, final Network network, final Long podId, final Account ipOwner, final String requestedIp) throws InsufficientAddressCapacityException ;
+
 }

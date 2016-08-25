@@ -1939,4 +1939,59 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
     public ConfigKey<?>[] getConfigKeys() {
         return new ConfigKey<?>[] {UseSystemPublicIps};
     }
+
+    @Override
+    public String getAssociatedIpAddress(final long dcId, final Network network, final Long podId, final Account owner, final String requestedIp)
+            throws InsufficientAddressCapacityException {
+        IPAddressVO addr = Transaction.execute(new TransactionCallbackWithException<IPAddressVO, InsufficientAddressCapacityException>() {
+            @Override
+            public IPAddressVO doInTransaction(TransactionStatus status) throws InsufficientAddressCapacityException {
+                StringBuilder errorMessage = new StringBuilder("Unable to get ip adress in ");
+
+                SearchBuilder<IPAddressVO> searchBuilder = _ipAddressDao.createSearchBuilder();
+                searchBuilder.and("dc", searchBuilder.entity().getDataCenterId(), Op.EQ);
+                searchBuilder.and("allocated", searchBuilder.entity().getAllocatedTime(), Op.NNULL);
+                searchBuilder.and("account_id", searchBuilder.entity().getAccountId(), Op.EQ);
+                SearchCriteria<IPAddressVO> sc = searchBuilder.create();
+                // TODO handle and understand pods
+//                if (podId != null) {
+//                    sc.setJoinParameters("podVlanMapSB", "podId", podId);
+//                    errorMessage.append(" pod id=" + podId);
+//                } else {
+//                    errorMessage.append(" zone id=" + dcId);
+//                }
+
+                sc.setParameters("dc", dcId);
+                DataCenter zone = _entityMgr.findById(DataCenter.class, dcId);
+
+                if (requestedIp != null) {
+                    sc.addAnd("address", SearchCriteria.Op.EQ, requestedIp);
+                    errorMessage.append(": requested ip " + requestedIp + " is not available");
+                }
+
+
+                Filter filter = new Filter(IPAddressVO.class, "vlanId", true, 0l, 1l);
+                List<IPAddressVO> addrs = _ipAddressDao.lockRows(sc, filter, true);
+
+                if (addrs.size() == 0) {
+                    // TODO raise proper exception "No associated ip addresses available
+                    throw new RuntimeException();
+                }
+
+                assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
+
+                IPAddressVO addr = addrs.get(0);
+                // TODO What is this?
+    //            addr.setSourceNat(sourceNat);
+                addr.setAllocatedTime(new Date());
+                addr.setAllocatedInDomainId(owner.getDomainId());
+                addr.setAllocatedToAccountId(owner.getId());
+                addr.setSystem(false);
+
+                return addrs.get(0);
+            }
+        });
+
+        return addr.getAddress().addr();
+    }
 }
