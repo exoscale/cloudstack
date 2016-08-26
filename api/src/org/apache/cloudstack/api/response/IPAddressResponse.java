@@ -39,6 +39,10 @@ public class IPAddressResponse extends BaseResponse implements ControlledEntityR
     @Param(description = "public IP address")
     private String ipAddress;
 
+    @SerializedName("associated")
+    @Param(description = "date the public IP address was associated")
+    private Date associated;
+
     @SerializedName("allocated")
     @Param(description = "date the public IP address was acquired")
     private Date allocated;
@@ -162,6 +166,10 @@ public class IPAddressResponse extends BaseResponse implements ControlledEntityR
     @Override
     public String getObjectId() {
         return this.getId();
+    }
+
+    public void setAssociated(Date associated) {
+        this.associated = associated;
     }
 
     public void setAllocated(Date allocated) {

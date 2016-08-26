@@ -88,6 +88,11 @@ public class PublicIp implements PublicIpAddress {
     }
 
     @Override
+    public Date getAssociatedTime() {
+        return _addr.getAllocatedTime();
+    }
+
+    @Override
     public Date getAllocatedTime() {
         return _addr.getAllocatedTime();
     }

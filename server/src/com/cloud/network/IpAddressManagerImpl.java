@@ -413,7 +413,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
         DataCenter zone = _entityMgr.findById(DataCenter.class, zoneId);
 
-        return allocateIp(ipOwner, isSystem, caller, callerUserId, zone, null, networkId);
+        return allocateIp(ipOwner, isSystem, caller, callerUserId, zone, null, networkId, false);
     }
 
     // An IP association is required in below cases
@@ -644,18 +644,18 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
     @Override
     public PublicIp assignPublicIpAddress(long dcId, Long podId, Account owner, VlanType type, Long networkId, String requestedIp, boolean isSystem)
         throws InsufficientAddressCapacityException {
-        return fetchNewPublicIp(dcId, podId, null, owner, type, networkId, false, true, requestedIp, isSystem, null, null);
+        return fetchNewPublicIp(dcId, podId, null, owner, type, networkId, false, true, requestedIp, isSystem, null, null, false);
     }
 
     @Override
     public PublicIp assignPublicIpAddressFromVlans(long dcId, Long podId, Account owner, VlanType type, List<Long> vlanDbIds, Long networkId, String requestedIp, boolean isSystem)
         throws InsufficientAddressCapacityException {
-        return fetchNewPublicIp(dcId, podId, vlanDbIds, owner, type, networkId, false, true, requestedIp, isSystem, null, null);
+        return fetchNewPublicIp(dcId, podId, vlanDbIds, owner, type, networkId, false, true, requestedIp, isSystem, null, null, false);
     }
 
     @DB
     public PublicIp fetchNewPublicIp(final long dcId, final Long podId, final List<Long> vlanDbIds, final Account owner, final VlanType vlanUse, final Long guestNetworkId,
-            final boolean sourceNat, final boolean assign, final String requestedIp, final boolean isSystem, final Long vpcId, final Boolean displayIp)
+            final boolean sourceNat, final boolean assign, final String requestedIp, final boolean isSystem, final Long vpcId, final Boolean displayIp, final boolean associate)
             throws InsufficientAddressCapacityException {
 
         IPAddressVO addr = Transaction.execute(new TransactionCallbackWithException<IPAddressVO, InsufficientAddressCapacityException>() {
@@ -774,12 +774,17 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                     addr.setDisplay(displayIp);
                 }
 
-        if (assign) {
-            markPublicIpAsAllocated(addr);
+        if (associate) {
+            addr.setState(State.Associated);
+            addr.setAssociatedTime(new Date());
         } else {
-            addr.setState(IpAddress.State.Allocating);
+            if (assign) {
+                markPublicIpAsAllocated(addr);
+            } else {
+                addr.setState(IpAddress.State.Allocating);
+            }
+            addr.setState(assign ? IpAddress.State.Allocated : IpAddress.State.Allocating);
         }
-        addr.setState(assign ? IpAddress.State.Allocated : IpAddress.State.Allocating);
 
         if (vlanUse != VlanType.DirectAttached) {
             addr.setAssociatedWithNetworkId(guestNetworkId);
@@ -889,7 +894,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                         displayIp = vpc.isDisplay();
                     }
 
-                    PublicIp ip = fetchNewPublicIp(dcId, null, null, owner, VlanType.VirtualNetwork, guestNtwkId, isSourceNat, false, null, false, vpcId, displayIp);
+                    PublicIp ip = fetchNewPublicIp(dcId, null, null, owner, VlanType.VirtualNetwork, guestNtwkId, isSourceNat, false, null, false, vpcId, displayIp, false);
             IPAddressVO publicIp = ip.ip();
 
             markPublicIpAsAllocated(publicIp);
@@ -991,7 +996,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
     @DB
     @Override
-    public IpAddress allocateIp(final Account ipOwner, final boolean isSystem, Account caller, long callerUserId, final DataCenter zone, final Boolean displayIp, final Long guestNetworkId)
+    public IpAddress allocateIp(final Account ipOwner, final boolean isSystem, Account caller, long callerUserId, final DataCenter zone, final Boolean displayIp, final Long guestNetworkId, final Boolean associate)
             throws ConcurrentOperationException,
         ResourceAllocationException, InsufficientAddressCapacityException {
 
@@ -1030,7 +1035,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             ip = Transaction.execute(new TransactionCallbackWithException<PublicIp, InsufficientAddressCapacityException>() {
                 @Override
                 public PublicIp doInTransaction(TransactionStatus status) throws InsufficientAddressCapacityException {
-                    PublicIp ip = fetchNewPublicIp(zone.getId(), null, null, ipOwner, vlanType, guestNetworkId, false, assign, null, isSystem, null, displayIp);
+                    PublicIp ip = fetchNewPublicIp(zone.getId(), null, null, ipOwner, vlanType, guestNetworkId, false, assign, null, isSystem, null, displayIp, associate);
 
             if (ip == null) {
                         InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("Unable to find available public IP addresses", DataCenter.class, zone
@@ -1950,7 +1955,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
                 SearchBuilder<IPAddressVO> searchBuilder = _ipAddressDao.createSearchBuilder();
                 searchBuilder.and("dc", searchBuilder.entity().getDataCenterId(), Op.EQ);
-                searchBuilder.and("allocated", searchBuilder.entity().getAllocatedTime(), Op.NNULL);
                 searchBuilder.and("account_id", searchBuilder.entity().getAccountId(), Op.EQ);
                 SearchCriteria<IPAddressVO> sc = searchBuilder.create();
                 // TODO handle and understand pods
@@ -1962,6 +1966,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 //                }
 
                 sc.setParameters("dc", dcId);
+                sc.addAnd("state", SearchCriteria.Op.EQ, State.Associated);
                 DataCenter zone = _entityMgr.findById(DataCenter.class, dcId);
 
                 if (requestedIp != null) {
@@ -1974,8 +1979,10 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 List<IPAddressVO> addrs = _ipAddressDao.lockRows(sc, filter, true);
 
                 if (addrs.size() == 0) {
-                    // TODO raise proper exception "No associated ip addresses available
-                    throw new RuntimeException();
+                    s_logger.warn(errorMessage.toString());
+                    InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("No associated ip addresses available", DataCenter.class, dcId);
+                    ex.addProxyObject(ApiDBUtils.findZoneById(dcId).getUuid());
+                    throw ex;
                 }
 
                 assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
@@ -1987,7 +1994,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 addr.setAllocatedInDomainId(owner.getDomainId());
                 addr.setAllocatedToAccountId(owner.getId());
                 addr.setSystem(false);
-
                 return addrs.get(0);
             }
         });

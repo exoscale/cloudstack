@@ -63,6 +63,10 @@ public class IPAddressVO implements IpAddress {
     @Column(name = "source_nat")
     private boolean sourceNat;
 
+    @Column(name = "associated")
+    @Temporal(value = TemporalType.TIMESTAMP)
+    private Date associatedTime;
+
     @Column(name = "allocated")
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date allocatedTime;
@@ -139,6 +143,7 @@ public class IPAddressVO implements IpAddress {
         this.sourceNat = sourceNat;
         allocatedInDomainId = null;
         allocatedToAccountId = null;
+        associatedTime = null;
         allocatedTime = null;
         state = State.Free;
         this.macAddress = macAddress;
@@ -204,6 +209,11 @@ public class IPAddressVO implements IpAddress {
     }
 
     @Override
+    public Date getAssociatedTime() {
+        return associatedTime;
+    }
+
+    @Override
     public Date getAllocatedTime() {
         return allocatedTime;
     }
@@ -223,6 +233,10 @@ public class IPAddressVO implements IpAddress {
     @Override
     public boolean isSourceNat() {
         return sourceNat;
+    }
+
+    public void setAssociatedTime(Date associated) {
+        associatedTime = associated;
     }
 
     public void setAllocatedTime(Date allocated) {

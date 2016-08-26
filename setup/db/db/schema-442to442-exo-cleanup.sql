@@ -349,3 +349,8 @@ SELECT `vm_instance`.`id` AS `id`,
             AND (`custom_speed`.`name` = 'CpuSpeed'))))
         LEFT JOIN `user_vm_details` `custom_ram_size` on(((`custom_ram_size`.`vm_id` = `vm_instance`.`id`)
             AND (`custom_ram_size`.`name` = 'memory'))));
+
+
+-- 2016.10.14 Add associated field to user_ip_address
+alter table user_ip_address add associated datetime DEFAULT NULL COMMENT 'Date this ip was associated to someone';
+
