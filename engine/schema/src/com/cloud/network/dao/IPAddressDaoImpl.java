@@ -161,7 +161,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         address.setSourceNat(false);
         address.setOneToOneNat(false);
         address.setAssociatedWithVmId(null);
-        address.setState(State.Allocating);
+        address.setState(State.Free);
         address.setAssociatedWithNetworkId(null);
         address.setVpcId(null);
         address.setSystem(false);
@@ -178,7 +178,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         address.setSourceNat(false);
         address.setOneToOneNat(false);
         address.setAssociatedWithVmId(null);
-        address.setState(State.Allocating);
+        address.setState(State.Associated);
         address.setVpcId(null);
         address.setSystem(false);
         address.setVmIp(null);

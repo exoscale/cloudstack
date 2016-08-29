@@ -1956,14 +1956,24 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 SearchBuilder<IPAddressVO> searchBuilder = _ipAddressDao.createSearchBuilder();
                 searchBuilder.and("dc", searchBuilder.entity().getDataCenterId(), Op.EQ);
                 searchBuilder.and("account_id", searchBuilder.entity().getAccountId(), Op.EQ);
+
+                SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();
+                podVlanSearch.and("type", podVlanSearch.entity().getVlanType(), Op.EQ);
+                podVlanSearch.and("networkId", podVlanSearch.entity().getNetworkId(), Op.EQ);
+                SearchBuilder<PodVlanMapVO> podVlanMapSB = _podVlanMapDao.createSearchBuilder();
+                podVlanMapSB.and("podId", podVlanMapSB.entity().getPodId(), Op.EQ);
+                searchBuilder.join("podVlanMapSB", podVlanMapSB, podVlanMapSB.entity().getVlanDbId(), searchBuilder.entity().getVlanId(),
+                    JoinType.INNER);
+                searchBuilder.join("vlan", podVlanSearch, podVlanSearch.entity().getId(), searchBuilder.entity().getVlanId(), JoinType.INNER);
+                searchBuilder.done();
+
                 SearchCriteria<IPAddressVO> sc = searchBuilder.create();
-                // TODO handle and understand pods
-//                if (podId != null) {
-//                    sc.setJoinParameters("podVlanMapSB", "podId", podId);
-//                    errorMessage.append(" pod id=" + podId);
-//                } else {
-//                    errorMessage.append(" zone id=" + dcId);
-//                }
+                if (podId != null) {
+                    sc.setJoinParameters("podVlanMapSB", "podId", podId);
+                    errorMessage.append(" pod id=" + podId);
+                } else {
+                    errorMessage.append(" zone id=" + dcId);
+                }
 
                 sc.setParameters("dc", dcId);
                 sc.addAnd("state", SearchCriteria.Op.EQ, State.Associated);
