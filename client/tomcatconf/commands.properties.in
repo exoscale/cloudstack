@@ -26,7 +26,6 @@ disableAccount=7
 enableAccount=7
 lockAccount=7
 listAccounts=15
-listAccountsForUsage=15
 accountStats=1
 markDefaultZoneForAccount=1
 
