@@ -239,17 +239,14 @@ public class HighAvailabilityManagerImpl extends ManagerBase implements HighAvai
 
         // send an email alert that the host is down
         StringBuilder sb = null;
+        boolean hasHaVms = false;
         if ((vms != null) && !vms.isEmpty()) {
             sb = new StringBuilder();
-            sb.append("  Starting HA on the following VMs: ");
+            sb.append(" Starting HA on the following VMs: ");
             // collect list of vm names for the alert email
-            VMInstanceVO vm = vms.get(0);
-            if (vm.isHaEnabled()) {
-                sb.append(" " + vm);
-            }
-            for (int i = 1; i < vms.size(); i++) {
-                vm = vms.get(i);
+            for (VMInstanceVO vm : vms) {
                 if (vm.isHaEnabled()) {
+                    hasHaVms = true;
                     sb.append(" " + vm.getHostName());
                 }
             }
@@ -261,7 +258,7 @@ public class HighAvailabilityManagerImpl extends ManagerBase implements HighAvai
 
         _alertMgr.sendAlert(AlertManager.AlertType.ALERT_TYPE_HOST, host.getDataCenterId(), host.getPodId(), "Host is down, " + hostDesc, "Host [" + hostDesc +
             "] is down." +
-            ((sb != null) ? sb.toString() : ""));
+            (hasHaVms ? sb.toString() : ""));
 
         for (VMInstanceVO vm : vms) {
             if (s_logger.isDebugEnabled()) {
