@@ -172,7 +172,7 @@ public class Script implements Callable<String> {
         String[] command = _command.toArray(new String[_command.size()]);
 
         if (command[0].equals("/usr/share/cloudstack-common/scripts/vm/network/security_group.py")) {
-            _logger.error("Script command: " + Arrays.toString(command));
+            _logger.info("Script command: " + Arrays.toString(command));
         }
 
         if (_logger.isDebugEnabled()) {

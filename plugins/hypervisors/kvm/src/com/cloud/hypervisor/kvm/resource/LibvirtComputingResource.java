@@ -2916,6 +2916,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         boolean result =
                 add_network_rules(cmd.getVmName(), Long.toString(cmd.getVmId()), cmd.getGuestIp(), cmd.getSignature(), Long.toString(cmd.getSeqNum()), cmd.getGuestMac(),
                         cmd.stringifyRules(), vif, brname, cmd.getSecIpsString());
+        add_network_rules_jura(cmd.getVmName(), Long.toString(cmd.getVmId()), cmd.getGuestIp(), cmd.getSignature(), Long.toString(cmd.getSeqNum()), cmd.getGuestMac(),
+                cmd.stringifyRules(), vif, brname, cmd.getSecIpsString());
 
         if (!result) {
             s_logger.warn("Failed to program network rules for vm " + cmd.getVmName());
@@ -3275,6 +3277,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         } else {
             destroy_network_rules_for_vm(conn, vmName);
+            destroy_network_rules_for_vm_jura(conn, vmName);
             for (InterfaceDef iface : ifaces) {
                 // We don't know which "traffic type" is associated with
                 // each interface at this point, so inform all vif drivers
@@ -3629,6 +3632,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             List<InterfaceDef> ifaces = getInterfaces(conn, vmName);
 
             destroy_network_rules_for_vm(conn, vmName);
+            destroy_network_rules_for_vm_jura(conn, vmName);
             String result = stopVM(conn, vmName);
             if (result == null) {
                 for (DiskDef disk : disks) {
@@ -5389,7 +5393,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             cmd.add("--vif", vif);
         }
         String result = cmd.execute();
-        this.destroy_network_rules_for_vm_jura(conn, vmName);
         if (result != null) {
             return false;
         }
