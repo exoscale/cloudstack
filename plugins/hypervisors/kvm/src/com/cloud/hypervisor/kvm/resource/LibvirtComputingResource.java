@@ -5396,15 +5396,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private static int getPrefixFromNetmask(String netmask) {
-        String[] parts = netmask.split(Pattern.quote("."));
-        int netmaskAsInt = 0;
-        for (int i = 3; i >= 0; i--) {
-            netmaskAsInt += Integer.bitCount(Integer.parseInt(parts[i]));
-        }
-        return netmaskAsInt;
-    }
-
     private boolean default_network_rules_jura(Connect conn, String vmName, NicTO nic, List<String> nicSecIps) {
         List<InterfaceDef> intfs = getInterfaces(conn, vmName);
         if (intfs.size() == 0 || intfs.size() < nic.getDeviceId()) {
@@ -5437,7 +5428,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
         cmdGatewayAdd.add("gateway add");
         cmdGatewayAdd.add(vif);
-        cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), getPrefixFromNetmask(nic.getNetmask())));
+        cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdGatewayAdd.toString());
