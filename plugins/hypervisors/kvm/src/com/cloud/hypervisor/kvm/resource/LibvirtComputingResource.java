@@ -5594,13 +5594,13 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
         }
         OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
-        String result = cmdFirewallAdd.execute(parser);
-        if (result == null) {
-            if (s_logger.isInfoEnabled()) {
-                s_logger.info("JURA output -> " + parser.getLines());
-            }
-            return parser.getLines();
-        }
+//        String result = cmdFirewallAdd.execute(parser);
+//        if (result == null) {
+//            if (s_logger.isInfoEnabled()) {
+//                s_logger.info("JURA output -> " + parser.getLines());
+//            }
+//            return parser.getLines();
+//        }
 
         return null;
     }
