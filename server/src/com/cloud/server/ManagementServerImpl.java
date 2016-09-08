@@ -44,6 +44,7 @@ import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAut
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
 import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
 import org.apache.cloudstack.api.command.user.snapshot.UpdateSnapshotPolicyCmd;
+import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.log4j.Logger;
 
@@ -3007,6 +3008,8 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(UpdateLBStickinessPolicyCmd.class);
         cmdList.add(UpdateLBHealthCheckPolicyCmd.class);
         cmdList.add(ListServiceOfferingsCmdByAdmin.class);
+        // separate Exoscale custom command
+        cmdList.add(ListVMsForUsageCmd.class);
 
         return cmdList;
     }

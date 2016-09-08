@@ -23,7 +23,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.cloud.service.ServiceOfferingAuthorizationVO;
+import com.cloud.api.query.vo.VMInstanceUsageVO;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
+import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.log4j.Logger;
 
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
@@ -119,6 +121,25 @@ public class ViewResponseHelper {
         return respList;
     }
 
+    public static List<UsageUserVmResponse> createUsageUserVmResponse(String objectName, VMInstanceUsageVO... vms) {
+        List<UsageUserVmResponse> result = new ArrayList<>(vms.length);
+        for (VMInstanceUsageVO vm : vms) {
+            UsageUserVmResponse usageVM = new UsageUserVmResponse();
+            usageVM.setId(vm.getUuid());
+            usageVM.setCreated(vm.getCreated());
+            usageVM.setDomainId(vm.getDomainUuid());
+            usageVM.setDomainName(vm.getDomainName());
+            usageVM.setAccountId(vm.getAccountUuid());
+            usageVM.setAccountName(vm.getAccountName());
+            usageVM.setState(vm.getState().name());
+            usageVM.setServiceOfferingId(vm.getServiceOfferingUuid());
+            usageVM.setTemplateId(vm.getTemplateUuid());
+            usageVM.setObjectName(objectName);
+
+            result.add(usageVM);
+        }
+        return result;
+    }
 
     public static List<UserVmResponse> createUserVmResponse(ResponseView view, String objectName, UserVmJoinVO... userVms) {
         return createUserVmResponse(view, objectName, EnumSet.of(VMDetails.all), userVms);

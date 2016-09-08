@@ -42,6 +42,7 @@ import org.apache.cloudstack.api.command.user.securitygroup.ListSecurityGroupsCm
 import org.apache.cloudstack.api.command.user.tag.ListTagsCmd;
 import org.apache.cloudstack.api.command.user.template.ListTemplatesCmd;
 import org.apache.cloudstack.api.command.user.vm.ListVMsCmd;
+import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
 import org.apache.cloudstack.api.command.user.vmgroup.ListVMGroupsCmd;
 import org.apache.cloudstack.api.command.user.volume.ListResourceDetailsCmd;
 import org.apache.cloudstack.api.command.user.volume.ListVolumesCmd;
@@ -65,6 +66,7 @@ import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingResponse;
 import org.apache.cloudstack.api.response.StoragePoolResponse;
 import org.apache.cloudstack.api.response.TemplateResponse;
+import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.cloudstack.api.response.UserResponse;
 import org.apache.cloudstack.api.response.UserVmResponse;
 import org.apache.cloudstack.api.response.VolumeResponse;
@@ -90,6 +92,8 @@ public interface QueryService {
     public ListResponse<ResourceTagResponse> listTags(ListTagsCmd cmd);
 
     public ListResponse<InstanceGroupResponse> searchForVmGroups(ListVMGroupsCmd cmd);
+
+    ListResponse<UsageUserVmResponse> searchForUserVMs(ListVMsForUsageCmd cmd);
 
     public ListResponse<UserVmResponse> searchForUserVMs(ListVMsCmd cmd);
 

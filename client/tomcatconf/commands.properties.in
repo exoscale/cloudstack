@@ -74,6 +74,7 @@ migrateVirtualMachineWithVolume=1
 recoverVirtualMachine=15
 expungeVirtualMachine=15
 getVirtualMachineUserData=15
+listVirtualMachinesForUsage=15
 
 #### snapshot commands
 createSnapshot=15

@@ -28,9 +28,13 @@ import javax.inject.Inject;
 import com.cloud.api.ApiDBUtils;
 import com.cloud.service.ServiceOfferingAuthorizationVO;
 import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
+import com.cloud.api.query.vo.VMInstanceUsageVO;
+import com.cloud.api.query.dao.VMInstanceUsageDao;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
 import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
+import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
+import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -370,6 +374,10 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
 
     @Inject
     protected ServiceOfferingAuthorizationDao serviceOfferingAuthorizationDao;
+
+    @Inject
+    protected VMInstanceUsageDao vmInstanceUsageDao;
+
     /*
      * (non-Javadoc)
      *
@@ -735,6 +743,78 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         }
 
         return _vmGroupJoinDao.searchAndCount(sc, searchFilter);
+    }
+
+    @Override
+    public ListResponse<UsageUserVmResponse> searchForUserVMs(ListVMsForUsageCmd cmd) {
+        Pair<List<VMInstanceUsageVO>, Integer> result = searchForUserVMsUsageInternal(cmd);
+        ListResponse<UsageUserVmResponse> response = new ListResponse<>();
+        List<UsageUserVmResponse> vmResponses = ViewResponseHelper.createUsageUserVmResponse("virtualmachine",
+                result.first().toArray(new VMInstanceUsageVO[result.first().size()]));
+
+        response.setResponses(vmResponses, result.second());
+        return response;
+    }
+
+    private Pair<List<VMInstanceUsageVO>, Integer> searchForUserVMsUsageInternal(ListVMsForUsageCmd cmd) {
+        Account caller = CallContext.current().getCallingAccount();
+        List<Long> permittedAccounts = new ArrayList<Long>();
+
+        Long id = cmd.getId();
+        Ternary<Long, Boolean, ListProjectResourcesCriteria> domainIdRecursiveListProject = new Ternary<Long, Boolean, ListProjectResourcesCriteria>(
+                cmd.getDomainId(), true, null);
+        _accountMgr.buildACLSearchParameters(caller, id, cmd.getAccountName(), null, permittedAccounts,
+                domainIdRecursiveListProject, true, false);
+        Long domainId = domainIdRecursiveListProject.first();
+
+        ListProjectResourcesCriteria listProjectResourcesCriteria = domainIdRecursiveListProject.third();
+
+        List<Long> ids = null;
+        if (cmd.getId() != null) {
+            if (cmd.getIds() != null && !cmd.getIds().isEmpty()) {
+                throw new InvalidParameterValueException("Specify either id or ids but not both parameters");
+            }
+            ids = new ArrayList<Long>();
+            ids.add(cmd.getId());
+        } else {
+            ids = cmd.getIds();
+        }
+
+        // first search distinct vm id by using query criteria and pagination
+        SearchBuilder<VMInstanceUsageVO> sb = vmInstanceUsageDao.createSearchBuilder();
+
+        _accountMgr.buildACLViewSearchBuilder(sb, domainId, true, permittedAccounts,
+                listProjectResourcesCriteria);
+        Object state = cmd.getState();
+
+        sb.and("idIN", sb.entity().getId(), SearchCriteria.Op.IN);
+        sb.and("stateEQ", sb.entity().getState(), SearchCriteria.Op.EQ);
+        sb.and("stateNIN", sb.entity().getState(), SearchCriteria.Op.NIN);
+        sb.and("typeEQ", sb.entity().getType(), SearchCriteria.Op.EQ);
+
+        // populate the search criteria with the values passed in
+        SearchCriteria<VMInstanceUsageVO> sc = sb.create();
+
+        // building ACL condition
+        _accountMgr.buildACLViewSearchCriteria(sc, domainId, true, permittedAccounts,
+                listProjectResourcesCriteria);
+
+        if (ids != null) {
+            List<?> idList = (ids instanceof List<?> ? (List<?>)ids : null);
+            if (idList != null && !idList.isEmpty()) {
+                sc.setParameters("idIN", idList.toArray());
+            }
+        }
+
+        if (state != null) {
+            sc.setParameters("stateEQ", state);
+        }
+
+        // Force filtering on state and type
+        sc.setParameters("stateNIN", "Destroyed", "Expunging");
+        sc.setParameters("typeEQ", "User");
+
+        return vmInstanceUsageDao.searchAndCount(sc, null);
     }
 
     @Override
@@ -2596,7 +2676,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         }
 
         if (vmTypeStr != null) {
-            sc.addAnd("vmType", SearchCriteria.Op.EQ, vmTypeStr);
+            sc.addAnd("type", SearchCriteria.Op.EQ, vmTypeStr);
         }
 
         return _srvOfferingJoinDao.searchAndCount(sc, searchFilter);
