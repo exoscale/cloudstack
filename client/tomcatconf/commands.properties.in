@@ -80,6 +80,7 @@ listVirtualMachinesForUsage=15
 #### snapshot commands
 createSnapshot=15
 listSnapshots=15
+listSnapshotsForUsage=15
 deleteSnapshot=15
 createSnapshotPolicy=15
 updateSnapshotPolicy=15

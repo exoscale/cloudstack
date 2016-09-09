@@ -25,6 +25,7 @@ import java.util.TimeZone;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.api.query.dao.SnapshotAccountJoinDao;
 import org.apache.cloudstack.api.command.user.snapshot.UpdateSnapshotPolicyCmd;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -140,6 +141,8 @@ public class SnapshotManagerImpl extends ManagerBase implements SnapshotManager,
     private AccountDao _accountDao;
     @Inject
     private SnapshotDao _snapshotDao;
+    @Inject
+    private SnapshotAccountJoinDao _snapshotAccountJoinDao;
     @Inject
     private SnapshotDataStoreDao _snapshotStoreDao;
     @Inject

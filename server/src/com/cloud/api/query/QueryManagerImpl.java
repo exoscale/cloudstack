@@ -33,6 +33,9 @@ import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import com.cloud.api.query.vo.VMInstanceUsageVO;
 import com.cloud.api.query.dao.VMInstanceUsageDao;
 import com.cloud.user.AccountVO;
+import com.cloud.api.query.dao.SnapshotAccountJoinDao;
+import com.cloud.api.query.vo.SnapshotAccountJoinVO;
+import com.cloud.storage.Snapshot;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
 import org.apache.cloudstack.api.command.user.account.ListAccountsForUsageCmd;
 import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
@@ -42,6 +45,8 @@ import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.cloudstack.api.command.user.volume.ListVolumesForUsageCmd;
 import org.apache.cloudstack.api.response.VolumeAccountResponse;
+import org.apache.cloudstack.api.command.user.snapshot.ListSnapshotsForUsageCmd;
+import org.apache.cloudstack.api.response.SnapshotAccountResponse;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -364,6 +369,9 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
 
     @Inject
     private DedicatedResourceDao _dedicatedDao;
+
+    @Inject
+    private SnapshotAccountJoinDao _snapshotAccountJoinDao;
 
     @Inject
     DataCenterDetailsDao _dcDetailsDao;
@@ -2306,6 +2314,70 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         response.setResponses(poolResponses, result.second());
         return response;
     }
+
+    @Override
+    public ListResponse<SnapshotAccountResponse> searchForSnapshots(ListSnapshotsForUsageCmd cmd) {
+        Pair<List<SnapshotAccountJoinVO>, Integer> result = searchForSnapshotsInternal(cmd);
+
+        ListResponse<SnapshotAccountResponse> response = new ListResponse<SnapshotAccountResponse>();
+        List<SnapshotAccountResponse> snapshotResponses = new ArrayList<SnapshotAccountResponse>();
+
+        for (SnapshotAccountJoinVO snapshot : result.first()) {
+            SnapshotAccountResponse snapshotResponse = new SnapshotAccountResponse();
+
+            snapshotResponse.setId(snapshot.getUuid());
+            snapshotResponse.setSize(snapshot.getSize());
+            snapshotResponse.setPhysicalSize(snapshot.getPhysicalSize());
+            snapshotResponse.setAccountId(snapshot.getAccountUuid());
+            snapshotResponse.setAccountName(snapshot.getAccountName());
+            snapshotResponse.setDomainId(snapshot.getDomainUuid());
+            snapshotResponse.setDomainName(snapshot.getDomainName());
+            snapshotResponse.setObjectName("snapshot");
+
+            snapshotResponses.add(snapshotResponse);
+        }
+
+        response.setResponses(snapshotResponses, result.second());
+        return response;
+    }
+
+    public Pair<List<SnapshotAccountJoinVO>, Integer> searchForSnapshotsInternal(ListSnapshotsForUsageCmd cmd) {
+        Long id = cmd.getId();
+
+        Account caller = CallContext.current().getCallingAccount();
+        List<Long> permittedAccounts = new ArrayList<Long>();
+
+        Ternary<Long, Boolean, ListProjectResourcesCriteria> domainIdRecursiveListProject =
+                new Ternary<Long, Boolean, ListProjectResourcesCriteria>(cmd.getDomainId(), true, null);
+        _accountMgr.buildACLSearchParameters(caller, id, cmd.getAccountName(), null,
+                permittedAccounts, domainIdRecursiveListProject, true, false);
+        Long domainId = domainIdRecursiveListProject.first();
+        Boolean isRecursive = domainIdRecursiveListProject.second();
+        ListProjectResourcesCriteria listProjectResourcesCriteria = domainIdRecursiveListProject.third();
+
+        SearchBuilder<SnapshotAccountJoinVO> sb = _snapshotAccountJoinDao.createSearchBuilder();
+        _accountMgr.buildACLViewSearchBuilder(sb, domainId, isRecursive, permittedAccounts, listProjectResourcesCriteria);
+
+        sb.and("statusEQ", sb.entity().getState(), SearchCriteria.Op.EQ);
+        sb.and("id", sb.entity().getId(), SearchCriteria.Op.EQ);
+        sb.and("snapshotTypeNEQ", sb.entity().getType(), SearchCriteria.Op.NEQ);
+        sb.and("storeRoleEQ", sb.entity().getStoreRole(), SearchCriteria.Op.EQ);
+
+        SearchCriteria<SnapshotAccountJoinVO> sc = sb.create();
+        _accountMgr.buildACLViewSearchCriteria(sc, domainId, isRecursive, permittedAccounts, listProjectResourcesCriteria);
+
+        sc.setParameters("statusEQ", Snapshot.State.BackedUp);
+        sc.setParameters("storeRoleEQ", DataStoreRole.Image);
+
+        if (id != null) {
+            sc.setParameters("id", id);
+        }
+
+        sc.setParameters("snapshotTypeNEQ", Snapshot.Type.TEMPLATE.ordinal());
+
+        return _snapshotAccountJoinDao.searchAndCount(sc, null);
+    }
+
 
     private Pair<List<StoragePoolJoinVO>, Integer> searchForStoragePoolsInternal(ListStoragePoolsCmd cmd) {
         ScopeType scopeType = null;

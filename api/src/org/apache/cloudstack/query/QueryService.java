@@ -40,6 +40,7 @@ import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdBy
 import org.apache.cloudstack.api.command.user.project.ListProjectInvitationsCmd;
 import org.apache.cloudstack.api.command.user.project.ListProjectsCmd;
 import org.apache.cloudstack.api.command.user.securitygroup.ListSecurityGroupsCmd;
+import org.apache.cloudstack.api.command.user.snapshot.ListSnapshotsForUsageCmd;
 import org.apache.cloudstack.api.command.user.tag.ListTagsCmd;
 import org.apache.cloudstack.api.command.user.template.ListTemplatesCmd;
 import org.apache.cloudstack.api.command.user.vm.ListVMsCmd;
@@ -67,6 +68,7 @@ import org.apache.cloudstack.api.response.ResourceTagResponse;
 import org.apache.cloudstack.api.response.SecurityGroupResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingResponse;
+import org.apache.cloudstack.api.response.SnapshotAccountResponse;
 import org.apache.cloudstack.api.response.StoragePoolResponse;
 import org.apache.cloudstack.api.response.TemplateResponse;
 import org.apache.cloudstack.api.response.UsageUserVmResponse;
@@ -151,4 +153,5 @@ public interface QueryService {
 
     ListResponse<DomainRouterResponse> searchForInternalLbVms(ListInternalLBVMsCmd cmd);
 
+    public ListResponse<SnapshotAccountResponse> searchForSnapshots(ListSnapshotsForUsageCmd cmd);
 }

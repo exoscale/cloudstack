@@ -414,6 +414,7 @@ import org.apache.cloudstack.api.command.user.snapshot.DeleteSnapshotCmd;
 import org.apache.cloudstack.api.command.user.snapshot.DeleteSnapshotPoliciesCmd;
 import org.apache.cloudstack.api.command.user.snapshot.ListSnapshotPoliciesCmd;
 import org.apache.cloudstack.api.command.user.snapshot.ListSnapshotsCmd;
+import org.apache.cloudstack.api.command.user.snapshot.ListSnapshotsForUsageCmd;
 import org.apache.cloudstack.api.command.user.snapshot.RevertSnapshotCmd;
 import org.apache.cloudstack.api.command.user.ssh.CreateSSHKeyPairCmd;
 import org.apache.cloudstack.api.command.user.ssh.DeleteSSHKeyPairCmd;
@@ -2809,6 +2810,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(DeleteSnapshotPoliciesCmd.class);
         cmdList.add(ListSnapshotPoliciesCmd.class);
         cmdList.add(ListSnapshotsCmd.class);
+        cmdList.add(ListSnapshotsForUsageCmd.class);
         cmdList.add(RevertSnapshotCmd.class);
         cmdList.add(CreateSSHKeyPairCmd.class);
         cmdList.add(DeleteSSHKeyPairCmd.class);
