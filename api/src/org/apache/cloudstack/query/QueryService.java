@@ -47,6 +47,7 @@ import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
 import org.apache.cloudstack.api.command.user.vmgroup.ListVMGroupsCmd;
 import org.apache.cloudstack.api.command.user.volume.ListResourceDetailsCmd;
 import org.apache.cloudstack.api.command.user.volume.ListVolumesCmd;
+import org.apache.cloudstack.api.command.user.volume.ListVolumesForUsageCmd;
 import org.apache.cloudstack.api.command.user.zone.ListZonesCmd;
 import org.apache.cloudstack.api.response.AccountResponse;
 import org.apache.cloudstack.api.response.AccountStateResponse;
@@ -71,6 +72,7 @@ import org.apache.cloudstack.api.response.TemplateResponse;
 import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.cloudstack.api.response.UserResponse;
 import org.apache.cloudstack.api.response.UserVmResponse;
+import org.apache.cloudstack.api.response.VolumeAccountResponse;
 import org.apache.cloudstack.api.response.VolumeResponse;
 import org.apache.cloudstack.api.response.ZoneResponse;
 import org.apache.cloudstack.framework.config.ConfigKey;
@@ -112,6 +114,8 @@ public interface QueryService {
     public ListResponse<HostResponse> searchForServers(ListHostsCmd cmd);
 
     public ListResponse<VolumeResponse> searchForVolumes(ListVolumesCmd cmd);
+
+    public ListResponse<VolumeAccountResponse> searchForVolumes(ListVolumesForUsageCmd cmd);
 
     public ListResponse<StoragePoolResponse> searchForStoragePools(ListStoragePoolsCmd cmd);
 

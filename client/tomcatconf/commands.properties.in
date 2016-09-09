@@ -316,6 +316,7 @@ detachVolume=15
 createVolume=15
 deleteVolume=15
 listVolumes=15
+listVolumesForUsage=15
 extractVolume=15
 migrateVolume=15
 resizeVolume=15

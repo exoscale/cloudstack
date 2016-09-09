@@ -26,6 +26,8 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import com.cloud.api.ApiDBUtils;
+import com.cloud.api.query.dao.VolumeAccountJoinDao;
+import com.cloud.api.query.vo.VolumeAccountJoinVO;
 import com.cloud.service.ServiceOfferingAuthorizationVO;
 import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import com.cloud.api.query.vo.VMInstanceUsageVO;
@@ -38,6 +40,8 @@ import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
 import org.apache.cloudstack.api.response.AccountStateResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.UsageUserVmResponse;
+import org.apache.cloudstack.api.command.user.volume.ListVolumesForUsageCmd;
+import org.apache.cloudstack.api.response.VolumeAccountResponse;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -286,6 +290,9 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
 
     @Inject
     private VolumeJoinDao _volumeJoinDao;
+
+    @Inject
+    private VolumeAccountJoinDao _volumeAccountJoinDao;
 
     @Inject
     private AccountDao _accountDao;
@@ -1769,6 +1776,33 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         return response;
     }
 
+    @Override
+    public ListResponse<VolumeAccountResponse> searchForVolumes(ListVolumesForUsageCmd cmd) {
+        Pair<List<VolumeAccountJoinVO>, Integer> result = searchForVolumesInternal(cmd);
+        ListResponse<VolumeAccountResponse> response = new ListResponse<>();
+
+        List<VolumeAccountResponse> volumeResponses = new ArrayList<>();
+
+        for (VolumeAccountJoinVO v : result.first()) {
+            VolumeAccountResponse volumeResponse = new VolumeAccountResponse();
+
+            volumeResponse.setObjectName("volume");
+            volumeResponse.setAccountName(v.getAccountName());
+            volumeResponse.setAccountId(v.getAccountUuid());
+            volumeResponse.setDomainId(v.getDomainUuid());
+            volumeResponse.setDomainName(v.getDomainName());
+            volumeResponse.setSize(v.getSize());
+            volumeResponse.setId(v.getUuid());
+            volumeResponse.setState(v.getState().name());
+            volumeResponse.setType(v.getType().name());
+
+            volumeResponses.add(volumeResponse);
+        }
+
+        response.setResponses(volumeResponses, result.second());
+        return response;
+    }
+
     private Pair<List<VolumeJoinVO>, Integer> searchForVolumesInternal(ListVolumesCmd cmd) {
 
         Account caller = CallContext.current().getCallingAccount();
@@ -1912,6 +1946,62 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         }
         List<VolumeJoinVO> vrs = _volumeJoinDao.searchByIds(vrIds);
         return new Pair<List<VolumeJoinVO>, Integer>(vrs, count);
+    }
+
+    private Pair<List<VolumeAccountJoinVO>, Integer> searchForVolumesInternal(ListVolumesForUsageCmd cmd) {
+
+        Account caller = CallContext.current().getCallingAccount();
+        List<Long> permittedAccounts = new ArrayList<>();
+
+        Long id = cmd.getId();
+        String type = cmd.getType();
+        String state = cmd.getState();
+
+        Ternary<Long, Boolean, ListProjectResourcesCriteria> domainIdRecursiveListProject = new Ternary<>(
+                cmd.getDomainId(), true, null);
+        _accountMgr.buildACLSearchParameters(caller, id, cmd.getAccountName(), cmd.getProjectId(), permittedAccounts,
+                domainIdRecursiveListProject, true, false);
+        Long domainId = domainIdRecursiveListProject.first();
+        Boolean isRecursive = domainIdRecursiveListProject.second();
+        ListProjectResourcesCriteria listProjectResourcesCriteria = domainIdRecursiveListProject.third();
+
+        SearchBuilder<VolumeAccountJoinVO> sb = _volumeAccountJoinDao.createSearchBuilder();
+
+        _accountMgr.buildACLViewSearchBuilder(sb, domainId, isRecursive, permittedAccounts,
+                listProjectResourcesCriteria);
+
+        sb.and("id", sb.entity().getId(), SearchCriteria.Op.EQ);
+        sb.and("stateNIN", sb.entity().getState(), SearchCriteria.Op.NIN);
+        sb.and("stateEQ", sb.entity().getState(), SearchCriteria.Op.EQ);
+        sb.and("volumeType", sb.entity().getType(), SearchCriteria.Op.LIKE);
+        sb.and().op("type", sb.entity().getVmType(), SearchCriteria.Op.NIN);
+        sb.or("nulltype", sb.entity().getVmType(), SearchCriteria.Op.NULL);
+        sb.cp();
+
+        // now set the SC criteria...
+        SearchCriteria<VolumeAccountJoinVO> sc = sb.create();
+        _accountMgr.buildACLViewSearchCriteria(sc, domainId, isRecursive, permittedAccounts,
+                listProjectResourcesCriteria);
+
+        if (id != null) {
+            sc.setParameters("id", id);
+        }
+
+        if (type != null) {
+            sc.setParameters("volumeType", "%" + type + "%");
+        }
+
+        if (state != null) {
+            sc.setParameters("stateEQ", state);
+        }
+
+        // Don't return DomR and ConsoleProxy volumes
+        sc.setParameters("type", VirtualMachine.Type.ConsoleProxy, VirtualMachine.Type.SecondaryStorageVm, VirtualMachine.Type.DomainRouter);
+
+        // Only return volumes that are not destroyed
+        sc.setParameters("stateNIN", Volume.State.Destroy, Volume.State.Expunging, Volume.State.Expunged);
+
+        return _volumeAccountJoinDao.searchAndCount(sc, null);
     }
 
     public void searchForAccountsCheckAccess(Account caller, Long accountId, Long domainId, String accountName) {

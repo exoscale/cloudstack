@@ -466,6 +466,7 @@ import org.apache.cloudstack.api.command.user.volume.DetachVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.ExtractVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.ListResourceDetailsCmd;
 import org.apache.cloudstack.api.command.user.volume.ListVolumesCmd;
+import org.apache.cloudstack.api.command.user.volume.ListVolumesForUsageCmd;
 import org.apache.cloudstack.api.command.user.volume.MigrateVolumeCmd;
 import org.apache.cloudstack.api.command.user.volume.RemoveResourceDetailCmd;
 import org.apache.cloudstack.api.command.user.volume.ResizeVolumeCmd;
@@ -2853,6 +2854,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(DetachVolumeCmd.class);
         cmdList.add(ExtractVolumeCmd.class);
         cmdList.add(ListVolumesCmd.class);
+        cmdList.add(ListVolumesForUsageCmd.class);
         cmdList.add(MigrateVolumeCmd.class);
         cmdList.add(ResizeVolumeCmd.class);
         cmdList.add(UploadVolumeCmd.class);
