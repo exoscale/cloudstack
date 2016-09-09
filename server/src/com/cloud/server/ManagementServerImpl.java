@@ -274,6 +274,7 @@ import org.apache.cloudstack.api.command.admin.zone.UpdateZoneCmd;
 import org.apache.cloudstack.api.command.user.account.AddAccountToProjectCmd;
 import org.apache.cloudstack.api.command.user.account.DeleteAccountFromProjectCmd;
 import org.apache.cloudstack.api.command.user.account.ListAccountsCmd;
+import org.apache.cloudstack.api.command.user.account.ListAccountsForUsageCmd;
 import org.apache.cloudstack.api.command.user.account.ListProjectAccountsCmd;
 import org.apache.cloudstack.api.command.user.address.AssociateIPAddrCmd;
 import org.apache.cloudstack.api.command.user.address.DisassociateIPAddrCmd;
@@ -2691,6 +2692,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(AddAccountToProjectCmd.class);
         cmdList.add(DeleteAccountFromProjectCmd.class);
         cmdList.add(ListAccountsCmd.class);
+        cmdList.add(ListAccountsForUsageCmd.class);
         cmdList.add(ListProjectAccountsCmd.class);
         cmdList.add(AssociateIPAddrCmd.class);
         cmdList.add(DisassociateIPAddrCmd.class);

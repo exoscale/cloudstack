@@ -30,9 +30,12 @@ import com.cloud.service.ServiceOfferingAuthorizationVO;
 import com.cloud.service.dao.ServiceOfferingAuthorizationDao;
 import com.cloud.api.query.vo.VMInstanceUsageVO;
 import com.cloud.api.query.dao.VMInstanceUsageDao;
+import com.cloud.user.AccountVO;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
+import org.apache.cloudstack.api.command.user.account.ListAccountsForUsageCmd;
 import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
 import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
+import org.apache.cloudstack.api.response.AccountStateResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.log4j.Logger;
@@ -1911,31 +1914,7 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         return new Pair<List<VolumeJoinVO>, Integer>(vrs, count);
     }
 
-    @Override
-    public ListResponse<AccountResponse> searchForAccounts(ListAccountsCmd cmd) {
-        Pair<List<AccountJoinVO>, Integer> result = searchForAccountsInternal(cmd);
-        ListResponse<AccountResponse> response = new ListResponse<AccountResponse>();
-
-        ResponseView respView = ResponseView.Restricted;
-        if (cmd instanceof ListAccountsCmdByAdmin) {
-            respView = ResponseView.Full;
-        }
-
-        List<AccountResponse> accountResponses = ViewResponseHelper.createAccountResponse(respView, result.first().toArray(
-                new AccountJoinVO[result.first().size()]));
-        response.setResponses(accountResponses, result.second());
-        return response;
-    }
-
-    private Pair<List<AccountJoinVO>, Integer> searchForAccountsInternal(ListAccountsCmd cmd) {
-        Account caller = CallContext.current().getCallingAccount();
-        Long domainId = cmd.getDomainId();
-        Long accountId = cmd.getId();
-        String accountName = cmd.getSearchName();
-        boolean isRecursive = cmd.isRecursive();
-        boolean listAll = cmd.listAll();
-        Boolean listForDomain = false;
-
+    public void searchForAccountsCheckAccess(Account caller, Long accountId, Long domainId, String accountName) {
         if (accountId != null) {
             Account account = _accountDao.findById(accountId);
             if (account == null || account.getId() == Account.ACCOUNT_ID_SYSTEM) {
@@ -1962,6 +1941,34 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
                 _accountMgr.checkAccess(caller, null, true, account);
             }
         }
+    }
+
+    @Override
+    public ListResponse<AccountResponse> searchForAccounts(ListAccountsCmd cmd) {
+        Pair<List<AccountJoinVO>, Integer> result = searchForAccountsInternal(cmd);
+        ListResponse<AccountResponse> response = new ListResponse<AccountResponse>();
+
+        ResponseView respView = ResponseView.Restricted;
+        if (cmd instanceof ListAccountsCmdByAdmin) {
+            respView = ResponseView.Full;
+        }
+
+        List<AccountResponse> accountResponses = ViewResponseHelper.createAccountResponse(respView, result.first().toArray(
+                new AccountJoinVO[result.first().size()]));
+        response.setResponses(accountResponses, result.second());
+        return response;
+    }
+
+    private Pair<List<AccountJoinVO>, Integer> searchForAccountsInternal(ListAccountsCmd cmd) {
+        Account caller = CallContext.current().getCallingAccount();
+        Long domainId = cmd.getDomainId();
+        Long accountId = cmd.getId();
+        String accountName = cmd.getSearchName();
+        boolean isRecursive = cmd.isRecursive();
+        boolean listAll = cmd.listAll();
+        Boolean listForDomain = false;
+
+        searchForAccountsCheckAccess(caller, accountId, domainId, accountName);
 
         if (accountId == null) {
             if (_accountMgr.isAdmin(caller.getId()) && listAll && domainId == null) {
@@ -2042,6 +2049,75 @@ public class QueryManagerImpl extends ManagerBase implements QueryService, Confi
         }
 
         return _accountJoinDao.searchAndCount(sc, searchFilter);
+    }
+
+    @Override
+    public ListResponse<AccountStateResponse> searchForAccounts(ListAccountsForUsageCmd cmd) {
+        Pair<List<AccountVO>, Integer> result = searchForAccountsInternal(cmd);
+        ListResponse<AccountStateResponse> response = new ListResponse<>();
+
+        List<AccountStateResponse> accountResponses = new ArrayList<>();
+        for (AccountVO a : result.first().toArray(new AccountVO[result.first().size()])) {
+            AccountStateResponse accountState = new AccountStateResponse();
+
+            accountState.setObjectName("account");
+            accountState.setName(a.getAccountName());
+            accountState.setId(a.getUuid());
+            accountState.setState(a.getState().name());
+
+            accountResponses.add(accountState);
+        }
+
+        response.setResponses(accountResponses, result.second());
+        return response;
+    }
+
+    private Pair<List<AccountVO>, Integer> searchForAccountsInternal(ListAccountsForUsageCmd cmd) {
+        Account caller = CallContext.current().getCallingAccount();
+        Long domainId = cmd.getDomainId();
+        Long accountId = cmd.getId();
+        String accountName = cmd.getSearchName();
+        Object state = cmd.getState();
+        Object type = cmd.getAccountType();
+
+        searchForAccountsCheckAccess(caller, accountId, domainId, accountName);
+
+        if (accountId == null && !_accountMgr.isAdmin(caller.getId())) {
+            accountId = caller.getAccountId();
+        }
+
+        SearchBuilder<AccountVO> sb = _accountDao.createSearchBuilder();
+        sb.and("accountName", sb.entity().getAccountName(), SearchCriteria.Op.LIKE);
+        sb.and("state", sb.entity().getState(), SearchCriteria.Op.EQ);
+        sb.and("type", sb.entity().getType(), SearchCriteria.Op.EQ);
+        sb.and("id", sb.entity().getId(), SearchCriteria.Op.EQ);
+        sb.and("idNEQ", sb.entity().getId(), SearchCriteria.Op.NEQ);
+        sb.and("typeNEQ", sb.entity().getType(), SearchCriteria.Op.NEQ);
+
+        SearchCriteria<AccountVO> sc = sb.create();
+
+        sc.setParameters("idNEQ", Account.ACCOUNT_ID_SYSTEM);
+        // don't return account of type project to the end user
+        sc.setParameters("typeNEQ", 5);
+
+
+        if (accountName != null) {
+            sc.setParameters("accountName", "%" + accountName + "%");
+        }
+
+        if (state != null) {
+            sc.setParameters("state", state);
+        }
+
+        if (type != null) {
+            sc.setParameters("type", type);
+        }
+
+        if (accountId != null) {
+            sc.setParameters("id", accountId);
+        }
+
+        return _accountDao.searchAndCount(sc, null);
     }
 
     @Override
