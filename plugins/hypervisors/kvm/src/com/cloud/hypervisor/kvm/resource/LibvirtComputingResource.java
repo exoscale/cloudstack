@@ -3922,13 +3922,18 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             s_logger.debug("starting " + vmName + ": " + vm.toString());
             startVM(conn, vmName, vm.toString());
 
+            boolean skipInsteadOfBreak = false;
             NicTO[] nics = vmSpec.getNics();
             for (NicTO nic : nics) {
+                if (VirtualMachine.Type.User != vmSpec.getType()) {
+                    default_network_rules_for_systemvm_jura(conn, vmName, nic);
+                }
                 if (nic.isSecurityGroupEnabled() || (nic.getIsolationUri() != null && nic.getIsolationUri().getScheme().equalsIgnoreCase(IsolationType.Ec2.toString()))) {
                     if (vmSpec.getType() != VirtualMachine.Type.User) {
-                        default_network_rules_for_systemvm_jura(conn, vmName, nic);
-                        default_network_rules_for_systemvm(vmName);
-                        break;
+                        if (!skipInsteadOfBreak) {
+                            default_network_rules_for_systemvm(vmName);
+                            skipInsteadOfBreak = true;
+                        }
                     } else {
                         List<String> nicSecIps = nic.getNicSecIps();
                         String secIpsStr;
