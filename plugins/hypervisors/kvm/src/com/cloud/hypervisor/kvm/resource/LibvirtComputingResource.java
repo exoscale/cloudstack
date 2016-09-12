@@ -3632,6 +3632,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             List<DiskDef> disks = getDisks(conn, vmName);
             List<InterfaceDef> ifaces = getInterfaces(conn, vmName);
 
+
             destroy_network_rules_for_vm(conn, vmName);
             destroy_network_rules_for_vm_jura(conn, vmName);
             String result = stopVM(conn, vmName);
@@ -5335,51 +5336,54 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     protected boolean destroy_network_rules_for_vm_jura(Connect conn, String vmName) {
-        String vif = null;
+        String vif;
         List<InterfaceDef> intfs = getInterfaces(conn, vmName);
-        if (intfs.size() > 0) {
-            InterfaceDef intf = intfs.get(0);
+        if (intfs == null || intfs.size() == 0) {
+            return false;
+        }
+
+        for (InterfaceDef intf : intfs){
             vif = intf.getDevName();
+
+            Script cmdFireWallClear = new Script(_juraPath, _timeout, s_logger);
+            cmdFireWallClear.add("firewall clear");
+            cmdFireWallClear.add(vif);
+
+            if (s_logger.isInfoEnabled()) {
+                s_logger.info("JURA -> " + cmdFireWallClear.toString());
+            }
+            //      String result = cmdFireWallClear.execute();
+            //
+            //      if (result != null) {
+            //          return false;
+            //      }
+
+            Script cmdGatewayClear = new Script(_juraPath, _timeout, s_logger);
+            cmdGatewayClear.add("gateway clear");
+            cmdGatewayClear.add(vif);
+
+            if (s_logger.isInfoEnabled()) {
+                s_logger.info("JURA -> " + cmdGatewayClear.toString());
+            }
+            //      String result = cmdGatewayClear.execute();
+            //
+            //      if (result != null) {
+            //          return false;
+            //      }
+
+            Script cmdPeerClear = new Script(_juraPath, _timeout, s_logger);
+            cmdPeerClear.add("peer clear");
+            cmdPeerClear.add(vif);
+
+            if (s_logger.isInfoEnabled()) {
+                s_logger.info("JURA -> " + cmdPeerClear.toString());
+            }
+            //      String result = cmdPeerClear.execute();
+            //
+            //      if (result != null) {
+            //          return false;
+            //      }
         }
-
-        Script cmdFireWallClear = new Script(_juraPath, _timeout, s_logger);
-        cmdFireWallClear.add("firewall clear");
-        cmdFireWallClear.add(vif);
-
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdFireWallClear.toString());
-        }
-//      String result = cmdFireWallClear.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
-
-        Script cmdGatewayClear = new Script(_juraPath, _timeout, s_logger);
-        cmdGatewayClear.add("gateway clear");
-        cmdGatewayClear.add(vif);
-
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdGatewayClear.toString());
-        }
-//      String result = cmdGatewayClear.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
-
-        Script cmdPeerClear = new Script(_juraPath, _timeout, s_logger);
-        cmdPeerClear.add("peer clear");
-        cmdPeerClear.add(vif);
-
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdPeerClear.toString());
-        }
-//      String result = cmdPeerClear.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
         return true;
     }
 
