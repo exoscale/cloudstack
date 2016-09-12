@@ -16,20 +16,19 @@
 // under the License.
 package com.cloud.agent.api;
 
+import com.cloud.agent.api.to.VirtualMachineTO;
 import com.cloud.vm.VirtualMachine;
 
 public class NetworkRulesSystemVmCommand extends Command {
 
     private String vmName;
     private VirtualMachine.Type type;
+    private VirtualMachineTO vmTO;
 
-    protected NetworkRulesSystemVmCommand() {
-
-    }
-
-    public NetworkRulesSystemVmCommand(String vmName, VirtualMachine.Type type) {
+    public NetworkRulesSystemVmCommand(String vmName, VirtualMachine.Type type, VirtualMachineTO vmTO) {
         this.vmName = vmName;
         this.type = type;
+        this.vmTO = vmTO;
     }
 
     public String getVmName() {
@@ -38,6 +37,10 @@ public class NetworkRulesSystemVmCommand extends Command {
 
     public VirtualMachine.Type getType() {
         return type;
+    }
+
+    public VirtualMachineTO getVirtualMachine() {
+        return vmTO;
     }
 
     @Override

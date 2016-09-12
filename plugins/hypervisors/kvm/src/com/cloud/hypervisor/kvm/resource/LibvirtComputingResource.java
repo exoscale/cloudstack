@@ -3926,6 +3926,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             for (NicTO nic : nics) {
                 if (nic.isSecurityGroupEnabled() || (nic.getIsolationUri() != null && nic.getIsolationUri().getScheme().equalsIgnoreCase(IsolationType.Ec2.toString()))) {
                     if (vmSpec.getType() != VirtualMachine.Type.User) {
+                        default_network_rules_for_systemvm_jura(conn, vmName, nic);
                         default_network_rules_for_systemvm(vmName);
                         break;
                     } else {
@@ -5493,6 +5494,65 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
+    protected boolean default_network_rules_for_systemvm_jura(Connect conn, String vmName, NicTO nic) {
+        if (!_canBridgeFirewall) {
+            return false;
+        }
+
+        List<InterfaceDef> intfs = getInterfaces(conn, vmName);
+        if (intfs.size() == 0 || intfs.size() < nic.getDeviceId()) {
+            return false;
+        }
+
+        InterfaceDef intf = intfs.get(nic.getDeviceId());
+        String vif = intf.getDevName();
+
+        Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdPeerAdd.add("peer set");
+        cmdPeerAdd.add(vif);
+        cmdPeerAdd.add(nic.getIp());
+
+        if (s_logger.isInfoEnabled()) {
+            s_logger.info("JURA -> " + cmdPeerAdd.toString());
+        }
+//        String result = cmdPeerAdd.execute();
+//
+//        if (result != null) {
+//            return false;
+//        }
+
+        Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdGatewayAdd.add("gateway set");
+        cmdGatewayAdd.add(vif);
+        cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
+
+        if (s_logger.isInfoEnabled()) {
+            s_logger.info("JURA -> " + cmdGatewayAdd.toString());
+        }
+//      String result = cmdGatewayAdd.execute();
+//
+//      if (result != null) {
+//          return false;
+//      }
+
+        // Force a clear in case something wasn't cleaned up correctly.
+        Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
+        cmdFirewallClear.add("firewall set");
+        cmdFirewallClear.add(vif);
+        cmdFirewallClear.add("I,tcp,, I,udp,, I,icmp,,");
+
+        if (s_logger.isInfoEnabled()) {
+            s_logger.info("JURA -> " + cmdFirewallClear.toString());
+        }
+//      String result = cmdFirewallClear.execute();
+//
+//      if (result != null) {
+//          return false;
+//      }
+
+        return true;
+    }
+
     protected boolean default_network_rules_for_systemvm(String vmName) {
         if (!_canBridgeFirewall) {
             return false;
@@ -5662,7 +5722,21 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private Answer execute(NetworkRulesSystemVmCommand cmd) {
-        boolean success = default_network_rules_for_systemvm(cmd.getVmName());
+        boolean success = true;
+        Connect conn;
+        VirtualMachineTO vmSpec = cmd.getVirtualMachine();
+
+        try {
+            conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
+            for (NicTO nic : vmSpec.getNics()) {
+                success &= default_network_rules_for_systemvm_jura(conn, cmd.getVmName(), nic);
+            }
+            success = default_network_rules_for_systemvm(cmd.getVmName());
+        } catch (LibvirtException e) {
+            s_logger.error("Libvirt exception while executing NetworkRulesSystemVmCommand", e);
+            success = false;
+        }
+
         return new Answer(cmd, success, "");
     }
 

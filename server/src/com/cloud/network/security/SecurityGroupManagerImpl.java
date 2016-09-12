@@ -39,6 +39,8 @@ import javax.ejb.ConcurrentAccessException;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import com.cloud.agent.api.to.VirtualMachineTO;
+import com.cloud.vm.VirtualMachineProfileImpl;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 
@@ -538,7 +540,8 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
             return;
         if (vm.getType() != VirtualMachine.Type.User) {
             Commands cmds = null;
-            NetworkRulesSystemVmCommand nrc = new NetworkRulesSystemVmCommand(vm.getInstanceName(), vm.getType());
+            VirtualMachineTO vmTO = _itMgr.toVmTO(new VirtualMachineProfileImpl(vm));
+            NetworkRulesSystemVmCommand nrc = new NetworkRulesSystemVmCommand(vm.getInstanceName(), vm.getType(), vmTO);
             cmds = new Commands(nrc);
             try {
                 _agentMgr.send(vm.getHostId(), cmds);
