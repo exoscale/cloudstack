@@ -5623,7 +5623,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private boolean network_rules_vmSecondaryIp(Connect conn, String vmName, String secIp, String action) {
+    private boolean network_rules_vmSecondaryIp(String vmName, String secIp, String action) {
 
         if (!_canBridgeFirewall) {
             return false;
@@ -5750,16 +5750,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private Answer execute(NetworkRulesVmSecondaryIpCommand cmd) {
-        boolean success = false;
-        Connect conn;
-        try {
-            conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
-            success = network_rules_vmSecondaryIp(conn, cmd.getVmName(), cmd.getVmSecIp(), cmd.getAction());
-        } catch (LibvirtException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
+        boolean success = network_rules_vmSecondaryIp(cmd.getVmName(), cmd.getVmSecIp(), cmd.getAction());
         return new Answer(cmd, success, "");
     }
 
