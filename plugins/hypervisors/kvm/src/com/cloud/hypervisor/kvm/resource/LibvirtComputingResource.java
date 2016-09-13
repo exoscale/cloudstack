@@ -307,6 +307,21 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private String _heartBeatPath;
     private String _securityGroupPath;
     private String _juraPath;
+    private JuraState _juraState;
+
+    private enum JuraState {
+        OFF, LOG, EXEC;
+
+        public static JuraState fromString(String value) {
+            for (JuraState juraState : JuraState.values()) {
+                if (juraState.name().equalsIgnoreCase(value)) {
+                    return juraState;
+                }
+            }
+            return JuraState.OFF;
+        }
+    }
+
     private String _ovsPvlanDhcpHostPath;
     private String _ovsPvlanVmPath;
     private String _routerProxyPath;
@@ -703,6 +718,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
 
         _juraPath = "jura";
+
+        _juraState = JuraState.fromString((String) params.get("jura"));
 
         _ovsTunnelPath = Script.findScript(networkScriptsDir, "ovstunnel.py");
         if (_ovsTunnelPath == null) {
@@ -2916,8 +2933,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         boolean result =
                 add_network_rules(cmd.getVmName(), Long.toString(cmd.getVmId()), cmd.getGuestIp(), cmd.getSignature(), Long.toString(cmd.getSeqNum()), cmd.getGuestMac(),
                         cmd.stringifyRules(), vif, brname, cmd.getSecIpsString());
-        add_network_rules_jura(cmd.getVmName(), Long.toString(cmd.getVmId()), cmd.getGuestIp(), cmd.getSignature(), Long.toString(cmd.getSeqNum()), cmd.getGuestMac(),
-                cmd.stringifyRules(), vif, brname, cmd.getSecIpsString());
 
         if (!result) {
             s_logger.warn("Failed to program network rules for vm " + cmd.getVmName());
@@ -3277,7 +3292,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         } else {
             destroy_network_rules_for_vm(conn, vmName);
-            destroy_network_rules_for_vm_jura(conn, vmName);
             for (InterfaceDef iface : ifaces) {
                 // We don't know which "traffic type" is associated with
                 // each interface at this point, so inform all vif drivers
@@ -3540,7 +3554,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 } catch (LibvirtException e) {
                     s_logger.trace("Ignoring libvirt error.", e);
                 }
-                get_rule_logs_for_vms_jura();
                 get_rule_logs_for_vms();
                 return new RebootAnswer(cmd, null, vncPort);
             } else {
@@ -3634,7 +3647,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
 
             destroy_network_rules_for_vm(conn, vmName);
-            destroy_network_rules_for_vm_jura(conn, vmName);
             String result = stopVM(conn, vmName);
             if (result == null) {
                 for (DiskDef disk : disks) {
@@ -3926,13 +3938,13 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             boolean skipInsteadOfBreak = false;
             NicTO[] nics = vmSpec.getNics();
             for (NicTO nic : nics) {
-                if (VirtualMachine.Type.User != vmSpec.getType()) {
+                if (VirtualMachine.Type.User != vmSpec.getType() && _juraState != JuraState.OFF) {
                     default_network_rules_for_systemvm_jura(conn, vmName, nic);
                 }
                 if (nic.isSecurityGroupEnabled() || (nic.getIsolationUri() != null && nic.getIsolationUri().getScheme().equalsIgnoreCase(IsolationType.Ec2.toString()))) {
                     if (vmSpec.getType() != VirtualMachine.Type.User) {
-                        if (!skipInsteadOfBreak) {
-                            default_network_rules_for_systemvm(vmName);
+                        if (!skipInsteadOfBreak && _juraState != JuraState.EXEC) {
+                            default_network_rules_for_systemvm_security_groups(vmName);
                             skipInsteadOfBreak = true;
                         }
                     } else {
@@ -3947,9 +3959,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                         } else {
                             secIpsStr = "0:";
                         }
-                        default_network_rules(conn, vmName, nic, vmSpec.getId(), secIpsStr);
-                        // TODO this replaces the default_network_rules
-                        default_network_rules_jura(conn, vmName, nic, nicSecIps);
+                        default_network_rules(conn, vmName, nic, vmSpec.getId(), secIpsStr, nicSecIps);
                     }
                 }
             }
@@ -5318,12 +5328,15 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
-    private boolean can_bridge_firewall_jura(String prvNic) {
-        // Not needed
+    private boolean can_bridge_firewall(String prvNic) {
+        // Not needed for JURA
+        if (_juraState != JuraState.EXEC) {
+            return can_bridge_firewall_security_groups(prvNic);
+        }
         return true;
     }
 
-    private boolean can_bridge_firewall(String prvNic) {
+    private boolean can_bridge_firewall_security_groups(String prvNic) {
         Script cmd = new Script(_securityGroupPath, _timeout, s_logger);
         cmd.add("can_bridge_firewall");
         cmd.add(prvNic);
@@ -5331,18 +5344,33 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (result != null) {
             return false;
         }
-        can_bridge_firewall_jura(prvNic);
         return true;
     }
 
-    protected boolean destroy_network_rules_for_vm_jura(Connect conn, String vmName) {
+    private boolean destroy_network_rules_for_vm(Connect conn, String vmName) {
+        boolean result = false;
+        switch (_juraState) {
+            case OFF:
+                result = destroy_network_rules_for_vm_security_groups(conn, vmName);
+                break;
+            case LOG:
+                destroy_network_rules_for_vm_jura(conn, vmName);
+                result = destroy_network_rules_for_vm_security_groups(conn, vmName);
+                break;
+            case EXEC:
+                result = destroy_network_rules_for_vm_jura(conn, vmName);
+        }
+        return result;
+    }
+
+    private boolean destroy_network_rules_for_vm_jura(Connect conn, String vmName) {
         String vif;
         List<InterfaceDef> intfs = getInterfaces(conn, vmName);
         if (intfs == null || intfs.size() == 0) {
             return false;
         }
 
-        for (InterfaceDef intf : intfs){
+        for (InterfaceDef intf : intfs) {
             vif = intf.getDevName();
 
             Script cmdFireWallClear = new Script(_juraPath, _timeout, s_logger);
@@ -5352,12 +5380,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (s_logger.isInfoEnabled()) {
                 s_logger.info("JURA -> " + cmdFireWallClear.toString());
             }
-            //      String result = cmdFireWallClear.execute();
-            //
-            //      if (result != null) {
-            //          return false;
-            //      }
-
+            if (_juraState == JuraState.EXEC) {
+                String result = cmdFireWallClear.execute();
+                if (result != null) {
+                    return false;
+                }
+            }
             Script cmdGatewayClear = new Script(_juraPath, _timeout, s_logger);
             cmdGatewayClear.add("gateway clear");
             cmdGatewayClear.add(vif);
@@ -5365,12 +5393,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (s_logger.isInfoEnabled()) {
                 s_logger.info("JURA -> " + cmdGatewayClear.toString());
             }
-            //      String result = cmdGatewayClear.execute();
-            //
-            //      if (result != null) {
-            //          return false;
-            //      }
-
+            if (_juraState == JuraState.EXEC) {
+                String result = cmdGatewayClear.execute();
+                if (result != null) {
+                    return false;
+                }
+            }
             Script cmdPeerClear = new Script(_juraPath, _timeout, s_logger);
             cmdPeerClear.add("peer clear");
             cmdPeerClear.add(vif);
@@ -5378,16 +5406,17 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (s_logger.isInfoEnabled()) {
                 s_logger.info("JURA -> " + cmdPeerClear.toString());
             }
-            //      String result = cmdPeerClear.execute();
-            //
-            //      if (result != null) {
-            //          return false;
-            //      }
+            if (_juraState == JuraState.EXEC) {
+                String result = cmdPeerClear.execute();
+                if (result != null) {
+                    return false;
+                }
+            }
         }
         return true;
     }
 
-    protected boolean destroy_network_rules_for_vm(Connect conn, String vmName) {
+    private boolean destroy_network_rules_for_vm_security_groups(Connect conn, String vmName) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5408,6 +5437,23 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             return false;
         }
         return true;
+    }
+
+    private boolean default_network_rules(Connect conn, String vmName, NicTO nic, Long vmId, String secIpStr, List<String> nicSecIps) {
+        boolean result = false;
+        switch (_juraState) {
+            case OFF:
+                result = default_network_rules_security_groups(conn, vmName, nic, vmId, secIpStr);
+                break;
+            case LOG:
+                default_network_rules_jura(conn, vmName, nic, nicSecIps);
+                result = default_network_rules_security_groups(conn, vmName, nic, vmId, secIpStr);
+                break;
+            case EXEC:
+                result = default_network_rules_jura(conn, vmName, nic, nicSecIps);
+                break;
+        }
+        return result;
     }
 
     private boolean default_network_rules_jura(Connect conn, String vmName, NicTO nic, List<String> nicSecIps) {
@@ -5433,11 +5479,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdPeerAdd.toString());
         }
-//        String result = cmdPeerAdd.execute();
-//
-//        if (result != null) {
-//            return false;
-//        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdPeerAdd.execute();
+            if (result != null) {
+                return false;
+            }
+        }
 
         Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
         cmdGatewayAdd.add("gateway set");
@@ -5447,11 +5494,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdGatewayAdd.toString());
         }
-//      String result = cmdGatewayAdd.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdGatewayAdd.execute();
+            if (result != null) {
+                return false;
+            }
+        }
 
         // Force a clear in case something wasn't cleaned up correctly.
         Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
@@ -5461,16 +5509,17 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallClear.toString());
         }
-//      String result = cmdFirewallClear.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallClear.execute();
+            if (result != null) {
+                return false;
+            }
+        }
 
         return true;
     }
 
-    protected boolean default_network_rules(Connect conn, String vmName, NicTO nic, Long vmId, String secIpStr) {
+    private boolean default_network_rules_security_groups(Connect conn, String vmName, NicTO nic, Long vmId, String secIpStr) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5503,7 +5552,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    protected boolean default_network_rules_for_systemvm_jura(Connect conn, String vmName, NicTO nic) {
+    private boolean default_network_rules_for_systemvm_jura(Connect conn, String vmName, NicTO nic) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5524,11 +5573,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdPeerAdd.toString());
         }
-//        String result = cmdPeerAdd.execute();
-//
-//        if (result != null) {
-//            return false;
-//        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdPeerAdd.execute();
+            if (result != null) {
+                return false;
+            }
+        }
 
         Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
         cmdGatewayAdd.add("gateway set");
@@ -5538,11 +5588,12 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdGatewayAdd.toString());
         }
-//      String result = cmdGatewayAdd.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdGatewayAdd.execute();
+            if (result != null) {
+                return false;
+            }
+        }
 
         // Force a clear in case something wasn't cleaned up correctly.
         Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
@@ -5553,16 +5604,16 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallClear.toString());
         }
-//      String result = cmdFirewallClear.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
-
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallClear.execute();
+            if (result != null) {
+                return false;
+            }
+        }
         return true;
     }
 
-    protected boolean default_network_rules_for_systemvm(String vmName) {
+    private boolean default_network_rules_for_systemvm_security_groups(String vmName) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5578,7 +5629,24 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private boolean add_network_rules_jura(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
+    private boolean add_network_rules(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
+        boolean result = false;
+        switch(_juraState) {
+            case OFF:
+                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, rules, vif, brname, secIps);
+                break;
+            case LOG:
+                add_network_rules_jura(vif, rules);
+                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, rules, vif, brname, secIps);
+                break;
+            case EXEC:
+                result = add_network_rules_jura(vif, rules);
+                break;
+        }
+        return result;
+    }
+
+    private boolean add_network_rules_jura(String vif, String rules) {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallAdd.add("firewall set");
         cmdFirewallAdd.add(vif);
@@ -5587,16 +5655,18 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
         }
-//      String result = cmdFirewallAdd.execute();
-//
-//      if (result != null) {
-//          return false;
-//      }
+
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallAdd.execute();
+            if (result != null) {
+                return false;
+            }
+        }
 
         return true;
     }
 
-    private boolean add_network_rules(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
+    private boolean add_network_rules_security_groups(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5623,7 +5693,57 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private boolean network_rules_vmSecondaryIp(String vmName, String secIp, String action) {
+    private boolean network_rules_vmSecondaryIp(Connect conn, String vmName, String secIp, String action, boolean addAction) {
+        boolean result = false;
+        switch (_juraState) {
+            case OFF:
+                result = network_rules_vmSecondaryIp_security_groups(vmName, secIp, action);
+                break;
+            case LOG:
+                network_rules_vmSecondaryIp_jura(conn, vmName, secIp, addAction);
+                result = network_rules_vmSecondaryIp_security_groups(vmName, secIp, action);
+                break;
+            case EXEC:
+                result = network_rules_vmSecondaryIp_jura(conn, vmName, secIp, addAction);
+                break;
+        }
+        return result;
+    }
+
+    private boolean network_rules_vmSecondaryIp_jura(Connect conn, String vmName, String secIp, boolean addAction) {
+        List<InterfaceDef> intfs = getInterfaces(conn, vmName);
+
+        if (intfs.size() == 0 || intfs.size() > 1) {
+            s_logger.error(intfs.size() + " interfaces were found on the virtual machine, dunno which one should get the secondary IP");
+            return false;
+        }
+
+        InterfaceDef intf = intfs.get(0);
+        String vif = intf.getDevName();
+        Script cmd = new Script(_juraPath, _timeout, s_logger);
+        if (addAction) {
+            cmd.add("peer add");
+        } else {
+            cmd.add("peer remove");
+        }
+        cmd.add(vif);
+        cmd.add(secIp);
+
+        if (s_logger.isInfoEnabled()) {
+            s_logger.info("JURA -> " + cmd.toString());
+        }
+
+        if (_juraState == JuraState.EXEC) {
+            String result = cmd.execute();
+            if (result != null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean network_rules_vmSecondaryIp_security_groups(String vmName, String secIp, String action) {
 
         if (!_canBridgeFirewall) {
             return false;
@@ -5643,6 +5763,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private boolean cleanup_rules() {
+        // Not needed for JURA
+        if (_juraState != JuraState.EXEC) {
+            return cleanup_rules_security_groups();
+        }
+        return true;
+    }
+
+    private boolean cleanup_rules_security_groups() {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5655,6 +5783,24 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
+    private String get_rule_logs_for_vms() {
+        String result = "";
+        switch(_juraState) {
+            case OFF:
+                result = get_rule_logs_for_vms_security_groups();
+                break;
+            case LOG:
+                get_rule_logs_for_vms_jura();
+                result = get_rule_logs_for_vms_security_groups();
+                break;
+            case EXEC:
+                // Should skip the command entirely. Will return JURA output to see what fails in CS on the controller.
+                result = get_rule_logs_for_vms_jura();
+                break;
+        }
+        return result;
+    }
+
     private String get_rule_logs_for_vms_jura() {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallAdd.add("firewall list --firewall");
@@ -5663,18 +5809,21 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
         }
         OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
-//        String result = cmdFirewallAdd.execute(parser);
-//        if (result == null) {
-//            if (s_logger.isInfoEnabled()) {
-//                s_logger.info("JURA output -> " + parser.getLines());
-//            }
-//            return parser.getLines();
-//        }
+
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallAdd.execute(parser);
+            if (result == null) {
+                if (s_logger.isInfoEnabled()) {
+                    s_logger.info("JURA output -> " + parser.getLines());
+                }
+                return parser.getLines();
+            }
+        }
 
         return null;
     }
 
-    private String get_rule_logs_for_vms() {
+    private String get_rule_logs_for_vms_security_groups() {
         Script cmd = new Script(_securityGroupPath, _timeout, s_logger);
         cmd.add("get_rule_logs_for_vms");
         OutputInterpreter.OneLineParser parser = new OutputInterpreter.OneLineParser();
@@ -5688,7 +5837,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private HashMap<String, Pair<Long, Long>> syncNetworkGroups(long id) {
         HashMap<String, Pair<Long, Long>> states = new HashMap<String, Pair<Long, Long>>();
 
-        get_rule_logs_for_vms_jura();
         String result = get_rule_logs_for_vms();
         s_logger.trace("syncNetworkGroups: id=" + id + " got: " + result);
         String[] rulelogs = result != null ? result.split(";") : new String[0];
@@ -5737,10 +5885,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
         try {
             conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
-            for (NicTO nic : vmSpec.getNics()) {
-                success &= default_network_rules_for_systemvm_jura(conn, cmd.getVmName(), nic);
+            if (_juraState != JuraState.OFF) {
+                for (NicTO nic : vmSpec.getNics()) {
+                    success &= default_network_rules_for_systemvm_jura(conn, cmd.getVmName(), nic);
+                }
             }
-            success = default_network_rules_for_systemvm(cmd.getVmName());
+            if (_juraState != JuraState.EXEC) {
+                success = default_network_rules_for_systemvm_security_groups(cmd.getVmName());
+            }
         } catch (LibvirtException e) {
             s_logger.error("Libvirt exception while executing NetworkRulesSystemVmCommand", e);
             success = false;
@@ -5750,7 +5902,15 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private Answer execute(NetworkRulesVmSecondaryIpCommand cmd) {
-        boolean success = network_rules_vmSecondaryIp(cmd.getVmName(), cmd.getVmSecIp(), cmd.getAction());
+        Connect conn;
+        boolean success = false;
+        try {
+            conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
+            success = network_rules_vmSecondaryIp(conn, cmd.getVmName(), cmd.getVmSecIp(), cmd.getAction(), cmd.getAddAction());
+        } catch (LibvirtException e) {
+            s_logger.error("Libvirt exception while executing NetworkRulesVmSecondaryIpCommand", e);
+        }
+
         return new Answer(cmd, success, "");
     }
 
