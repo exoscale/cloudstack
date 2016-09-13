@@ -5838,7 +5838,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         HashMap<String, Pair<Long, Long>> states = new HashMap<String, Pair<Long, Long>>();
 
         String result = get_rule_logs_for_vms();
-        s_logger.trace("syncNetworkGroups: id=" + id + " got: " + result);
+        s_logger.debug("syncNetworkGroups: id=" + id + " got: " + result);
         String[] rulelogs = result != null ? result.split(";") : new String[0];
         for (String rulesforvm : rulelogs) {
             String[] log = rulesforvm.split(",");

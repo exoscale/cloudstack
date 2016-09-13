@@ -746,8 +746,8 @@ public class Agent implements HandlerFactory, IAgentControl {
 
         @Override
         protected void runInContext() {
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("Scheduling " + (_request instanceof Response ? "Ping" : "Watch Task"));
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Scheduling " + (_request instanceof Response ? "Ping" : "Watch Task"));
             }
             try {
                 if (_request instanceof Response) {
