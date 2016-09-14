@@ -1996,8 +1996,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
 
                 IPAddressVO addr = addrs.get(0);
-                // TODO What is this?
-    //            addr.setSourceNat(sourceNat);
                 addr.setAllocatedTime(new Date());
                 addr.setAllocatedInDomainId(owner.getDomainId());
                 addr.setAllocatedToAccountId(owner.getId());
