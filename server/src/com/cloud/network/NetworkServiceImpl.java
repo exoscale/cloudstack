@@ -718,11 +718,11 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             DataCenter dc = _dcDao.findById(network.getDataCenterId());
 
             if (dc.getNetworkType() == NetworkType.Basic) {
-            VMInstanceVO vmi = (VMInstanceVO)vm;
+                VMInstanceVO vmi = (VMInstanceVO)vm;
                 podId = vmi.getPodIdToDeployIn();
-            if (podId == null) {
-                    throw new InvalidParameterValueException("vm pod id is null in Basic zone; can't decide the range for ip allocation");
-            }
+                if (podId == null) {
+                        throw new InvalidParameterValueException("vm pod id is null in Basic zone; can't decide the range for ip allocation");
+                }
             }
 //
 //            try {
