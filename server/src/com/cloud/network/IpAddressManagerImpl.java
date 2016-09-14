@@ -770,20 +770,18 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         addr.setAllocatedInDomainId(owner.getDomainId());
         addr.setAllocatedToAccountId(owner.getId());
         addr.setSystem(isSystem);
-                if (displayIp != null) {
-                    addr.setDisplay(displayIp);
-                }
+        if (displayIp != null) {
+            addr.setDisplay(displayIp);
+        }
 
         if (associate) {
             addr.setState(State.Associated);
             addr.setAssociatedTime(new Date());
+        } else if (assign) {
+            markPublicIpAsAllocated(addr);
+            addr.setState(IpAddress.State.Allocated);
         } else {
-            if (assign) {
-                markPublicIpAsAllocated(addr);
-            } else {
-                addr.setState(IpAddress.State.Allocating);
-            }
-            addr.setState(assign ? IpAddress.State.Allocated : IpAddress.State.Allocating);
+            addr.setState(IpAddress.State.Allocating);
         }
 
         if (vlanUse != VlanType.DirectAttached) {
