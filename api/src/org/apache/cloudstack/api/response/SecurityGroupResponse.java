@@ -77,6 +77,8 @@ public class SecurityGroupResponse extends BaseResponse implements ControlledVie
     private Set<ResourceTagResponse> tags;
 
     public SecurityGroupResponse() {
+        this.ingressRules = new LinkedHashSet<SecurityGroupRuleResponse>();
+        this.egressRules = new LinkedHashSet<SecurityGroupRuleResponse>();
         this.tags = new LinkedHashSet<ResourceTagResponse>();
     }
 
@@ -121,9 +123,6 @@ public class SecurityGroupResponse extends BaseResponse implements ControlledVie
     }
 
     public void addSecurityGroupIngressRule(SecurityGroupRuleResponse rule) {
-        if (this.ingressRules == null) {
-            this.ingressRules = new LinkedHashSet<>();
-        }
         this.ingressRules.add(rule);
     }
 
@@ -132,9 +131,6 @@ public class SecurityGroupResponse extends BaseResponse implements ControlledVie
     }
 
     public void addSecurityGroupEgressRule(SecurityGroupRuleResponse rule) {
-        if (this.egressRules == null) {
-            this.egressRules = new LinkedHashSet<>();
-        }
         this.egressRules.add(rule);
     }
 
