@@ -216,6 +216,9 @@ public class UserVmJoinDaoImpl extends GenericDaoBase<UserVmJoinVO, Long> implem
                 resp.setName(userVm.getSecurityGroupName());
                 resp.setDescription(userVm.getSecurityGroupDescription());
                 resp.setObjectName("securitygroup");
+                // Clear egress and ingress
+                resp.setSecurityGroupEgressRules(null);
+                resp.setSecurityGroupIngressRules(null);
                 if (userVm.getAccountType() == Account.ACCOUNT_TYPE_PROJECT) {
                     resp.setProjectId(userVm.getProjectUuid());
                     resp.setProjectName(userVm.getProjectName());
@@ -308,6 +311,9 @@ public class UserVmJoinDaoImpl extends GenericDaoBase<UserVmJoinVO, Long> implem
             resp.setName(uvo.getSecurityGroupName());
             resp.setDescription(uvo.getSecurityGroupDescription());
             resp.setObjectName("securitygroup");
+            // Clear egress and ingress
+            resp.setSecurityGroupEgressRules(null);
+            resp.setSecurityGroupIngressRules(null);
             if (uvo.getAccountType() == Account.ACCOUNT_TYPE_PROJECT) {
                 resp.setProjectId(uvo.getProjectUuid());
                 resp.setProjectName(uvo.getProjectName());
