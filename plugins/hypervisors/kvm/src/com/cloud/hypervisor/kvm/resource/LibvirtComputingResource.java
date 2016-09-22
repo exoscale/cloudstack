@@ -5524,7 +5524,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private String get_rule_logs_for_vms_jura() {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallAdd.add("firewall list --firewall");
+        cmdFirewallAdd.add("list --firewall");
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
