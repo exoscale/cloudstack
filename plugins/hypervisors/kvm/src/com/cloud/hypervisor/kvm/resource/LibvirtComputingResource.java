@@ -707,7 +707,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             throw new ConfigurationException("Unable to find the security_group.py");
         }
 
-        _juraPath = "jura";
+        _juraPath = "/usr/bin/jura";
 
         _juraState = JuraState.fromString((String) params.get("jura"));
 
