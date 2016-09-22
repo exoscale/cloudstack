@@ -75,15 +75,6 @@ import com.cloud.agent.api.NetworkRulesSystemVmCommand;
 import com.cloud.agent.api.NetworkRulesVmSecondaryIpCommand;
 import com.cloud.agent.api.NetworkUsageAnswer;
 import com.cloud.agent.api.NetworkUsageCommand;
-import com.cloud.agent.api.OvsCreateTunnelAnswer;
-import com.cloud.agent.api.OvsCreateTunnelCommand;
-import com.cloud.agent.api.OvsDestroyBridgeCommand;
-import com.cloud.agent.api.OvsDestroyTunnelCommand;
-import com.cloud.agent.api.OvsFetchInterfaceAnswer;
-import com.cloud.agent.api.OvsFetchInterfaceCommand;
-import com.cloud.agent.api.OvsSetupBridgeCommand;
-import com.cloud.agent.api.OvsVpcPhysicalTopologyConfigCommand;
-import com.cloud.agent.api.OvsVpcRoutingPolicyConfigCommand;
 import com.cloud.agent.api.PingCommand;
 import com.cloud.agent.api.PingRoutingCommand;
 import com.cloud.agent.api.PingRoutingWithNwGroupsCommand;
@@ -175,7 +166,6 @@ import com.cloud.network.Networks.BroadcastDomainType;
 import com.cloud.network.Networks.IsolationType;
 import com.cloud.network.Networks.RouterPrivateIpStrategy;
 import com.cloud.network.Networks.TrafficType;
-import com.cloud.network.PhysicalNetworkSetupInfo;
 import com.cloud.resource.ServerResource;
 import com.cloud.resource.ServerResourceBase;
 import com.cloud.storage.JavaStorageLayer;
@@ -1214,43 +1204,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return "";
     }
 
-    private boolean checkNetwork(String networkName) {
-        if (networkName == null) {
-            return true;
-        }
-
-        if (_bridgeType == BridgeType.OPENVSWITCH) {
-            return checkOvsNetwork(networkName);
-        } else {
-            return checkBridgeNetwork(networkName);
-        }
-    }
-
-    private boolean checkBridgeNetwork(String networkName) {
-        if (networkName == null) {
-            return true;
-        }
-
-        String name = matchPifFileInDirectory(networkName);
-
-        if (name == null || name.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    private boolean checkOvsNetwork(String networkName) {
-        s_logger.debug("Checking if network " + networkName + " exists as openvswitch bridge");
-        if (networkName == null) {
-            return true;
-        }
-
-        Script command = new Script("/bin/sh", _timeout);
-        command.add("-c");
-        command.add("ovs-vsctl br-exists " + networkName);
-        return "0".equals(command.execute(null));
-    }
 
     private boolean passCmdLine(String vmName, String cmdLine) throws InternalErrorException {
         final Script command = new Script(_patchViaSocketPath, 5 * 1000, s_logger);
@@ -1263,19 +1216,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             return false;
         }
         return true;
-    }
-
-    boolean isDirectAttachedNetwork(String type) {
-        if ("untagged".equalsIgnoreCase(type)) {
-            return true;
-        } else {
-            try {
-                Long.valueOf(type);
-            } catch (NumberFormatException e) {
-                return true;
-            }
-            return false;
-        }
     }
 
     protected String startVM(Connect conn, String vmName, String domainXML) throws LibvirtException, InternalErrorException {
@@ -1431,20 +1371,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((PvlanSetupCommand)cmd);
             } else if (cmd instanceof CheckOnHostCommand) {
                 return execute((CheckOnHostCommand)cmd);
-            } else if (cmd instanceof OvsFetchInterfaceCommand) {
-                return execute((OvsFetchInterfaceCommand)cmd);
-            } else if (cmd instanceof OvsSetupBridgeCommand) {
-                return execute((OvsSetupBridgeCommand)cmd);
-            } else if (cmd instanceof OvsDestroyBridgeCommand) {
-                return execute((OvsDestroyBridgeCommand)cmd);
-            } else if (cmd instanceof OvsCreateTunnelCommand) {
-                return execute((OvsCreateTunnelCommand)cmd);
-            } else if (cmd instanceof OvsDestroyTunnelCommand) {
-                return execute((OvsDestroyTunnelCommand)cmd);
-            } else if (cmd instanceof OvsVpcPhysicalTopologyConfigCommand) {
-                return execute((OvsVpcPhysicalTopologyConfigCommand) cmd);
-            } else if (cmd instanceof OvsVpcRoutingPolicyConfigCommand) {
-                return execute((OvsVpcRoutingPolicyConfigCommand) cmd);
             } else if (cmd instanceof MigrateWithStorageCommand) {
                 return execute((MigrateWithStorageCommand) cmd);
             } else if (cmd instanceof CancelMigrationCommand) {
@@ -1458,233 +1384,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
-    private OvsFetchInterfaceAnswer execute(OvsFetchInterfaceCommand cmd) {
-        String label = cmd.getLabel();
-        s_logger.debug("Will look for network with name-label:" + label);
-        try {
-            String ipadd = Script.runSimpleBashScript("ifconfig " + label + " | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'");
-            String mask = Script.runSimpleBashScript("ifconfig " + label + " | grep 'inet addr:' | cut -d: -f4");
-            String mac = Script.runSimpleBashScript("ifconfig " + label + " | grep HWaddr | awk -F \" \" '{print $5}'");
-            return new OvsFetchInterfaceAnswer(cmd, true, "Interface " + label
-                    + " retrieved successfully", ipadd, mask, mac);
-
-        } catch (Exception e) {
-            s_logger.warn("Caught execption when fetching interface", e);
-            return new OvsFetchInterfaceAnswer(cmd, false, "EXCEPTION:"
-                    + e.getMessage());
-        }
-
-    }
-
-    private Answer execute(OvsSetupBridgeCommand cmd) {
-        findOrCreateTunnelNetwork(cmd.getBridgeName());
-        configureTunnelNetwork(cmd.getNetworkId(), cmd.getHostId(),
-                cmd.getBridgeName());
-        s_logger.debug("OVS Bridge configured");
-        return new Answer(cmd, true, null);
-    }
-
-    private Answer execute(OvsDestroyBridgeCommand cmd) {
-        destroyTunnelNetwork(cmd.getBridgeName());
-        s_logger.debug("OVS Bridge destroyed");
-        return new Answer(cmd, true, null);
-    }
-
-    public Answer execute(OvsVpcPhysicalTopologyConfigCommand cmd) {
-
-        String bridge = cmd.getBridgeName();
-        try {
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("configure_ovs_bridge_for_network_topology");
-            command.add("--bridge", bridge);
-            command.add("--config", cmd.getVpcConfigInJson());
-
-            String result = command.execute();
-            if (result.equalsIgnoreCase("SUCCESS")) {
-                return new Answer(cmd, true, result);
-            } else {
-                return new Answer(cmd, false, result);
-            }
-        } catch  (Exception e) {
-            s_logger.warn("caught exception while updating host with latest routing polcies", e);
-            return new Answer(cmd, false, e.getMessage());
-        }
-    }
-
-    public Answer execute(OvsVpcRoutingPolicyConfigCommand cmd) {
-
-        try {
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("configure_ovs_bridge_for_routing_policies");
-            command.add("--bridge", cmd.getBridgeName());
-            command.add("--config", cmd.getVpcConfigInJson());
-
-            String result = command.execute();
-            if (result.equalsIgnoreCase("SUCCESS")) {
-                return new Answer(cmd, true, result);
-            } else {
-                return new Answer(cmd, false, result);
-            }
-        } catch  (Exception e) {
-            s_logger.warn("caught exception while updating host with latest VPC topology", e);
-            return new Answer(cmd, false, e.getMessage());
-        }
-    }
-
-    private synchronized void destroyTunnelNetwork(String bridge) {
-        try {
-            findOrCreateTunnelNetwork(bridge);
-            Script cmd = new Script(_ovsTunnelPath, _timeout, s_logger);
-            cmd.add("destroy_ovs_bridge");
-            cmd.add("--bridge", bridge);
-            String result = cmd.execute();
-            if (result != null) {
-                // TODO: Should make this error not fatal?
-                // Can Concurrent VM shutdown/migration/reboot events can cause
-                // this method
-                // to be executed on a bridge which has already been removed?
-                throw new CloudRuntimeException("Unable to remove OVS bridge " + bridge);
-            }
-            return;
-        } catch (Exception e) {
-            s_logger.warn("destroyTunnelNetwork failed:", e);
-            return;
-        }
-    }
-
-    private synchronized boolean findOrCreateTunnelNetwork(String nwName) {
-        try {
-            if (checkNetwork(nwName)) {
-                return true;
-            }
-            // if not found, create a new one
-            Map<String, String> otherConfig = new HashMap<String, String>();
-            otherConfig.put("ovs-host-setup", "");
-            Script.runSimpleBashScript("ovs-vsctl -- --may-exist add-br "
-                    + nwName + " -- set bridge " + nwName
-                    + " other_config:ovs-host-setup='-1'");
-            s_logger.debug("### KVM network for tunnels created:" + nwName);
-        } catch (Exception e) {
-            s_logger.warn("createTunnelNetwork failed", e);
-        }
-        return true;
-    }
-
-    private synchronized boolean configureTunnelNetwork(long networkId,
-            long hostId, String nwName) {
-        try {
-            findOrCreateTunnelNetwork(nwName);
-            String configuredHosts = Script
-                    .runSimpleBashScript("ovs-vsctl get bridge " + nwName
-                            + " other_config:ovs-host-setup");
-            boolean configured = false;
-            if (configuredHosts != null) {
-                String hostIdsStr[] = configuredHosts.split(",");
-                for (String hostIdStr : hostIdsStr) {
-                    if (hostIdStr.equals(((Long)hostId).toString())) {
-                        configured = true;
-                        break;
-                    }
-                }
-            }
-            if (!configured) {
-                Script cmd = new Script(_ovsTunnelPath, _timeout, s_logger);
-                cmd.add("setup_ovs_bridge");
-                cmd.add("--key", nwName);
-                cmd.add("--cs_host_id", ((Long)hostId).toString());
-                cmd.add("--bridge", nwName);
-                String result = cmd.execute();
-                if (result != null) {
-                    throw new CloudRuntimeException(
-                            "Unable to pre-configure OVS bridge " + nwName
-                            + " for network ID:" + networkId);
-                }
-            }
-        } catch (Exception e) {
-            s_logger.warn("createandConfigureTunnelNetwork failed", e);
-            return false;
-        }
-        return true;
-    }
-
-    private OvsCreateTunnelAnswer execute(OvsCreateTunnelCommand cmd) {
-        String bridge = cmd.getNetworkName();
-        try {
-            if (!findOrCreateTunnelNetwork(bridge)) {
-                s_logger.debug("Error during bridge setup");
-                return new OvsCreateTunnelAnswer(cmd, false,
-                        "Cannot create network", bridge);
-            }
-
-            configureTunnelNetwork(cmd.getNetworkId(), cmd.getFrom(),
-                    cmd.getNetworkName());
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("create_tunnel");
-            command.add("--bridge", bridge);
-            command.add("--remote_ip", cmd.getRemoteIp());
-            command.add("--key", cmd.getKey().toString());
-            command.add("--src_host", cmd.getFrom().toString());
-            command.add("--dst_host", cmd.getTo().toString());
-
-            String result = command.execute();
-            if (result != null) {
-                return new OvsCreateTunnelAnswer(cmd, true, result, null,
-                        bridge);
-            } else {
-                return new OvsCreateTunnelAnswer(cmd, false, result, bridge);
-            }
-        } catch (Exception e) {
-            s_logger.debug("Error during tunnel setup");
-            s_logger.warn("Caught execption when creating ovs tunnel", e);
-            return new OvsCreateTunnelAnswer(cmd, false, e.getMessage(), bridge);
-        }
-    }
-
-    private Answer execute(OvsDestroyTunnelCommand cmd) {
-        try {
-            if (!findOrCreateTunnelNetwork(cmd.getBridgeName())) {
-                s_logger.warn("Unable to find tunnel network for GRE key:"
-                        + cmd.getBridgeName());
-                return new Answer(cmd, false, "No network found");
-            }
-
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("destroy_tunnel");
-            command.add("--bridge", cmd.getBridgeName());
-            command.add("--iface_name", cmd.getInPortName());
-            String result = command.execute();
-            if (result == null) {
-                return new Answer(cmd, true, result);
-            } else {
-                return new Answer(cmd, false, result);
-            }
-        } catch (Exception e) {
-            s_logger.warn("caught execption when destroy ovs tunnel", e);
-            return new Answer(cmd, false, e.getMessage());
-        }
-    }
-
     private CheckNetworkAnswer execute(CheckNetworkCommand cmd) {
-        List<PhysicalNetworkSetupInfo> phyNics = cmd.getPhysicalNetworkInfoList();
-        String errMsg = null;
-        for (PhysicalNetworkSetupInfo nic : phyNics) {
-            if (!checkNetwork(nic.getGuestNetworkName())) {
-                errMsg = "Can not find network: " + nic.getGuestNetworkName();
-                break;
-            } else if (!checkNetwork(nic.getPrivateNetworkName())) {
-                errMsg = "Can not find network: " + nic.getPrivateNetworkName();
-                break;
-            } else if (!checkNetwork(nic.getPublicNetworkName())) {
-                errMsg = "Can not find network: " + nic.getPublicNetworkName();
-                break;
-            }
-        }
-
-        if (errMsg != null) {
-            return new CheckNetworkAnswer(cmd, false, errMsg);
-        } else {
-            return new CheckNetworkAnswer(cmd, true, null);
-        }
+        // With JURA, for the moment we don't check anything
+        return new CheckNetworkAnswer(cmd, true, null);
     }
 
     private CopyVolumeAnswer execute(CopyVolumeCommand cmd) {
