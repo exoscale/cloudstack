@@ -5077,8 +5077,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             vif = intf.getDevName();
 
             Script cmdFireWallClear = new Script(_juraPath, _timeout, s_logger);
-            cmdFireWallClear.add("firewall clear");
-            cmdFireWallClear.add(vif);
+            cmdFireWallClear.add("firewall", "clear", vif);
 
             if (s_logger.isInfoEnabled()) {
                 s_logger.info("JURA -> " + cmdFireWallClear.toString());
@@ -5091,8 +5090,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             }
             Script cmdGatewayClear = new Script(_juraPath, _timeout, s_logger);
-            cmdGatewayClear.add("gateway clear");
-            cmdGatewayClear.add(vif);
+            cmdGatewayClear.add("gateway", "clear", vif);
 
             if (s_logger.isInfoEnabled()) {
                 s_logger.info("JURA -> " + cmdGatewayClear.toString());
@@ -5105,8 +5103,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 }
             }
             Script cmdPeerClear = new Script(_juraPath, _timeout, s_logger);
-            cmdPeerClear.add("peer clear");
-            cmdPeerClear.add(vif);
+            cmdPeerClear.add("peer", "clear", vif);
 
             if (s_logger.isInfoEnabled()) {
                 s_logger.info("JURA -> " + cmdPeerClear.toString());
@@ -5174,8 +5171,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String vif = intf.getDevName();
 
         Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdPeerAdd.add("peer set");
-        cmdPeerAdd.add(vif);
+        cmdPeerAdd.add("peer", "set", vif);
         cmdPeerAdd.add(nic.getIp());
 
         if (nicSecIps != null) {
@@ -5196,8 +5192,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
 
         Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdGatewayAdd.add("gateway set");
-        cmdGatewayAdd.add(vif);
+        cmdGatewayAdd.add("gateway", "set", vif);
         cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
 
         if (s_logger.isInfoEnabled()) {
@@ -5213,8 +5208,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
         // Force a clear in case something wasn't cleaned up correctly.
         Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallClear.add("firewall clear");
-        cmdFirewallClear.add(vif);
+        cmdFirewallClear.add("firewall", "clear", vif);
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallClear.toString());
@@ -5278,8 +5272,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String vif = intf.getDevName();
 
         Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdPeerAdd.add("peer set");
-        cmdPeerAdd.add(vif);
+        cmdPeerAdd.add("peer", "set", vif);
         cmdPeerAdd.add(nic.getIp());
 
         if (s_logger.isInfoEnabled()) {
@@ -5294,8 +5287,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
 
         Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdGatewayAdd.add("gateway set");
-        cmdGatewayAdd.add(vif);
+        cmdGatewayAdd.add("gateway", "set", vif);
         cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
 
         if (s_logger.isInfoEnabled()) {
@@ -5311,9 +5303,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
         // Force a clear in case something wasn't cleaned up correctly.
         Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallClear.add("firewall set");
-        cmdFirewallClear.add(vif);
-        cmdFirewallClear.add("I,tcp,, I,udp,, I,icmp,,");
+        cmdFirewallClear.add("firewall", "set", vif);
+        cmdFirewallClear.add("I,tcp,,", "I,udp,,", "I,icmp,,");
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallClear.toString());
@@ -5365,8 +5356,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private boolean add_network_rules_jura(String vif, String rules) {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallAdd.add("firewall set");
-        cmdFirewallAdd.add(vif);
+        cmdFirewallAdd.add("firewall", "set", vif);
         cmdFirewallAdd.add(rules);
 
         if (s_logger.isInfoEnabled()) {
@@ -5441,12 +5431,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String vif = intf.getDevName();
         Script cmd = new Script(_juraPath, _timeout, s_logger);
         if (addAction) {
-            cmd.add("peer add");
+            cmd.add("peer", "add");
         } else {
-            cmd.add("peer remove");
+            cmd.add("peer", "remove");
         }
-        cmd.add(vif);
-        cmd.add(secIp);
+        cmd.add(vif, secIp);
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmd.toString());
@@ -5524,7 +5513,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private String get_rule_logs_for_vms_jura() {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallAdd.add("list --firewall");
+        cmdFirewallAdd.add("list", "--firewall");
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
