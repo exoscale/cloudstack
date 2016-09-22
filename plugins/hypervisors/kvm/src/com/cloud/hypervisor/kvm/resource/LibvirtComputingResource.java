@@ -5360,6 +5360,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             case EXEC:
                 result = destroy_network_rules_for_vm_jura(conn, vmName);
         }
+        s_logger.info("destroy_network_rules_for_vm return " + result);
         return result;
     }
 
@@ -5383,6 +5384,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (_juraState == JuraState.EXEC) {
                 String result = cmdFireWallClear.execute();
                 if (result != null) {
+                    s_logger.error(("destroy_network_rules_for_vm_jura #1 returns 0 because of result=" + result));
                     return false;
                 }
             }
@@ -5396,6 +5398,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (_juraState == JuraState.EXEC) {
                 String result = cmdGatewayClear.execute();
                 if (result != null) {
+                    s_logger.error(("destroy_network_rules_for_vm_jura #2 returns 0 because of result=" + result));
                     return false;
                 }
             }
@@ -5409,6 +5412,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             if (_juraState == JuraState.EXEC) {
                 String result = cmdPeerClear.execute();
                 if (result != null) {
+                    s_logger.error(("destroy_network_rules_for_vm_jura #3 returns 0 because of result=" + result));
                     return false;
                 }
             }
@@ -5453,12 +5457,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = default_network_rules_jura(conn, vmName, nic, nicSecIps);
                 break;
         }
+        s_logger.info("default_network_rules returns " + result);
         return result;
     }
 
     private boolean default_network_rules_jura(Connect conn, String vmName, NicTO nic, List<String> nicSecIps) {
         List<InterfaceDef> intfs = getInterfaces(conn, vmName);
         if (intfs.size() == 0 || intfs.size() < nic.getDeviceId()) {
+            s_logger.error("default_network_rules_jura #1 returns 0 because of intfs.size()=" + intfs.size() + ", nic.getDeviceId()=" + nic.getDeviceId());
             return false;
         }
 
@@ -5482,6 +5488,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdPeerAdd.execute();
             if (result != null) {
+                s_logger.error(("default_network_rules_jura #2 returns 0 because of result=" + result));
                 return false;
             }
         }
@@ -5497,6 +5504,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdGatewayAdd.execute();
             if (result != null) {
+                s_logger.error(("default_network_rules_jura #3 returns 0 because of result=" + result));
                 return false;
             }
         }
@@ -5512,6 +5520,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdFirewallClear.execute();
             if (result != null) {
+                s_logger.error(("default_network_rules_jura #4 returns 0 because of result=" + result));
                 return false;
             }
         }
@@ -5559,6 +5568,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
         List<InterfaceDef> intfs = getInterfaces(conn, vmName);
         if (intfs.size() == 0 || intfs.size() < nic.getDeviceId()) {
+            s_logger.error("default_network_rules_for_systemvm_jura #1 returns 0 because of intfs.size()=" + intfs.size() + ", nic.getDeviceId()=" + nic.getDeviceId());
             return false;
         }
 
@@ -5576,6 +5586,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdPeerAdd.execute();
             if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #2 returns 0 because of result=" + result);
                 return false;
             }
         }
@@ -5591,6 +5602,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdGatewayAdd.execute();
             if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #3 returns 0 because of result=" + result);
                 return false;
             }
         }
@@ -5607,9 +5619,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdFirewallClear.execute();
             if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #4 returns 0 because of result=" + result);
                 return false;
             }
         }
+        s_logger.info("default_network_rules_for_systemvm_jura returns 1");
         return true;
     }
 
@@ -5643,6 +5657,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = add_network_rules_jura(vif, rules);
                 break;
         }
+        s_logger.info("add_network_rules returns " + result);
         return result;
     }
 
@@ -5659,6 +5674,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmdFirewallAdd.execute();
             if (result != null) {
+                s_logger.error(("add_network_rules_jura returns null because of result=" + result));
                 return false;
             }
         }
@@ -5707,6 +5723,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = network_rules_vmSecondaryIp_jura(conn, vmName, secIp, addAction);
                 break;
         }
+        s_logger.info("network_rules_vmSecondaryIp returns " + result);
         return result;
     }
 
@@ -5736,6 +5753,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_juraState == JuraState.EXEC) {
             String result = cmd.execute();
             if (result != null) {
+                s_logger.error(("network_rules_vmSecondaryIp_jura returns 0 because of result=" + result));
                 return false;
             }
         }
@@ -5798,6 +5816,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = get_rule_logs_for_vms_jura();
                 break;
         }
+        s_logger.info("get_rule_logs_for_vms returns " + result);
         return result;
     }
 
@@ -5817,6 +5836,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                     s_logger.info("JURA output -> " + parser.getLines());
                 }
                 return parser.getLines();
+            } else {
+                s_logger.error(("get_rule_logs_for_vms_jura returns null because of result=" + result));
             }
         }
 
