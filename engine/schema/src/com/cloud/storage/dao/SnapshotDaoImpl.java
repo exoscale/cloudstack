@@ -67,6 +67,7 @@ public class SnapshotDaoImpl extends GenericDaoBase<SnapshotVO, Long> implements
     private SearchBuilder<SnapshotVO> AccountIdSearch;
     private SearchBuilder<SnapshotVO> InstanceIdSearch;
     private SearchBuilder<SnapshotVO> StatusSearch;
+    private GenericSearchBuilder<SnapshotVO, Long> CountStatusNotIn;
     private GenericSearchBuilder<SnapshotVO, Long> CountSnapshotsByAccount;
     @Inject
     ResourceTagDao _tagsDao;
@@ -169,6 +170,13 @@ public class SnapshotDaoImpl extends GenericDaoBase<SnapshotVO, Long> implements
         StatusSearch.and("volumeId", StatusSearch.entity().getVolumeId(), SearchCriteria.Op.EQ);
         StatusSearch.and("status", StatusSearch.entity().getState(), SearchCriteria.Op.IN);
         StatusSearch.done();
+
+        CountStatusNotIn = createSearchBuilder(Long.class);
+        CountStatusNotIn.select(null, Func.COUNT, null);
+        CountStatusNotIn.and("volumeId", CountStatusNotIn.entity().getVolumeId(), SearchCriteria.Op.EQ);
+        CountStatusNotIn.and("status", CountStatusNotIn.entity().getState(), SearchCriteria.Op.NIN);
+        CountStatusNotIn.and("removed", CountStatusNotIn.entity().getRemoved(), SearchCriteria.Op.NULL);
+        CountStatusNotIn.done();
 
         CountSnapshotsByAccount = createSearchBuilder(Long.class);
         CountSnapshotsByAccount.select(null, Func.COUNT, null);
@@ -290,6 +298,14 @@ public class SnapshotDaoImpl extends GenericDaoBase<SnapshotVO, Long> implements
         sc.setParameters("volumeId", volumeId);
         sc.setParameters("status", (Object[])status);
         return listBy(sc, null);
+    }
+
+    @Override
+    public Long countByStatusNotIn(long volumeId, Snapshot.State... status) {
+        SearchCriteria<Long> sc = this.CountStatusNotIn.create();
+        sc.setParameters("volumeId", volumeId);
+        sc.setParameters("status", (Object[])status);
+        return customSearch(sc, null).get(0);
     }
 
     @Override

@@ -55,6 +55,8 @@ public interface SnapshotDao extends GenericDao<SnapshotVO, Long>, StateDao<Snap
 
     List<SnapshotVO> listByStatus(long volumeId, Snapshot.State... status);
 
+    Long countByStatusNotIn(long volumeId, Snapshot.State... status);
+
     List<SnapshotVO> listAllByStatus(Snapshot.State... status);
 
 }

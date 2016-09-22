@@ -36,6 +36,7 @@ import javax.naming.ConfigurationException;
 
 import com.cloud.offering.DiskOffering;
 import com.cloud.server.ManagementService;
+import com.cloud.storage.Snapshot;
 import io.exo.cloudstack.restrictions.ServiceOfferingService;
 import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreDao;
 import org.apache.cloudstack.storage.datastore.db.TemplateDataStoreVO;
@@ -4773,8 +4774,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
             }
 
             // If target VM has associated root volume snapshots then don't allow restore of VM
-            List<SnapshotVO> snapshots = _snapshotDao.listByVolumeId(root.getId());
-            if (snapshots.size() > 0) {
+            if (_snapshotDao.countByStatusNotIn(root.getId(), Snapshot.State.Destroyed, Snapshot.State.Error) > 0) {
                 throw new InvalidParameterValueException("Unable to restore VM, please delete the root volume snapshots before.");
             }
 
