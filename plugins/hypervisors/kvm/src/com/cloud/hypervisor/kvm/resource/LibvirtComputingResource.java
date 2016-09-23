@@ -5338,16 +5338,17 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private boolean add_network_rules(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
         boolean result = false;
+        String newRules = rules.replace(" ", ";");
         switch(_juraState) {
             case OFF:
-                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, rules, vif, brname, secIps);
+                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
                 break;
             case LOG:
-                add_network_rules_jura(vif, rules);
-                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, rules, vif, brname, secIps);
+                add_network_rules_jura(vif, newRules);
+                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
                 break;
             case EXEC:
-                result = add_network_rules_jura(vif, rules);
+                result = add_network_rules_jura(vif, newRules);
                 break;
         }
         s_logger.info("add_network_rules returns " + result);
