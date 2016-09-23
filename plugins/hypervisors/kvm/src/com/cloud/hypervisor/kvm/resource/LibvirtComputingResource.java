@@ -5514,7 +5514,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private String get_rule_logs_for_vms_jura() {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallAdd.add("list", "--firewall");
+        cmdFirewallAdd.add("list", "--format", "cloudstack");
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
@@ -5553,16 +5553,31 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         String result = get_rule_logs_for_vms();
         // TODO put back debug or remove
         s_logger.info("syncNetworkGroups: id=" + id + " got: " + result);
-        String[] rulelogs = result != null ? result.split(";") : new String[0];
-        for (String rulesforvm : rulelogs) {
-            String[] log = rulesforvm.split(",");
-            if (log.length != 6) {
-                continue;
+        if (_juraState == JuraState.EXEC) {
+            String[] rulelogs = result != null ? result.split("\n") : new String[0];
+            for (String rulesforvm : rulelogs) {
+                String[] log = rulesforvm.split(",");
+                if (log.length != 3) {
+                    continue;
+                }
+                try {
+                    states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[2])));
+                } catch (NumberFormatException nfe) {
+                    states.put(log[0], new Pair<Long, Long>(-1L, -1L));
+                }
             }
-            try {
-                states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[5])));
-            } catch (NumberFormatException nfe) {
-                states.put(log[0], new Pair<Long, Long>(-1L, -1L));
+        } else {
+            String[] rulelogs = result != null ? result.split(";") : new String[0];
+            for (String rulesforvm : rulelogs) {
+                String[] log = rulesforvm.split(",");
+                if (log.length != 6) {
+                    continue;
+                }
+                try {
+                    states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[5])));
+                } catch (NumberFormatException nfe) {
+                    states.put(log[0], new Pair<Long, Long>(-1L, -1L));
+                }
             }
         }
         return states;
