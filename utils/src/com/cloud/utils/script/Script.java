@@ -155,8 +155,8 @@ public class Script implements Callable<String> {
             _logger.info("Script command: " + Arrays.toString(command));
         }
 
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("Executing: " + buildCommandLine(command));
+        if (_logger.isInfoEnabled()) {
+            _logger.info("Executing: " + buildCommandLine(command));
         }
 
         try {
