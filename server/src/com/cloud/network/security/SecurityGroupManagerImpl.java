@@ -395,8 +395,8 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
         }
 
         Collections.sort(affectedVms);
-        if (s_logger.isTraceEnabled()) {
-            s_logger.trace("Security Group Mgr: scheduling ruleset updates for " + affectedVms.size() + " vms");
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Security Group Mgr: scheduling ruleset updates for " + affectedVms.size() + " vms");
         }
         boolean locked = _workLock.lock(_globalWorkLockTimeout);
         if (!locked) {
@@ -404,8 +404,8 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
             return;
         }
 
-        if (s_logger.isTraceEnabled()) {
-            s_logger.trace("Security Group Mgr: acquired global work lock");
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Security Group Mgr: acquired global work lock");
         }
 
         try {
@@ -413,8 +413,8 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
                 @Override
                 public void doInTransactionWithoutResult(TransactionStatus status) {
                     for (Long vmId : affectedVms) {
-                        if (s_logger.isTraceEnabled()) {
-                            s_logger.trace("Security Group Mgr: scheduling ruleset update for " + vmId);
+                        if (s_logger.isDebugEnabled()) {
+                            s_logger.debug("Security Group Mgr: scheduling ruleset update for " + vmId);
                         }
                         VmRulesetLogVO log = null;
                         SecurityGroupWorkVO work = null;
@@ -433,8 +433,8 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
                         if (work == null) {
                             work = new SecurityGroupWorkVO(vmId, null, null, SecurityGroupWork.Step.Scheduled, null);
                             work = _workDao.persist(work);
-                            if (s_logger.isTraceEnabled()) {
-                                s_logger.trace("Security Group Mgr: created new work item for " + vmId + "; id = " + work.getId());
+                            if (s_logger.isDebugEnabled()) {
+                                s_logger.debug("Security Group Mgr: created new work item for " + vmId + "; id = " + work.getId());
                             }
                         }
 
@@ -449,8 +449,8 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
             }
         } finally {
             _workLock.unlock();
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("Security Group Mgr: released global work lock");
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Security Group Mgr: released global work lock");
             }
         }
     }
@@ -948,13 +948,13 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
 
     @DB
     public void work() {
-        if (s_logger.isTraceEnabled()) {
-            s_logger.trace("Checking the database");
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Checking the database");
         }
         final SecurityGroupWorkVO work = _workDao.take(_serverId);
         if (work == null) {
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("Security Group work: no work found");
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Security Group work: no work found");
             }
             return;
         }
@@ -1041,7 +1041,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
     @DB
     public boolean addInstanceToGroups(final Long userVmId, final List<Long> groups) {
         if (!isVmSecurityGroupEnabled(userVmId)) {
-            s_logger.trace("User vm " + userVmId + " is not security group enabled, not adding it to security group");
+            s_logger.debug("User vm " + userVmId + " is not security group enabled, not adding it to security group");
             return false;
         }
         if (groups != null && !groups.isEmpty()) {
@@ -1089,7 +1089,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
     @DB
     public void removeInstanceFromGroups(final long userVmId) {
         if (_securityGroupVMMapDao.countSGForVm(userVmId) < 1) {
-            s_logger.trace("No security groups found for vm id=" + userVmId + ", returning");
+            s_logger.debug("No security groups found for vm id=" + userVmId + ", returning");
             return;
         }
         Transaction.execute(new TransactionCallbackNoReturn() {
@@ -1286,18 +1286,18 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
         }
 
         if (VirtualMachine.State.isVmStarted(oldState, event, newState)) {
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("Security Group Mgr: handling start of vm id" + vm.getId());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Security Group Mgr: handling start of vm id" + vm.getId());
             }
             handleVmStarted((VMInstanceVO)vm);
         } else if (VirtualMachine.State.isVmStopped(oldState, event, newState)) {
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("Security Group Mgr: handling stop of vm id" + vm.getId());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Security Group Mgr: handling stop of vm id" + vm.getId());
             }
             handleVmStopped((VMInstanceVO)vm);
         } else if (VirtualMachine.State.isVmMigrated(oldState, event, newState)) {
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("Security Group Mgr: handling migration of vm id" + vm.getId());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("Security Group Mgr: handling migration of vm id" + vm.getId());
             }
             handleVmMigrated((VMInstanceVO)vm);
         }

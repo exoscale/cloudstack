@@ -137,13 +137,15 @@ public class SecurityGroupManagerImpl2 extends SecurityGroupManagerImpl {
 
     @Override
     public void work() {
-        s_logger.trace("Checking the work queue");
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Checking the work queue");
+        }
         List<SecurityGroupWork> workItems;
         try {
             workItems = _workQueue.getWork(1);
             for (SecurityGroupWork work : workItems) {
-                if (s_logger.isTraceEnabled()) {
-                    s_logger.trace("Processing " + work.getInstanceId());
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("Processing " + work.getInstanceId());
                 }
 
                 try {
@@ -170,8 +172,8 @@ public class SecurityGroupManagerImpl2 extends SecurityGroupManagerImpl {
         UserVm vm = _userVMDao.findById(userVmId);
 
         if (vm != null && vm.getState() == State.Running) {
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("SecurityGroupManager v2: found vm, " + userVmId + " state=" + vm.getState());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("SecurityGroupManager v2: found vm, " + userVmId + " state=" + vm.getState());
             }
             Map<PortAndProto, Set<String>> ingressRules = generateRulesForVM(userVmId, SecurityRuleType.IngressRule);
             Map<PortAndProto, Set<String>> egressRules = generateRulesForVM(userVmId, SecurityRuleType.EgressRule);
@@ -199,8 +201,8 @@ public class SecurityGroupManagerImpl2 extends SecurityGroupManagerImpl {
                 Commands cmds = new Commands(cmd);
                 try {
                     _agentMgr.send(agentId, cmds, _answerListener);
-                    if (s_logger.isTraceEnabled()) {
-                        s_logger.trace("SecurityGroupManager v2: sent ruleset updates for " + vm.getInstanceName() + " curr queue size=" + _workQueue.size());
+                    if (s_logger.isDebugEnabled()) {
+                        s_logger.debug("SecurityGroupManager v2: sent ruleset updates for " + vm.getInstanceName() + " curr queue size=" + _workQueue.size());
                     }
                 } catch (AgentUnavailableException e) {
                     s_logger.debug("Unable to send updates for vm: " + userVmId + "(agentid=" + agentId + ")");
