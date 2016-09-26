@@ -5304,7 +5304,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         // Force a clear in case something wasn't cleaned up correctly.
         Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallClear.add("firewall", "set", vif);
-        cmdFirewallClear.add("I,tcp,,", "I,udp,,", "I,icmp,,");
+        // Short version for firewall fully open
+        cmdFirewallClear.add("I,ip,,");
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallClear.toString());
