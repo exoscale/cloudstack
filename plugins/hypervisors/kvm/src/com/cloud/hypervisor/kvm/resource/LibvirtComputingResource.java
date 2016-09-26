@@ -195,6 +195,8 @@ import com.cloud.vm.DiskProfile;
 import com.cloud.vm.VirtualMachine;
 import com.cloud.vm.VirtualMachine.PowerState;
 import com.cloud.vm.VirtualMachine.State;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.cloudstack.storage.command.RevertSnapshotCommand;
 import org.apache.cloudstack.storage.command.StorageSubSystemCommand;
 import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
@@ -5345,21 +5347,22 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
                 break;
             case LOG:
-                add_network_rules_jura(vif, newRules);
+                add_network_rules_jura(vif, newRules, seq);
                 result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
                 break;
             case EXEC:
-                result = add_network_rules_jura(vif, newRules);
+                result = add_network_rules_jura(vif, newRules, seq);
                 break;
         }
         s_logger.info("add_network_rules returns " + result);
         return result;
     }
 
-    private boolean add_network_rules_jura(String vif, String rules) {
+    private boolean add_network_rules_jura(String vif, String rules, String seq) {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallAdd.add("firewall", "set", vif);
         cmdFirewallAdd.add(rules);
+        cmdFirewallAdd.add("--data", "SeqNum"+seq);
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
@@ -5515,7 +5518,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private String get_rule_logs_for_vms_jura() {
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
-        cmdFirewallAdd.add("list", "--format", "cloudstack");
+        cmdFirewallAdd.add("list", "--format", "json");
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdFirewallAdd.toString());
@@ -5548,6 +5551,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return null;
     }
 
+    /*
+    Should return a map with the key being the vm's name, and a pair containing the VM id with the seq number of the security group rules.
+     */
     private HashMap<String, Pair<Long, Long>> syncNetworkGroups(long id) {
         HashMap<String, Pair<Long, Long>> states = new HashMap<String, Pair<Long, Long>>();
 
@@ -5555,19 +5561,25 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         // TODO put back debug or remove
         s_logger.info("syncNetworkGroups: id=" + id + " got: " + result);
         if (_juraState == JuraState.EXEC) {
-            String[] rulelogs = result != null ? result.split("\n") : new String[0];
-            for (String rulesforvm : rulelogs) {
-                String[] log = rulesforvm.split(",");
-                if (log.length != 3) {
-                    continue;
-                }
-                try {
-                    states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[2])));
-                } catch (NumberFormatException nfe) {
-                    states.put(log[0], new Pair<Long, Long>(-1L, -1L));
+            Gson gson = new Gson();
+            java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
+            Map<String, JuraNetwork> juraNetworks = gson.fromJson(result, type);
+            for (JuraNetwork juraNet : juraNetworks.values()) {
+                if (juraNet.getDomainName() != null && juraNet.getDomainName().startsWith("i-")) {
+                    try {
+                        String[] domainName = juraNet.getDomainName().split("-");
+                        Long vmId = Long.parseLong(domainName[2]);
+                        Long seqNum = Long.parseLong(juraNet.getRules().getData() == null ? "0" : juraNet.getRules().getData().substring(6));
+                        states.put(juraNet.getDomainName(), new Pair<>(vmId, seqNum));
+                    } catch (NumberFormatException nfe) {
+                        states.put(juraNet.getDomainName(), new Pair<>(-1L, -1L));
+                    }
                 }
             }
         } else {
+            // security_groups.py output parsing
+            // Sample output is i-3-5-DEV,5,192.0.2.103,4,bb38d127218745fafc62d4fcd261f0eb,1
+            // What's returned: i-3-5-DEV:<5,1>
             String[] rulelogs = result != null ? result.split(";") : new String[0];
             for (String rulesforvm : rulelogs) {
                 String[] log = rulesforvm.split(",");
