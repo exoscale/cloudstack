@@ -552,6 +552,8 @@ public class StorageManagerImpl extends ManagerBase implements StorageManager, C
                 }
             }
             if (pool == null) {
+                // TODO TO be removed
+                s_logger.debug("EIP: createLocalStorage with pInfo.getHost()=" + (pInfo.getHost() == null ? "null" : pInfo.getHost()) + ", pInfo.getUuid()=" + (pInfo.getUuid() == null ? "null" : pInfo.getUuid()));
                 //the path can be different, but if they have the same uuid, assume they are the same storage
                 pool = _storagePoolDao.findPoolByHostPath(host.getDataCenterId(), host.getPodId(), pInfo.getHost(), null,
                         pInfo.getUuid());
