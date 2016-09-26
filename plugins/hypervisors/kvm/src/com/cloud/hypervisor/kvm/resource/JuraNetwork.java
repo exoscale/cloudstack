@@ -18,21 +18,19 @@ package com.cloud.hypervisor.kvm.resource;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.UUID;
-
 public class JuraNetwork {
-    @SerializedName("DomainUUID") private UUID domainUUID;
+    @SerializedName("DomainUUID") private String domainUUID;
     @SerializedName("DomainName") private String domainName;
     @SerializedName("MAC") private String mac;
     @SerializedName("Peers") private String[] peers;
     @SerializedName("Gateways") private String[] gateways;
     @SerializedName("Firewall") private JuraFirewallRule rules;
 
-    public UUID getDomainUUID() {
+    public String getDomainUUID() {
         return domainUUID;
     }
 
-    public void setDomainUUID(UUID domainUUID) {
+    public void setDomainUUID(String domainUUID) {
         this.domainUUID = domainUUID;
     }
 
