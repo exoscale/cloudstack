@@ -5558,8 +5558,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         HashMap<String, Pair<Long, Long>> states = new HashMap<String, Pair<Long, Long>>();
 
         String result = get_rule_logs_for_vms();
-        // TODO put back debug or remove
-        s_logger.info("syncNetworkGroups: id=" + id + " got: " + result);
         if (_juraState == JuraState.EXEC) {
             Gson gson = new Gson();
             java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
