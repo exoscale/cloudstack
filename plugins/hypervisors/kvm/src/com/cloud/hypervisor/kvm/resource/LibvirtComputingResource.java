@@ -314,6 +314,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
+    private String _virtualRouterSecondaryIp = "203.0.113.254";
+
     private String _ovsPvlanDhcpHostPath;
     private String _ovsPvlanVmPath;
     private String _routerProxyPath;
@@ -5276,6 +5278,11 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
         cmdPeerAdd.add("peer", "set", vif);
         cmdPeerAdd.add(nic.getIp());
+
+        // If it's a virtual router, add a secondary IP
+        if (vmName.startsWith("r-")) {
+            cmdPeerAdd.add(_virtualRouterSecondaryIp);
+        }
 
         if (s_logger.isInfoEnabled()) {
             s_logger.info("JURA -> " + cmdPeerAdd.toString());
