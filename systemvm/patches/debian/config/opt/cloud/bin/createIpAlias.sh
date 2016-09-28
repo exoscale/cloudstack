@@ -41,6 +41,7 @@ fi
 cp "$PORTS_CONF" "$PORTS_CONF_BAK"
 
 domain=$(echo "$CMDLINE" | grep -o " domain=.* " | sed -e 's/domain=//' | awk '{print $1}')
+domain=${domain:-cloudstack}
 
 setup_apache2() {
   local ip=$1
