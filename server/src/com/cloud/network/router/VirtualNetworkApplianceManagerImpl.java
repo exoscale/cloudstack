@@ -3009,7 +3009,7 @@ public class VirtualNetworkApplianceManagerImpl extends ManagerBase implements V
                 try {
                     if (network.getTrafficType() == TrafficType.Guest && network.getGuestType() == GuestType.Shared) {
                         _podDao.findById(vm.getPodIdToDeployIn());
-                        final Account caller = CallContext.current().getCallingAccount();
+                        final Account caller = _accountMgr.getAccount(Account.ACCOUNT_ID_SYSTEM);
                         final List<VlanVO> vlanList = _vlanDao.listVlansByNetworkIdAndGateway(network.getId(), nic.getGateway());
                         final List<Long> vlanDbIdList = new ArrayList<Long>();
                         for (final VlanVO vlan : vlanList) {
@@ -3034,7 +3034,7 @@ public class VirtualNetworkApplianceManagerImpl extends ManagerBase implements V
                 }
                 //this means we did not create a ip alis on the router.
                 final NicIpAliasVO alias =
-                        new NicIpAliasVO(domr_guest_nic.getId(), routerAliasIp, router.getId(), CallContext.current().getCallingAccountId(), network.getDomainId(),
+                        new NicIpAliasVO(domr_guest_nic.getId(), routerAliasIp, router.getId(), Account.ACCOUNT_ID_SYSTEM, network.getDomainId(),
                                 nic.getNetworkId(), nic.getGateway(), nic.getNetmask());
                 alias.setAliasCount((routerPublicIP.getIpMacAddress()));
                 _nicIpAliasDao.persist(alias);
@@ -3665,8 +3665,8 @@ public class VirtualNetworkApplianceManagerImpl extends ManagerBase implements V
         ipList.add(new DhcpTO(router_guest_nic.getIp4Address(), router_guest_nic.getGateway(), router_guest_nic.getNetmask(), startIpOfSubnet));
         for (final NicIpAliasVO ipAliasVO : ipAliasVOList) {
             final DhcpTO DhcpTO = new DhcpTO(ipAliasVO.getIp4Address(), ipAliasVO.getGateway(), ipAliasVO.getNetmask(), ipAliasVO.getStartIpOfSubnet());
-            if (s_logger.isTraceEnabled()) {
-                s_logger.trace("configDnsMasq : adding ip {" + DhcpTO.getGateway() + ", " + DhcpTO.getNetmask() + ", " + DhcpTO.getRouterIp() + ", " +
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("configDnsMasq : adding ip {" + DhcpTO.getGateway() + ", " + DhcpTO.getNetmask() + ", " + DhcpTO.getRouterIp() + ", " +
                         DhcpTO.getStartIpOfSubnet() + "}");
             }
             ipList.add(DhcpTO);
