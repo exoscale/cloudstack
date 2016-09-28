@@ -921,7 +921,7 @@ setup_router() {
         done
       fi
   fi
-  
+
   if [ -n "$ETH2_IP" -a "$RROUTER" == "1" ]
   then
     setup_redundant_router
@@ -1071,6 +1071,15 @@ EOF
 setup_dhcpsrvr() {
   log_it "Setting up dhcp server system vm"
   setup_common eth0 eth1
+
+  cat >> /etc/network/interfaces <<EOF
+auto eth0:eip
+iface eth0:eip inet static
+  address 203.0.113.254
+  netmask 255.255.255.255
+EOF
+  ifup eth0:eip
+
   setup_dnsmasq
   setup_apache2 $ETH0_IP
 
