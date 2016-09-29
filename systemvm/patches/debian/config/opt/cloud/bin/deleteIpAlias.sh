@@ -28,16 +28,6 @@ then
     exit 1
 fi
 
-remove_apache_config() {
-local ip=$1
- logger -t cloud "removing apache web server config for $ip"
- rm -f "/etc/apache2/sites-available/ipAlias.${ip}.meta-data"
- rm -f "/etc/apache2/sites-available/ipAlias.${ip}-ssl.meta-data"
- rm -f "/etc/apache2/conf.d/ports.${ip}.meta-data.conf"
- rm -f "/etc/apache2/sites-enabled/ipAlias.${ip}-ssl.meta-data"
- rm -f "/etc/apache2/sites-enabled/ipAlias.${ip}.meta-data"
-}
-
 var="$1"
 cert="/root/.ssh/id_rsa.cloud"
 
@@ -47,11 +37,8 @@ do
  alias_count=$( echo $var1 | cut -f1 -d ":" )
  routerip=$( echo $var1 | cut -f2 -d ":" )
  ifconfig eth0:$alias_count  down
- remove_apache_config "$routerip"
  var=$( echo $var | sed "s/${var1}-//" )
 done
-#restarting the apache server for the config to take effect.
-service apache2 restart
 
 releaseLockFile $lock $locked
 

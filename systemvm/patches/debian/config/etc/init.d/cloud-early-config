@@ -804,11 +804,11 @@ setup_apache2() {
   clean_ipalias_config
   log_it "Setting up apache web server"
   local ip=$1
-  [ -f /etc/apache2/sites-available/default ] && sed -i -e "s/<VirtualHost.*>/<VirtualHost $ip:80>/" /etc/apache2/sites-available/default
-  [ -f /etc/apache2/sites-available/default-ssl ] && sed -i -e "s/<VirtualHost.*>/<VirtualHost $ip:443>/" /etc/apache2/sites-available/default-ssl
-  [ -f /etc/apache2/ports.conf ] && sed -i -e "s/Listen .*:80/Listen $ip:80/g" /etc/apache2/ports.conf
-  [ -f /etc/apache2/ports.conf ] && sed -i -e "s/Listen .*:443/Listen $ip:443/g" /etc/apache2/ports.conf
-  [ -f /etc/apache2/ports.conf ] && sed -i -e "s/NameVirtualHost .*:80/NameVirtualHost $ip:80/g" /etc/apache2/ports.conf
+  [ -f /etc/apache2/sites-available/default ] && sed -i -e "s/<VirtualHost.*>/<VirtualHost *:80>/" /etc/apache2/sites-available/default
+  [ -f /etc/apache2/sites-available/default-ssl ] && sed -i -e "s/<VirtualHost.*>/<VirtualHost *:443>/" /etc/apache2/sites-available/default-ssl
+  [ -f /etc/apache2/ports.conf ] && sed -i -e "s/Listen .*:80/Listen 80/g" /etc/apache2/ports.conf
+  [ -f /etc/apache2/ports.conf ] && sed -i -e "s/Listen .*:443/Listen 443/g" /etc/apache2/ports.conf
+  [ -f /etc/apache2/ports.conf ] && sed -i -e "/NameVirtualHost .*:80/d" /etc/apache2/ports.conf
   [ -f /etc/apache2/conf.d/security ] && sed -i -e "s/^ServerTokens .*/ServerTokens Prod/g" /etc/apache2/conf.d/security
   [ -f /etc/apache2/conf.d/security ] && sed -i -e "s/^ServerSignature .*/ServerSignature Off/g" /etc/apache2/conf.d/security
 
