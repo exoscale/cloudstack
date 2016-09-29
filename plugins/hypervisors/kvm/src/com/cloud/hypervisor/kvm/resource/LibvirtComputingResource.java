@@ -5279,8 +5279,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         cmdPeerAdd.add("peer", "set", vif);
         cmdPeerAdd.add(nic.getIp());
 
-        // If it's a virtual router, add a secondary IP
-        if (vmName.startsWith("r-")) {
+        // If it's a virtual router, add a secondary IP on the default nic
+        if (vmName.startsWith("r-") && nic.isDefaultNic()) {
             cmdPeerAdd.add(_virtualRouterSecondaryIp);
         }
 
