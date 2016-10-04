@@ -5066,7 +5066,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             case EXEC:
                 result = destroy_network_rules_for_vm_jura(conn, vmName);
         }
-        s_logger.info("destroy_network_rules_for_vm return " + result);
+        s_logger.debug("destroy_network_rules_for_vm return " + result);
         return result;
     }
 
@@ -5083,8 +5083,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             Script cmdFireWallClear = new Script(_juraPath, _timeout, s_logger);
             cmdFireWallClear.add("firewall", "clear", vif);
 
-            if (s_logger.isInfoEnabled()) {
-                s_logger.info("JURA -> " + cmdFireWallClear.toString());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("JURA -> " + cmdFireWallClear.toString());
             }
             if (_juraState == JuraState.EXEC) {
                 String result = cmdFireWallClear.execute();
@@ -5096,8 +5096,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             Script cmdGatewayClear = new Script(_juraPath, _timeout, s_logger);
             cmdGatewayClear.add("gateway", "clear", vif);
 
-            if (s_logger.isInfoEnabled()) {
-                s_logger.info("JURA -> " + cmdGatewayClear.toString());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("JURA -> " + cmdGatewayClear.toString());
             }
             if (_juraState == JuraState.EXEC) {
                 String result = cmdGatewayClear.execute();
@@ -5109,8 +5109,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             Script cmdPeerClear = new Script(_juraPath, _timeout, s_logger);
             cmdPeerClear.add("peer", "clear", vif);
 
-            if (s_logger.isInfoEnabled()) {
-                s_logger.info("JURA -> " + cmdPeerClear.toString());
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("JURA -> " + cmdPeerClear.toString());
             }
             if (_juraState == JuraState.EXEC) {
                 String result = cmdPeerClear.execute();
@@ -5160,7 +5160,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = default_network_rules_jura(conn, vmName, nic, nicSecIps);
                 break;
         }
-        s_logger.info("default_network_rules returns " + result);
         return result;
     }
 
@@ -5184,8 +5183,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             }
         }
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdPeerAdd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdPeerAdd.toString());
         }
         if (_juraState == JuraState.EXEC) {
             String result = cmdPeerAdd.execute();
@@ -5199,8 +5198,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         cmdGatewayAdd.add("gateway", "set", vif);
         cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdGatewayAdd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdGatewayAdd.toString());
         }
         if (_juraState == JuraState.EXEC) {
             String result = cmdGatewayAdd.execute();
@@ -5214,8 +5213,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallClear.add("firewall", "clear", vif);
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdFirewallClear.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallClear.toString());
         }
         if (_juraState == JuraState.EXEC) {
             String result = cmdFirewallClear.execute();
@@ -5284,8 +5283,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             cmdPeerAdd.add(_virtualRouterSecondaryIp);
         }
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdPeerAdd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdPeerAdd.toString());
         }
         if (_juraState == JuraState.EXEC) {
             String result = cmdPeerAdd.execute();
@@ -5299,8 +5298,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         cmdGatewayAdd.add("gateway", "set", vif);
         cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdGatewayAdd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdGatewayAdd.toString());
         }
         if (_juraState == JuraState.EXEC) {
             String result = cmdGatewayAdd.execute();
@@ -5316,8 +5315,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         // Short version for firewall fully open
         cmdFirewallClear.add("I,ip,,");
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdFirewallClear.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallClear.toString());
         }
         if (_juraState == JuraState.EXEC) {
             String result = cmdFirewallClear.execute();
@@ -5326,7 +5325,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return false;
             }
         }
-        s_logger.info("default_network_rules_for_systemvm_jura returns 1");
         return true;
     }
 
@@ -5361,7 +5359,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = add_network_rules_jura(vif, newRules, seq);
                 break;
         }
-        s_logger.info("add_network_rules returns " + result);
         return result;
     }
 
@@ -5371,8 +5368,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         cmdFirewallAdd.add(rules);
         cmdFirewallAdd.add("--data", "SeqNum"+seq);
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdFirewallAdd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallAdd.toString());
         }
 
         if (_juraState == JuraState.EXEC) {
@@ -5427,7 +5424,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = network_rules_vmSecondaryIp_jura(conn, vmName, secIp, addAction);
                 break;
         }
-        s_logger.info("network_rules_vmSecondaryIp returns " + result);
         return result;
     }
 
@@ -5449,8 +5445,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
         cmd.add(vif, secIp);
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmd.toString());
         }
 
         if (_juraState == JuraState.EXEC) {
@@ -5519,7 +5515,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = get_rule_logs_for_vms_jura();
                 break;
         }
-        s_logger.info("get_rule_logs_for_vms returns " + result);
         return result;
     }
 
@@ -5527,16 +5522,16 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallAdd.add("list", "--format", "json");
 
-        if (s_logger.isInfoEnabled()) {
-            s_logger.info("JURA -> " + cmdFirewallAdd.toString());
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallAdd.toString());
         }
         OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
 
         if (_juraState == JuraState.EXEC) {
             String result = cmdFirewallAdd.execute(parser);
             if (result == null) {
-                if (s_logger.isInfoEnabled()) {
-                    s_logger.info("JURA output -> " + parser.getLines());
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("JURA output -> " + parser.getLines());
                 }
                 return parser.getLines();
             } else {

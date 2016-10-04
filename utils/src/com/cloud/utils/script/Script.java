@@ -35,7 +35,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -150,14 +149,6 @@ public class Script implements Callable<String> {
 
     public String execute(OutputInterpreter interpreter) {
         String[] command = _command.toArray(new String[_command.size()]);
-
-        if (command[0].equals("/usr/share/cloudstack-common/scripts/vm/network/security_group.py")) {
-            _logger.info("Script command: " + Arrays.toString(command));
-        }
-
-        if (_logger.isInfoEnabled()) {
-            _logger.info("Executing: " + buildCommandLine(command));
-        }
 
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
