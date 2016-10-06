@@ -56,8 +56,12 @@ def create_snapshot(disk_path, domain, snapshot_file_path):
 
     # Checking if domain already have a snapshot
     if os.path.exists(snapshot_file_path):
-        logging.error('A snapshot already exists for domain %s', domain)
-        raise Exception('A snapshot already exists for this domain')
+        logging.info('A snapshot already exists for domain %s', domain)
+        logging.info('Trying to commit existing snapshot for domain %s', domain)
+        destroy_snapshot(disk_path, domain, snapshot_file_path)
+        if os.path.exists(snapshot_file_path):
+            logging.error('An old snapshot already exists for domain %s but could not be removed', domain)
+            raise Exception('An old snapshot already exists for this domain')
 
     logging.info('Snapshot file will be %s', snapshot_file_path)
 
@@ -191,6 +195,7 @@ def backup_snapshot(disk_path, domain, backupdir, backup_file_name, snapshot_fil
         logging.error('An error occured during snapshot backup')
         logging.error('%s', e)
         logging.error('Destroying snapshot')
+        os.remove(dst)
         destroy_snapshot(disk_path, domain, snapshot_file_path)
         raise
 
