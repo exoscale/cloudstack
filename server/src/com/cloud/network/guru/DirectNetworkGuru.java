@@ -296,14 +296,15 @@ public class DirectNetworkGuru extends AdapterBase implements NetworkGuru {
                         }
 
                         //unassign nic secondary ip address
-                        s_logger.debug("remove nic " + nic.getId() + " secondary ip ");
-                        List<String> nicSecIps = null;
-                        nicSecIps = _nicSecondaryIpDao.getSecondaryIpAddressesForNic(nic.getId());
-                        for (String secIp : nicSecIps) {
-                            IPAddressVO pubIp = _ipAddressDao.findByIpAndSourceNetworkId(nic.getNetworkId(), secIp);
-                            _ipAddrMgr.markIpAsUnavailable(pubIp.getId());
-                            _ipAddressDao.unassignIpAddress(pubIp.getId());
-                        }
+                        // Comment out the code as the IP shoudl stay in the account. Only a disassociate command will remove it from the account.
+//                        s_logger.debug("remove nic " + nic.getId() + " secondary ip ");
+//                        List<String> nicSecIps = null;
+//                        nicSecIps = _nicSecondaryIpDao.getSecondaryIpAddressesForNic(nic.getId());
+//                        for (String secIp : nicSecIps) {
+//                            IPAddressVO pubIp = _ipAddressDao.findByIpAndSourceNetworkId(nic.getNetworkId(), secIp);
+//                            _ipAddrMgr.markIpAsUnavailable(pubIp.getId());
+//                            _ipAddressDao.unassignIpAddress(pubIp.getId());
+//                        }
                     }
                 });
             }
