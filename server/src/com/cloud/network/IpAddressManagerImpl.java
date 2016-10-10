@@ -766,7 +766,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
         IPAddressVO addr = addrs.get(0);
         addr.setSourceNat(sourceNat);
-        addr.setAllocatedTime(new Date());
         addr.setAllocatedInDomainId(owner.getDomainId());
         addr.setAllocatedToAccountId(owner.getId());
         addr.setSystem(isSystem);
@@ -780,7 +779,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             addr.setElastic(true);
         } else if (assign) {
             markPublicIpAsAllocated(addr);
-            addr.setState(IpAddress.State.Allocated);
         } else {
             addr.setState(IpAddress.State.Allocating);
         }
@@ -815,6 +813,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         Account owner = _accountMgr.getAccount(addr.getAllocatedToAccountId());
 
         addr.setState(IpAddress.State.Allocated);
+        addr.setAllocatedTime(new Date());
         _ipAddressDao.update(addr.getId(), addr);
 
         // Save usage event

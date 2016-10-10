@@ -922,6 +922,11 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             throw ex;
         }
 
+        // don't release elastic IP that is allocated on a VM
+        if (ipVO.isElastic() && ipVO.getState() != State.Associated) {
+            throw new InvalidParameterValueException("ip address is allocated to a vm and can not be disassociated.");
+        }
+
         boolean success = _ipAddrMgr.disassociatePublicIpAddress(ipAddressId, userId, caller);
 
         if (success) {

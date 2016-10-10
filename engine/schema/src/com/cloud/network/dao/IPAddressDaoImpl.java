@@ -179,6 +179,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         IPAddressVO address = createForUpdate();
         address.setSourceNat(false);
         address.setOneToOneNat(false);
+        address.setAllocatedTime(null);
         address.setAssociatedWithVmId(null);
         address.setState(State.Associated);
         address.setVpcId(null);
