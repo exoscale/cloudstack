@@ -166,6 +166,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         address.setVpcId(null);
         address.setSystem(false);
         address.setVmIp(null);
+        address.setElastic(false);
         address.setDisplay(true);
         //remove resource details for the ip
         _detailsDao.removeDetails(ipAddressId);

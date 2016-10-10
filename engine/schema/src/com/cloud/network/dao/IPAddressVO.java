@@ -127,6 +127,9 @@ public class IPAddressVO implements IpAddress {
     @Column(name = GenericDao.CREATED_COLUMN)
     private Date created;
 
+    @Column(name = "is_elastic")
+    private boolean elastic;
+
     protected IPAddressVO() {
         uuid = UUID.randomUUID().toString();
     }
@@ -380,5 +383,14 @@ public class IPAddressVO implements IpAddress {
     @Override
     public Date getCreated() {
         return created;
+    }
+
+    @Override
+    public boolean isElastic() {
+        return elastic;
+    }
+
+    public void setElastic(boolean elastic) {
+        this.elastic = elastic;
     }
 }

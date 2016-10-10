@@ -254,6 +254,11 @@ public class PublicIp implements PublicIpAddress {
     }
 
     @Override
+    public boolean isElastic() {
+        return _addr.isElastic();
+    }
+
+    @Override
     public Class<?> getEntityType() {
         return IpAddress.class;
     }

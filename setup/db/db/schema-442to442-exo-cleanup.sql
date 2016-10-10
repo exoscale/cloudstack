@@ -352,5 +352,5 @@ SELECT `vm_instance`.`id` AS `id`,
 
 
 -- 2016.10.14 Add associated field to user_ip_address
-alter table user_ip_address add associated datetime DEFAULT NULL COMMENT 'Date this ip was associated to someone';
-
+ALTER TABLE user_ip_address ADD associated datetime DEFAULT NULL COMMENT 'Date this ip was associated to the account',
+                            ADD is_elastic tinyint(1) NOT NULL DEFAULT 0 COMMENT 'True if the ip address is used as an elastic ip';

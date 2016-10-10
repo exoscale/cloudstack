@@ -96,4 +96,6 @@ public interface IpAddress extends ControlledEntity, Identity, InternalIdentity,
 
     public Date getCreated();
 
+    boolean isElastic();
+
 }

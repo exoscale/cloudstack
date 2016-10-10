@@ -777,6 +777,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         if (associate) {
             addr.setState(State.Associated);
             addr.setAssociatedTime(new Date());
+            addr.setElastic(true);
         } else if (assign) {
             markPublicIpAsAllocated(addr);
             addr.setState(IpAddress.State.Allocated);
