@@ -695,6 +695,13 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             throw new InvalidParameterValueException("Invalid network id is given");
         }
 
+        // Verify if the IP is not already on the VM nic and return it
+        NicSecondaryIpVO nicSecondaryIpVO = _nicSecondaryIpDao.findByIp4AddressAndNicId(requestedIp, nicId);
+        if (nicSecondaryIpVO != null) {
+            return nicSecondaryIpVO;
+        }
+
+
         int maxAllowedIpsPerNic = NumbersUtil.parseInt(_configDao.getValue(Config.MaxNumberOfSecondaryIPsPerNIC.key()), 10);
         Long nicWiseIpCount = _nicSecondaryIpDao.countByNicId(nicId);
         if(nicWiseIpCount.intValue() >= maxAllowedIpsPerNic) {
@@ -713,7 +720,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                 throw new InvalidParameterValueException("Allocating guest ip for nic failed");
             }
         } else if (network.getGuestType() == Network.GuestType.Shared) {
-            //for basic zone, need to provide the podId to ensure proper ip alloation
+            //for basic zone, need to provide the podId to ensure proper ip allocation
             Long podId = null;
             DataCenter dc = _dcDao.findById(network.getDataCenterId());
 
