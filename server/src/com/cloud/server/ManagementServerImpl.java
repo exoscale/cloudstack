@@ -1812,7 +1812,9 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
 
         boolean allocatedOnly = false;
         if ((isAllocated != null) && (isAllocated == true)) {
-            sb.and("allocated", sb.entity().getAllocatedTime(), SearchCriteria.Op.NNULL);
+            sb.and().op("allocated", sb.entity().getAllocatedTime(), SearchCriteria.Op.NNULL);
+            sb.or("associated", sb.entity().getAssociatedTime(), SearchCriteria.Op.NNULL);
+            sb.cp();
             allocatedOnly = true;
         }
 
@@ -1933,7 +1935,9 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         sb.and("isElastic", sb.entity().isElastic(), SearchCriteria.Op.EQ);
 
         if (isAllocated) {
-            sb.and("allocated", sb.entity().getAllocatedTime(), SearchCriteria.Op.NNULL);
+            sb.and().op("allocated", sb.entity().getAllocatedTime(), SearchCriteria.Op.NNULL);
+            sb.or("associated", sb.entity().getAssociatedTime(), SearchCriteria.Op.NNULL);
+            sb.cp();
         }
 
         SearchCriteria<IPAddressVO> sc = sb.create();
