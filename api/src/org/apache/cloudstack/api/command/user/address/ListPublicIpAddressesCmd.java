@@ -89,6 +89,9 @@ public class ListPublicIpAddressesCmd extends BaseListTaggedResourcesCmd {
     @Parameter(name = ApiConstants.IS_STATIC_NAT, type = CommandType.BOOLEAN, description = "list only static nat ip addresses")
     private Boolean isStaticNat;
 
+    @Parameter(name = ApiConstants.IS_ELASTIC, type = CommandType.BOOLEAN, description = "list only elastic ip addresses")
+    private Boolean isElastic;
+
     @Parameter(name = ApiConstants.VPC_ID, type = CommandType.UUID, entityType = VpcResponse.class, description = "List ips belonging to the VPC")
     private Long vpcId;
 
@@ -136,6 +139,10 @@ public class ListPublicIpAddressesCmd extends BaseListTaggedResourcesCmd {
 
     public Boolean getIsStaticNat() {
         return isStaticNat;
+    }
+
+    public Boolean getIsElastic() {
+        return isElastic;
     }
 
     public Long getVpcId() {

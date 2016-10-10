@@ -1742,6 +1742,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         Long ipId = cmd.getId();
         Boolean sourceNat = cmd.getIsSourceNat();
         Boolean staticNat = cmd.getIsStaticNat();
+        Boolean elastic = cmd.getIsElastic();
         Long vpcId = cmd.getVpcId();
         Boolean forDisplay = cmd.getDisplay();
         Map<String, String> tags = cmd.getTags();
@@ -1778,6 +1779,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         sb.and("associatedNetworkIdEq", sb.entity().getAssociatedWithNetworkId(), SearchCriteria.Op.EQ);
         sb.and("isSourceNat", sb.entity().isSourceNat(), SearchCriteria.Op.EQ);
         sb.and("isStaticNat", sb.entity().isOneToOneNat(), SearchCriteria.Op.EQ);
+        sb.and("isElastic", sb.entity().isElastic(), SearchCriteria.Op.EQ);
         sb.and("vpcId", sb.entity().getVpcId(), SearchCriteria.Op.EQ);
         sb.and("display", sb.entity().isDisplay(), SearchCriteria.Op.EQ);
 
@@ -1855,6 +1857,10 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
 
         if (staticNat != null) {
             sc.setParameters("isStaticNat", staticNat);
+        }
+
+        if (elastic != null) {
+            sc.setParameters("isElastic", elastic);
         }
 
         if (address == null && keyword != null) {
