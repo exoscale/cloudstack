@@ -46,6 +46,7 @@ import org.apache.cloudstack.api.command.admin.systemvm.StopSystemVmCmd;
 import org.apache.cloudstack.api.command.admin.systemvm.UpgradeSystemVMCmd;
 import org.apache.cloudstack.api.command.admin.vlan.ListVlanIpRangesCmd;
 import org.apache.cloudstack.api.command.user.address.ListPublicIpAddressesCmd;
+import org.apache.cloudstack.api.command.user.address.ListPublicIpAddressesForUsageCmd;
 import org.apache.cloudstack.api.command.user.config.ListCapabilitiesCmd;
 import org.apache.cloudstack.api.command.user.event.ArchiveEventsCmd;
 import org.apache.cloudstack.api.command.user.event.DeleteEventsCmd;
@@ -139,6 +140,15 @@ public interface ManagementService {
      * @return List of IPAddresses
      */
     Pair<List<? extends IpAddress>, Integer> searchForIPAddresses(ListPublicIpAddressesCmd cmd);
+
+    /**
+     * Obtains a list of IP Addresses by the specified search criteria which will not be paginated.
+     *
+     * @param cmd
+     *            the command that wraps the search criteria
+     * @return List of IPAddresses
+     */
+    Pair<List<? extends IpAddress>, Integer> searchForIPAddresses(ListPublicIpAddressesForUsageCmd cmd);
 
     /**
      * Obtains a list of all guest OS.

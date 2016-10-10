@@ -42,6 +42,7 @@ import org.apache.cloudstack.api.command.admin.account.AccountStatsCmd;
 import org.apache.cloudstack.api.command.admin.offering.CreateServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.DeleteServiceOfferingAuthorizationCmd;
 import org.apache.cloudstack.api.command.admin.offering.ListServiceOfferingAuthorizationsCmd;
+import org.apache.cloudstack.api.command.user.address.ListPublicIpAddressesForUsageCmd;
 import org.apache.cloudstack.api.command.user.offering.ListServiceOfferingsCmdByAdmin;
 import org.apache.cloudstack.api.command.user.snapshot.UpdateSnapshotPolicyCmd;
 import org.apache.cloudstack.api.command.user.vm.ListVMsForUsageCmd;
@@ -1892,6 +1893,83 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
     }
 
     @Override
+    public Pair<List<? extends IpAddress>, Integer> searchForIPAddresses(final ListPublicIpAddressesForUsageCmd cmd) {
+        Long physicalNetworkId = cmd.getPhysicalNetworkId();
+        Long associatedNetworkId = cmd.getAssociatedNetworkId();
+        Long zone = cmd.getZoneId();
+        String address = cmd.getIpAddress();
+        Long ipId = cmd.getId();
+        Boolean elastic = cmd.getIsElastic();
+
+        Boolean isAllocated = cmd.isAllocatedOnly();
+        if (isAllocated == null) {
+            isAllocated = Boolean.TRUE;
+        }
+
+        SearchBuilder<IPAddressVO> sb = _publicIpAddressDao.createSearchBuilder();
+        Long domainId = null;
+        Boolean isRecursive = null;
+        List<Long> permittedAccounts = new ArrayList<Long>();
+        ListProjectResourcesCriteria listProjectResourcesCriteria = null;
+
+        if (isAllocated) {
+            Account caller = CallContext.current().getCallingAccount();
+
+            Ternary<Long, Boolean, ListProjectResourcesCriteria> domainIdRecursiveListProject = new Ternary<Long, Boolean, ListProjectResourcesCriteria>(
+                    cmd.getDomainId(), true, null);
+            _accountMgr.buildACLSearchParameters(caller, cmd.getId(), cmd.getAccountName(), null, permittedAccounts,
+                    domainIdRecursiveListProject, true, false);
+            domainId = domainIdRecursiveListProject.first();
+            isRecursive = domainIdRecursiveListProject.second();
+            listProjectResourcesCriteria = domainIdRecursiveListProject.third();
+            _accountMgr.buildACLSearchBuilder(sb, domainId, isRecursive, permittedAccounts, listProjectResourcesCriteria);
+        }
+
+        sb.and("dataCenterId", sb.entity().getDataCenterId(), SearchCriteria.Op.EQ);
+        sb.and("address", sb.entity().getAddress(), SearchCriteria.Op.EQ);
+        sb.and("id", sb.entity().getId(), SearchCriteria.Op.EQ);
+        sb.and("physicalNetworkId", sb.entity().getPhysicalNetworkId(), SearchCriteria.Op.EQ);
+        sb.and("associatedNetworkIdEq", sb.entity().getAssociatedWithNetworkId(), SearchCriteria.Op.EQ);
+        sb.and("isElastic", sb.entity().isElastic(), SearchCriteria.Op.EQ);
+
+        if (isAllocated) {
+            sb.and("allocated", sb.entity().getAllocatedTime(), SearchCriteria.Op.NNULL);
+        }
+
+        SearchCriteria<IPAddressVO> sc = sb.create();
+        if (isAllocated) {
+            _accountMgr.buildACLSearchCriteria(sc, domainId, isRecursive, permittedAccounts, listProjectResourcesCriteria);
+        }
+
+        if (zone != null) {
+            sc.setParameters("dataCenterId", zone);
+        }
+
+        if (ipId != null) {
+            sc.setParameters("id", ipId);
+        }
+
+        if (elastic != null) {
+            sc.setParameters("isElastic", elastic);
+        }
+
+        if (address != null) {
+            sc.setParameters("address", address);
+        }
+
+        if (physicalNetworkId != null) {
+            sc.setParameters("physicalNetworkId", physicalNetworkId);
+        }
+
+        if (associatedNetworkId != null) {
+            sc.setParameters("associatedNetworkIdEq", associatedNetworkId);
+        }
+
+        Pair<List<IPAddressVO>, Integer> result = _publicIpAddressDao.searchAndCount(sc, null);
+        return new Pair<List<? extends IpAddress>, Integer>(result.first(), result.second());
+    }
+
+    @Override
     public Pair<List<? extends GuestOS>, Integer> listGuestOSByCriteria(ListGuestOsCmd cmd) {
         Filter searchFilter = new Filter(GuestOSVO.class, "displayName", true, cmd.getStartIndex(), cmd.getPageSizeVal());
         Long id = cmd.getId();
@@ -2705,6 +2783,7 @@ public class ManagementServerImpl extends ManagerBase implements ManagementServe
         cmdList.add(AssociateIPAddrCmd.class);
         cmdList.add(DisassociateIPAddrCmd.class);
         cmdList.add(ListPublicIpAddressesCmd.class);
+        cmdList.add(ListPublicIpAddressesForUsageCmd.class);
         cmdList.add(CreateAutoScalePolicyCmd.class);
         cmdList.add(CreateAutoScaleVmGroupCmd.class);
         cmdList.add(CreateAutoScaleVmProfileCmd.class);
