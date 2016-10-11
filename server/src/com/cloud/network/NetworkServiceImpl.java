@@ -798,11 +798,19 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
         Long nicId = secIpVO.getNicId();
         s_logger.debug("ip id = " + ipAddressId + " nic id = " + nicId);
         //check is this the last secondary ip for NIC
-        List<NicSecondaryIpVO> ipList = _nicSecondaryIpDao.listByNicId(nicId);
+        Long ipListSize = _nicSecondaryIpDao.countByNicId(nicId);
         boolean lastIp = false;
-        if (ipList.size() == 1) {
+        if (ipListSize != null && ipListSize.intValue() == 1) {
             // this is the last secondary ip to nic
             lastIp = true;
+            s_logger.debug("This is the last secondary IP on the Nic");
+        }
+
+        boolean lastVmNic = false;
+        Long numberOfVmWithSameIp = _nicSecondaryIpDao.countByNetworkIdAndIpAddress(secIpVO.getNetworkId(), secIpVO.getIp4Address());
+        if (numberOfVmWithSameIp != null && numberOfVmWithSameIp.intValue() == 1) {
+            lastVmNic = true;
+            s_logger.debug("This is the last VM having this secondary IP");
         }
 
         DataCenter dc = _dcDao.findById(network.getDataCenterId());
@@ -837,15 +845,19 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             }
 
         } else if (dc.getNetworkType() == NetworkType.Basic || ntwkOff.getGuestType() == Network.GuestType.Shared) {
-            final IPAddressVO ip = _ipAddressDao.findByIpAndSourceNetworkId(secIpVO.getNetworkId(), secIpVO.getIp4Address());
-            if (ip != null) {
-                Transaction.execute(new TransactionCallbackNoReturn() {
-                    @Override
-                    public void doInTransactionWithoutResult(TransactionStatus status) {
-                _ipAddrMgr.markIpAsUnavailable(ip.getId());
-                _ipAddressDao.detachIpAddress(ip.getId());
-                    }
-                });
+            if (lastVmNic) {
+                final IPAddressVO ip = _ipAddressDao.findByIpAndSourceNetworkId(secIpVO.getNetworkId(), secIpVO.getIp4Address());
+                if (ip != null) {
+                    Transaction.execute(new TransactionCallbackNoReturn() {
+                        @Override
+                        public void doInTransactionWithoutResult(TransactionStatus status) {
+                            _ipAddrMgr.markIpAsUnavailable(ip.getId());
+                            _ipAddressDao.detachIpAddress(ip.getId());
+                        }
+                    });
+                }
+            } else {
+                s_logger.debug("One or more VM has this secondary ip, no need to release it for now");
             }
         } else {
             throw new InvalidParameterValueException("Not supported for this network now");
@@ -868,7 +880,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             _nicDao.update(nicId, nic);
         }
 
-        s_logger.debug("Revoving nic secondary ip entry ...");
+        s_logger.debug("Removing nic secondary ip entry ...");
         _nicSecondaryIpDao.remove(ipVO.getId());
             }
         });
