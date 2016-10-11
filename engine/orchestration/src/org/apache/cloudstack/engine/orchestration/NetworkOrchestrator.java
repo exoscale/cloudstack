@@ -545,6 +545,7 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         AssignIpAddressSearch = _ipAddressDao.createSearchBuilder();
         AssignIpAddressSearch.and("dc", AssignIpAddressSearch.entity().getDataCenterId(), Op.EQ);
         AssignIpAddressSearch.and("allocated", AssignIpAddressSearch.entity().getAllocatedTime(), Op.NULL);
+        AssignIpAddressSearch.and("associated", AssignIpAddressSearch.entity().getAssociatedWithNetworkId(), Op.NULL);
         AssignIpAddressSearch.and("vlanId", AssignIpAddressSearch.entity().getVlanId(), Op.IN);
         SearchBuilder<VlanVO> vlanSearch = _vlanDao.createSearchBuilder();
         vlanSearch.and("type", vlanSearch.entity().getVlanType(), Op.EQ);
@@ -555,6 +556,7 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         AssignIpAddressFromPodVlanSearch = _ipAddressDao.createSearchBuilder();
         AssignIpAddressFromPodVlanSearch.and("dc", AssignIpAddressFromPodVlanSearch.entity().getDataCenterId(), Op.EQ);
         AssignIpAddressFromPodVlanSearch.and("allocated", AssignIpAddressFromPodVlanSearch.entity().getAllocatedTime(), Op.NULL);
+        AssignIpAddressFromPodVlanSearch.and("associated", AssignIpAddressFromPodVlanSearch.entity().getAssociatedTime(), Op.NULL);
         AssignIpAddressFromPodVlanSearch.and("vlanId", AssignIpAddressFromPodVlanSearch.entity().getVlanId(), Op.IN);
 
         SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();

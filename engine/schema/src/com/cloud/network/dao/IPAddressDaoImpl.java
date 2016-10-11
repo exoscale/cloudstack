@@ -89,6 +89,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
 
         VlanDbIdSearchUnallocated = createSearchBuilder();
         VlanDbIdSearchUnallocated.and("allocated", VlanDbIdSearchUnallocated.entity().getAllocatedTime(), Op.NULL);
+        VlanDbIdSearchUnallocated.and("associated", VlanDbIdSearchUnallocated.entity().getAssociatedTime(), Op.NULL);
         VlanDbIdSearchUnallocated.and("vlanDbId", VlanDbIdSearchUnallocated.entity().getVlanId(), Op.EQ);
         VlanDbIdSearchUnallocated.done();
 
@@ -102,7 +103,8 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         AllocatedIpCount.select(null, Func.COUNT, AllocatedIpCount.entity().getAddress());
         AllocatedIpCount.and("dc", AllocatedIpCount.entity().getDataCenterId(), Op.EQ);
         AllocatedIpCount.and("vlan", AllocatedIpCount.entity().getVlanId(), Op.EQ);
-        AllocatedIpCount.and("allocated", AllocatedIpCount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCount.and().op("allocated", AllocatedIpCount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCount.or("associated", AllocatedIpCount.entity().getAssociatedTime(), Op.NNULL).cp();
         AllocatedIpCount.done();
 
         AllIpCountForDashboard = createSearchBuilder(Integer.class);
@@ -121,7 +123,8 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         AllocatedIpCountForAccount = createSearchBuilder(Long.class);
         AllocatedIpCountForAccount.select(null, Func.COUNT, AllocatedIpCountForAccount.entity().getAddress());
         AllocatedIpCountForAccount.and("account", AllocatedIpCountForAccount.entity().getAllocatedToAccountId(), Op.EQ);
-        AllocatedIpCountForAccount.and("allocated", AllocatedIpCountForAccount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCountForAccount.and().op("allocated", AllocatedIpCountForAccount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCountForAccount.or("associated", AllocatedIpCountForAccount.entity().getAssociatedTime(), Op.NNULL).cp();
         AllocatedIpCountForAccount.and("network", AllocatedIpCountForAccount.entity().getAssociatedWithNetworkId(), Op.NNULL);
         AllocatedIpCountForAccount.done();
 

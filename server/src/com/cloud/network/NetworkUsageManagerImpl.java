@@ -218,7 +218,8 @@ public class NetworkUsageManagerImpl extends ManagerBase implements NetworkUsage
     @Override
     public boolean configure(String name, Map<String, Object> params) throws ConfigurationException {
         AllocatedIpSearch = _ipAddressDao.createSearchBuilder();
-        AllocatedIpSearch.and("allocated", AllocatedIpSearch.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpSearch.and().op("allocated", AllocatedIpSearch.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpSearch.or("associated", AllocatedIpSearch.entity().getAssociatedTime(), Op.NNULL).cp();
         AllocatedIpSearch.and("dc", AllocatedIpSearch.entity().getDataCenterId(), Op.EQ);
         SearchBuilder<NetworkVO> networkJoin = _networksDao.createSearchBuilder();
         networkJoin.and("guestType", networkJoin.entity().getGuestType(), Op.EQ);

@@ -901,7 +901,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             throw new InvalidParameterValueException("Unable to find ip address by id");
         }
 
-        if (ipVO.getAllocatedTime() == null) {
+        if (ipVO.getAllocatedTime() == null && ipVO.getAssociatedTime() == null) {
             s_logger.debug("Ip Address id= " + ipAddressId + " is not allocated, so do nothing.");
             return true;
         }
