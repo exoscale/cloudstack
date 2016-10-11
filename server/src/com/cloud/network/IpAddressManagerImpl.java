@@ -1956,14 +1956,18 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 SearchBuilder<IPAddressVO> searchBuilder = _ipAddressDao.createSearchBuilder();
                 searchBuilder.and("dc", searchBuilder.entity().getDataCenterId(), Op.EQ);
                 searchBuilder.and("account_id", searchBuilder.entity().getAccountId(), Op.EQ);
+                searchBuilder.and("state", searchBuilder.entity().getState(), Op.IN);
+                searchBuilder.and("address", searchBuilder.entity().getAddress(), Op.EQ);
+                searchBuilder.and("elastic", searchBuilder.entity().isElastic(), Op.EQ);
 
                 SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();
                 podVlanSearch.and("type", podVlanSearch.entity().getVlanType(), Op.EQ);
                 podVlanSearch.and("networkId", podVlanSearch.entity().getNetworkId(), Op.EQ);
+
                 SearchBuilder<PodVlanMapVO> podVlanMapSB = _podVlanMapDao.createSearchBuilder();
                 podVlanMapSB.and("podId", podVlanMapSB.entity().getPodId(), Op.EQ);
-                searchBuilder.join("podVlanMapSB", podVlanMapSB, podVlanMapSB.entity().getVlanDbId(), searchBuilder.entity().getVlanId(),
-                    JoinType.INNER);
+
+                searchBuilder.join("podVlanMapSB", podVlanMapSB, podVlanMapSB.entity().getVlanDbId(), searchBuilder.entity().getVlanId(), JoinType.INNER);
                 searchBuilder.join("vlan", podVlanSearch, podVlanSearch.entity().getId(), searchBuilder.entity().getVlanId(), JoinType.INNER);
                 searchBuilder.done();
 
@@ -1976,12 +1980,16 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 }
 
                 sc.setParameters("dc", dcId);
-                sc.addAnd("state", SearchCriteria.Op.EQ, State.Associated);
-                DataCenter zone = _entityMgr.findById(DataCenter.class, dcId);
+                sc.setParameters("elastic", true);
 
+                // If the ip address is given, then it can be allocated on multiple VMs
+                // otherwise one assocaited must exist.
                 if (requestedIp != null) {
-                    sc.addAnd("address", SearchCriteria.Op.EQ, requestedIp);
+                    sc.setParameters("address", requestedIp);
+                    sc.setParameters("state", State.Associated, State.Allocated);
                     errorMessage.append(": requested ip " + requestedIp + " is not available");
+                } else {
+                    sc.setParameters("state", State.Associated);
                 }
 
                 IPAddressVO addr = _ipAddressDao.lockOneRandomRow(sc, true);
@@ -1993,12 +2001,14 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                     throw ex;
                 }
 
-                addr.setState(State.Allocated);
-                addr.setAllocatedTime(new Date());
-                addr.setAllocatedInDomainId(owner.getDomainId());
-                addr.setAllocatedToAccountId(owner.getId());
-                addr.setSystem(false);
-                _ipAddressDao.update(addr.getId(), addr);
+                if (addr.getState() == State.Associated) {
+                    addr.setState(State.Allocated);
+                    addr.setAllocatedTime(new Date());
+                    addr.setAllocatedInDomainId(owner.getDomainId());
+                    addr.setAllocatedToAccountId(owner.getId());
+                    addr.setSystem(false);
+                    _ipAddressDao.update(addr.getId(), addr);
+                }
 
                 return addr;
             }
