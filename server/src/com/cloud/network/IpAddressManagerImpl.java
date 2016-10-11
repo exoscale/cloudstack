@@ -1984,25 +1984,23 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                     errorMessage.append(": requested ip " + requestedIp + " is not available");
                 }
 
+                IPAddressVO addr = _ipAddressDao.lockOneRandomRow(sc, true);
 
-                Filter filter = new Filter(IPAddressVO.class, "vlanId", true, 0l, 1l);
-                List<IPAddressVO> addrs = _ipAddressDao.lockRows(sc, filter, true);
-
-                if (addrs.size() == 0) {
+                if (addr == null) {
                     s_logger.warn(errorMessage.toString());
                     InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("No associated ip addresses available", DataCenter.class, dcId);
                     ex.addProxyObject(ApiDBUtils.findZoneById(dcId).getUuid());
                     throw ex;
                 }
 
-                assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
-
-                IPAddressVO addr = addrs.get(0);
+                addr.setState(State.Allocated);
                 addr.setAllocatedTime(new Date());
                 addr.setAllocatedInDomainId(owner.getDomainId());
                 addr.setAllocatedToAccountId(owner.getId());
                 addr.setSystem(false);
-                return addrs.get(0);
+                _ipAddressDao.update(addr.getId(), addr);
+
+                return addr;
             }
         });
 
