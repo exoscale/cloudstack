@@ -377,7 +377,6 @@ public class AlertManagerImpl extends ManagerBase implements AlertManager, Confi
     }
 
     public void createOrUpdateIpCapacity(Long dcId, Long podId, short capacityType, AllocationState capacityState) {
-        s_logger.debug("MARCO - createOrUpdateIpCapacity(" + dcId + ", " + podId + ", " + capacityType + ", " + capacityState + ")");
         SearchCriteria<CapacityVO> capacitySC = _capacityDao.createSearchCriteria();
 
         List<CapacityVO> capacities = _capacityDao.search(capacitySC, null);
@@ -398,9 +397,6 @@ public class AlertManagerImpl extends ManagerBase implements AlertManager, Confi
             totalIPs = _publicIPAddressDao.countIPsForNetwork(dcId, false, VlanType.DirectAttached);
             allocatedIPs = _publicIPAddressDao.countIPsForNetwork(dcId, true, VlanType.DirectAttached);
         }
-
-        s_logger.debug("MARCO - totalIPs=" + totalIPs);
-        s_logger.debug("MARCO - allocatedIPs=" + allocatedIPs);
 
         CapacityState ipCapacityState = (capacityState == AllocationState.Disabled) ? CapacityState.Disabled : CapacityState.Enabled;
         if (capacities.size() == 0) {
