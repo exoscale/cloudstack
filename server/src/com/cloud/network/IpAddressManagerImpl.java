@@ -139,7 +139,6 @@ import com.cloud.utils.Ternary;
 import com.cloud.utils.component.ManagerBase;
 import com.cloud.utils.db.DB;
 import com.cloud.utils.db.EntityManager;
-import com.cloud.utils.db.Filter;
 import com.cloud.utils.db.GlobalLock;
 import com.cloud.utils.db.JoinBuilder.JoinType;
 import com.cloud.utils.db.SearchBuilder;
@@ -388,7 +387,8 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         AssignIpAddressFromPodVlanSearch = _ipAddressDao.createSearchBuilder();
         AssignIpAddressFromPodVlanSearch.and("dc", AssignIpAddressFromPodVlanSearch.entity().getDataCenterId(), Op.EQ);
         AssignIpAddressFromPodVlanSearch.and("allocated", AssignIpAddressFromPodVlanSearch.entity().getAllocatedTime(), Op.NULL);
-        AssignIpAddressFromPodVlanSearch.and("assocaited", AssignIpAddressFromPodVlanSearch.entity().getAssociatedTime(), Op.NULL);
+        AssignIpAddressFromPodVlanSearch.and("associated", AssignIpAddressFromPodVlanSearch.entity().getAssociatedTime(), Op.NULL);
+        AssignIpAddressFromPodVlanSearch.and("address", AssignIpAddressFromPodVlanSearch.entity().getAddress(), Op.EQ);
         SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();
         podVlanSearch.and("type", podVlanSearch.entity().getVlanType(), Op.EQ);
         podVlanSearch.and("networkId", podVlanSearch.entity().getNetworkId(), Op.EQ);
@@ -711,8 +711,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
         sc.setParameters("dc", dcId);
 
-        DataCenter zone = _entityMgr.findById(DataCenter.class, dcId);
-
         // for direct network take ip addresses only from the vlans belonging to the network
         if (vlanUse == VlanType.DirectAttached) {
             sc.setJoinParameters("vlan", "networkId", guestNetworkId);
@@ -721,27 +719,25 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         sc.setJoinParameters("vlan", "type", vlanUse);
 
         if (requestedIp != null) {
-            sc.addAnd("address", SearchCriteria.Op.EQ, requestedIp);
+            sc.setParameters("address", requestedIp);
             errorMessage.append(": requested ip " + requestedIp + " is not available");
         }
 
-        Filter filter = new Filter(IPAddressVO.class, "vlanId", true, 0l, 1l);
-
-        List<IPAddressVO> addrs = _ipAddressDao.lockRows(sc, filter, true);
+        IPAddressVO addr = _ipAddressDao.lockOneRandomRow(sc, true);
 
         // If all the dedicated IPs of the owner are in use fetch an IP from the system pool
-        if (addrs.size() == 0 && fetchFromDedicatedRange) {
+        if (addr == null && fetchFromDedicatedRange) {
             // Verify if account is allowed to acquire IPs from the system
             boolean useSystemIps = UseSystemPublicIps.valueIn(owner.getId());
             if (useSystemIps && nonDedicatedVlanDbIds != null && !nonDedicatedVlanDbIds.isEmpty()) {
                 fetchFromDedicatedRange = false;
                 sc.setParameters("vlanId", nonDedicatedVlanDbIds.toArray());
                         errorMessage.append(", vlanId id=" + Arrays.toString(nonDedicatedVlanDbIds.toArray()));
-                addrs = _ipAddressDao.lockRows(sc, filter, true);
+                addr = _ipAddressDao.lockOneRandomRow(sc, true);
             }
         }
 
-        if (addrs.size() == 0) {
+        if (addr == null) {
             if (podId != null) {
                 InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("Insufficient address capacity", Pod.class, podId);
                 // for now, we hardcode the table names, but we should ideally do a lookup for the tablename from the VO object.
@@ -754,8 +750,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             throw ex;
         }
 
-        assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
-
         if (!fetchFromDedicatedRange) {
             // Check that the maximum number of public IPs for the given accountId will not be exceeded
             try {
@@ -766,7 +760,6 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             }
         }
 
-        IPAddressVO addr = addrs.get(0);
         addr.setSourceNat(sourceNat);
         addr.setAllocatedInDomainId(owner.getDomainId());
         addr.setAllocatedToAccountId(owner.getId());
