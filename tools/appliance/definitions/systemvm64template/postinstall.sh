@@ -275,7 +275,7 @@ postconfig_script() {
   echo '#!/bin/bash' >> /etc/init.d/exoscale_vr_startup-configscript.sh
   echo '' >> /etc/init.d/exoscale_vr_startup-configscript.sh
   echo 'cd /root' >> /etc/init.d/exoscale_vr_startup-configscript.sh
-  echo 'wget -t 2 http://deploy.internal.exoscale.ch/scripts/exoscale-vr_postconfig.sh' >> /etc/init.d/exoscale_vr_startup-configscript.sh
+  echo 'wget -t 2 --timeout 2 http://deploy.internal.exoscale.ch/scripts/exoscale-vr_postconfig.sh' >> /etc/init.d/exoscale_vr_startup-configscript.sh
   echo 'chmod +x exoscale-vr_postconfig.sh' >> /etc/init.d/exoscale_vr_startup-configscript.sh
   echo './exoscale-vr_postconfig.sh 2>&1 |tee /var/log/exoscale-vr_postconfig.log' >> /etc/init.d/exoscale_vr_startup-configscript.sh
   chmod +x /etc/init.d/exoscale_vr_startup-configscript.sh
