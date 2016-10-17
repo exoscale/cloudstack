@@ -189,14 +189,15 @@ class DeployDataCenters(object):
                         debug("Cluster Name : %s Id : %s Created Successfully"
                               % (str(cluster.clustername), str(clusterId)))
                     self.__addToCleanUp("Cluster", clusterId)
-                if cluster.hypervisor.lower() != "vmware":
+                if cluster.hypervisor.lower() != "vmware" and cluster.hypervisor.lower() != "kvm":
                     self.addHosts(cluster.hosts, zoneId, podId, clusterId,
                                   cluster.hypervisor)
-                self.waitForHost(zoneId, clusterId)
-                self.createPrimaryStorages(cluster.primaryStorages,
-                                           zoneId,
-                                           podId,
-                                           clusterId)
+                if cluster.hypervisor.lower() != "kvm":
+                    self.waitForHost(zoneId, clusterId)
+                    self.createPrimaryStorages(cluster.primaryStorages,
+                                               zoneId,
+                                               podId,
+                                               clusterId)
         except Exception as e:
             print "Exception Occurred %s" % GetDetailExceptionInfo(e)
             self.__tcRunLogger.exception("====Cluster %s Creation Failed"
