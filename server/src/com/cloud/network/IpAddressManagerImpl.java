@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
+import com.cloud.utils.db.Filter;
 import org.apache.cloudstack.acl.ControlledEntity.ACLType;
 import org.apache.cloudstack.acl.SecurityChecker.AccessType;
 import org.apache.cloudstack.context.CallContext;
@@ -722,22 +723,23 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             sc.setParameters("address", requestedIp);
             errorMessage.append(": requested ip " + requestedIp + " is not available");
         }
-
-        IPAddressVO addr = _ipAddressDao.lockOneRandomRow(sc, true);
+        Filter filter = new Filter(IPAddressVO.class, "vlanId", true, 0l, 1l);
+        filter.addRandomness();
+        List<IPAddressVO> addrs = _ipAddressDao.lockRows(sc, filter, true);
 
         // If all the dedicated IPs of the owner are in use fetch an IP from the system pool
-        if (addr == null && fetchFromDedicatedRange) {
+        if (addrs.size() == 0 && fetchFromDedicatedRange) {
             // Verify if account is allowed to acquire IPs from the system
             boolean useSystemIps = UseSystemPublicIps.valueIn(owner.getId());
             if (useSystemIps && nonDedicatedVlanDbIds != null && !nonDedicatedVlanDbIds.isEmpty()) {
                 fetchFromDedicatedRange = false;
                 sc.setParameters("vlanId", nonDedicatedVlanDbIds.toArray());
                         errorMessage.append(", vlanId id=" + Arrays.toString(nonDedicatedVlanDbIds.toArray()));
-                addr = _ipAddressDao.lockOneRandomRow(sc, true);
+                addrs = _ipAddressDao.lockRows(sc, filter, true);
             }
         }
 
-        if (addr == null) {
+        if (addrs.size() == 0) {
             if (podId != null) {
                 InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("Insufficient address capacity", Pod.class, podId);
                 // for now, we hardcode the table names, but we should ideally do a lookup for the tablename from the VO object.
@@ -750,6 +752,8 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             throw ex;
         }
 
+        assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
+
         if (!fetchFromDedicatedRange) {
             // Check that the maximum number of public IPs for the given accountId will not be exceeded
             try {
@@ -760,6 +764,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             }
         }
 
+        IPAddressVO addr = addrs.get(0);
         addr.setSourceNat(sourceNat);
         addr.setAllocatedInDomainId(owner.getDomainId());
         addr.setAllocatedToAccountId(owner.getId());
@@ -1976,7 +1981,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 sc.setParameters("elastic", true);
 
                 // If the ip address is given, then it can be allocated on multiple VMs
-                // otherwise one assocaited must exist.
+                // otherwise one associated must exist.
                 if (requestedIp != null) {
                     sc.setParameters("address", requestedIp);
                     sc.setParameters("state", State.Associated, State.Allocated);
@@ -1985,14 +1990,20 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                     sc.setParameters("state", State.Associated);
                 }
 
-                IPAddressVO addr = _ipAddressDao.lockOneRandomRow(sc, true);
+                Filter filter = new Filter(IPAddressVO.class, "vlanId", true, 0l, 1l);
+                filter.addRandomness();
+                List<IPAddressVO> addrs = _ipAddressDao.lockRows(sc, filter, true);
 
-                if (addr == null) {
+                if (addrs.size() == 0) {
                     s_logger.warn(errorMessage.toString());
                     InsufficientAddressCapacityException ex = new InsufficientAddressCapacityException("No associated ip addresses available", DataCenter.class, dcId);
                     ex.addProxyObject(ApiDBUtils.findZoneById(dcId).getUuid());
                     throw ex;
                 }
+
+                assert (addrs.size() == 1) : "Return size is incorrect: " + addrs.size();
+
+                IPAddressVO addr = addrs.get(0);
 
                 if (addr.getState() == State.Associated) {
                     addr.setState(State.Allocated);
