@@ -109,6 +109,9 @@ import com.cloud.agent.api.check.CheckSshCommand;
 import com.cloud.agent.api.proxy.CheckConsoleProxyLoadCommand;
 import com.cloud.agent.api.proxy.ConsoleProxyLoadAnswer;
 import com.cloud.agent.api.proxy.WatchConsoleProxyLoadCommand;
+import com.cloud.agent.api.routing.CreateIpAliasCommand;
+import com.cloud.agent.api.routing.DeleteIpAliasCommand;
+import com.cloud.agent.api.routing.IpAliasTO;
 import com.cloud.agent.api.routing.IpAssocCommand;
 import com.cloud.agent.api.routing.IpAssocVpcCommand;
 import com.cloud.agent.api.routing.NetworkElementCommand;
@@ -1350,7 +1353,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             } else if (cmd instanceof UnPlugNicCommand) {
                 return execute((UnPlugNicCommand)cmd);
             } else if (cmd instanceof NetworkElementCommand) {
-                return _virtRouterResource.executeRequest((NetworkElementCommand)cmd);
+                return execute((NetworkElementCommand)cmd);
             } else if (cmd instanceof CheckSshCommand) {
                 return execute((CheckSshCommand)cmd);
             } else if (cmd instanceof NetworkUsageCommand) {
@@ -1386,6 +1389,36 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         } catch (final IllegalArgumentException e) {
             return new Answer(cmd, false, e.getMessage());
         }
+    }
+
+    private Answer execute(NetworkElementCommand cmd) {
+        // Catch some commands to inform JURA about changes
+        if (cmd instanceof CreateIpAliasCommand) {
+            s_logger.debug("CreateIpAliasCommand");
+            CreateIpAliasCommand c = (CreateIpAliasCommand) cmd;
+            String routerIp = c.getRouterip();
+            List<IpAliasTO> aliases = c.getIpAliasList();
+            s_logger.debug("Router IP: " + routerIp);
+            for (IpAliasTO a : aliases) {
+                s_logger.debug("Alias TO <routerIp=" + a.getRouterip() + ", netmask=" + a.getNetmask() + ", count=" + a.getAlias_count());
+            }
+        } else if (cmd instanceof DeleteIpAliasCommand) {
+            s_logger.debug("DeleteIpAliasCommand");
+            DeleteIpAliasCommand c = (DeleteIpAliasCommand) cmd;
+            String routerIp = c.getRouterip();
+            s_logger.debug("Router IP: " + routerIp);
+            s_logger.debug("getCreateIpAliasTos");
+            List<IpAliasTO> createAliases = c.getCreateIpAliasTos();
+            for (IpAliasTO a : createAliases) {
+                s_logger.debug("create Alias TO <routerIp=" + a.getRouterip() + ", netmask=" + a.getNetmask() + ", count=" + a.getAlias_count());
+            }
+            s_logger.debug("getDeleteIpAliasTos");
+            List<IpAliasTO> deleteAliases = c.getDeleteIpAliasTos();
+            for (IpAliasTO a : deleteAliases) {
+                s_logger.debug("delete Alias TO <routerIp=" + a.getRouterip() + ", netmask=" + a.getNetmask() + ", count=" + a.getAlias_count());
+            }
+        }
+        return  _virtRouterResource.executeRequest(cmd);
     }
 
     private CheckNetworkAnswer execute(CheckNetworkCommand cmd) {
