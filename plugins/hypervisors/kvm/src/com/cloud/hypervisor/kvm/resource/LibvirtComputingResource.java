@@ -1393,32 +1393,68 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
 
     private Answer execute(NetworkElementCommand cmd) {
         // Catch some commands to inform JURA about changes
-        if (cmd instanceof CreateIpAliasCommand) {
-            s_logger.debug("CreateIpAliasCommand");
-            CreateIpAliasCommand c = (CreateIpAliasCommand) cmd;
-            String routerIp = c.getRouterip();
-            List<IpAliasTO> aliases = c.getIpAliasList();
-            s_logger.debug("Router IP: " + routerIp);
-            for (IpAliasTO a : aliases) {
-                s_logger.debug("Alias TO <routerIp=" + a.getRouterip() + ", netmask=" + a.getNetmask() + ", count=" + a.getAlias_count());
-            }
-        } else if (cmd instanceof DeleteIpAliasCommand) {
-            s_logger.debug("DeleteIpAliasCommand");
-            DeleteIpAliasCommand c = (DeleteIpAliasCommand) cmd;
-            String routerIp = c.getRouterip();
-            s_logger.debug("Router IP: " + routerIp);
-            s_logger.debug("getCreateIpAliasTos");
-            List<IpAliasTO> createAliases = c.getCreateIpAliasTos();
-            for (IpAliasTO a : createAliases) {
-                s_logger.debug("create Alias TO <routerIp=" + a.getRouterip() + ", netmask=" + a.getNetmask() + ", count=" + a.getAlias_count());
-            }
-            s_logger.debug("getDeleteIpAliasTos");
-            List<IpAliasTO> deleteAliases = c.getDeleteIpAliasTos();
-            for (IpAliasTO a : deleteAliases) {
-                s_logger.debug("delete Alias TO <routerIp=" + a.getRouterip() + ", netmask=" + a.getNetmask() + ", count=" + a.getAlias_count());
+        if (_juraState == JuraState.LOG || _juraState == JuraState.EXEC) {
+            if (cmd instanceof CreateIpAliasCommand) {
+                CreateIpAliasCommand c = (CreateIpAliasCommand) cmd;
+                String routerIp = c.getRouterip();
+                String routerVifName = getRouterVif(routerIp);
+                Script jCmd = new Script(_juraPath, _timeout, s_logger);
+                jCmd.add("peer", "add", routerVifName);
+                for (IpAliasTO ip : c.getIpAliasList()) {
+                    jCmd.add(ip.getRouterip());
+                }
+
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("JURA -> " + cmd.toString());
+                }
+
+                if (_juraState == JuraState.EXEC) {
+                    String result = jCmd.execute();
+                    if (result != null) {
+                        s_logger.error("execute(CreateIpAliasCommand) returned " + result);
+                        return new Answer(cmd, false, result);
+                    }
+                }
+
+            } else if (cmd instanceof DeleteIpAliasCommand) {
+                DeleteIpAliasCommand c = (DeleteIpAliasCommand) cmd;
+                String routerIp = c.getRouterip();
+                String routerVifName = getRouterVif(routerIp);
+                Script jCmd = new Script(_juraPath, _timeout, s_logger);
+                jCmd.add("peer", "remove", routerVifName);
+                List<IpAliasTO> deleteAliases = c.getDeleteIpAliasTos();
+                for (IpAliasTO ip : deleteAliases) {
+                    jCmd.add(ip.getRouterip());
+                }
+
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("JURA -> " + cmd.toString());
+                }
+
+                if (_juraState == JuraState.EXEC) {
+                    String result = jCmd.execute();
+                    if (result != null) {
+                        s_logger.error("execute(DeleteIpAliasCommand) returned " + result);
+                        return new Answer(cmd, false, result);
+                    }
+                }
+
             }
         }
         return  _virtRouterResource.executeRequest(cmd);
+    }
+
+    private String getRouterVif(String routerIp) {
+        Map<String, JuraNetwork> juraNetworks = getJuraFirewallState();
+        String routerVifName = null;
+        for (Map.Entry<String, JuraNetwork> entry : juraNetworks.entrySet()) {
+            JuraNetwork juraNetwork = entry.getValue();
+            if (juraNetwork.getDomainName().startsWith("r-") &&
+                    Arrays.asList(juraNetwork.getPeers()).contains(routerIp)) {
+                routerVifName = entry.getKey();
+            }
+        }
+        return routerVifName;
     }
 
     private CheckNetworkAnswer execute(CheckNetworkCommand cmd) {
@@ -5584,6 +5620,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             return parser.getLine();
         }
         return null;
+    }
+
+    private Map<String, JuraNetwork> getJuraFirewallState() {
+        // To refactor with function below when we are 100% JURA
+        Gson gson = new Gson();
+        java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
+        Map<String, JuraNetwork> juraNetworks = gson.fromJson(get_rule_logs_for_vms_jura(), type);
+        return juraNetworks;
     }
 
     /*
