@@ -44,4 +44,4 @@ releaseLockFile $lock $locked
 
 #recreating the active ip aliases
 /opt/cloud/bin/createIpAlias.sh $2
-unlock_exit $? $lock $locked
+unlock_exit $? $lock 0
