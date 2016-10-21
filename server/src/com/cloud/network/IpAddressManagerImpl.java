@@ -379,6 +379,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         AssignIpAddressSearch.and("allocated", AssignIpAddressSearch.entity().getAllocatedTime(), Op.NULL);
         AssignIpAddressSearch.and("associated", AssignIpAddressSearch.entity().getAssociatedTime(), Op.NULL);
         AssignIpAddressSearch.and("vlanId", AssignIpAddressSearch.entity().getVlanId(), Op.IN);
+        AssignIpAddressSearch.and("vlanDbIdInForEip", AssignIpAddressSearch.entity().getVlanId(), Op.IN);
         SearchBuilder<VlanVO> vlanSearch = _vlanDao.createSearchBuilder();
         vlanSearch.and("type", vlanSearch.entity().getVlanType(), Op.EQ);
         vlanSearch.and("networkId", vlanSearch.entity().getNetworkId(), Op.EQ);
@@ -390,6 +391,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         AssignIpAddressFromPodVlanSearch.and("allocated", AssignIpAddressFromPodVlanSearch.entity().getAllocatedTime(), Op.NULL);
         AssignIpAddressFromPodVlanSearch.and("associated", AssignIpAddressFromPodVlanSearch.entity().getAssociatedTime(), Op.NULL);
         AssignIpAddressFromPodVlanSearch.and("address", AssignIpAddressFromPodVlanSearch.entity().getAddress(), Op.EQ);
+        AssignIpAddressFromPodVlanSearch.and("vlanDbIdInForEip", AssignIpAddressFromPodVlanSearch.entity().getVlanId(), Op.IN);
         SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();
         podVlanSearch.and("type", podVlanSearch.entity().getVlanType(), Op.EQ);
         podVlanSearch.and("networkId", podVlanSearch.entity().getNetworkId(), Op.EQ);
@@ -709,6 +711,12 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             ex.addProxyObject(ApiDBUtils.findZoneById(dcId).getUuid());
             throw ex;
         }
+
+                if (associate) {
+                    // Must ensure we have at least 2 Ips left on a subnet for the sysVMs
+                    List<Long> r = _ipAddressDao.listVLanWithFreeElasticIp();
+                    sc.setParameters("vlanDbIdInForEip", r.toArray());
+                }
 
         sc.setParameters("dc", dcId);
 

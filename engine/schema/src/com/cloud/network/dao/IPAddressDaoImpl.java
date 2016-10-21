@@ -57,6 +57,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
     protected GenericSearchBuilder<IPAddressVO, Integer> AllIpCountForDashboard;
     protected SearchBuilder<IPAddressVO> DeleteAllExceptGivenIp;
     protected GenericSearchBuilder<IPAddressVO, Long> AllocatedIpCountForAccount;
+    protected GenericSearchBuilder<IPAddressVO, Long> VlanWithEnoughFreeIp;
     @Inject
     protected VlanDao _vlanDao;
     protected GenericSearchBuilder<IPAddressVO, Long> CountFreePublicIps;
@@ -140,6 +141,12 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         DeleteAllExceptGivenIp = createSearchBuilder();
         DeleteAllExceptGivenIp.and("vlanDbId", DeleteAllExceptGivenIp.entity().getVlanId(), Op.EQ);
         DeleteAllExceptGivenIp.and("ip", DeleteAllExceptGivenIp.entity().getAddress(), Op.NEQ);
+
+        VlanWithEnoughFreeIp = createSearchBuilder(Long.class);
+        VlanWithEnoughFreeIp.selectFields(VlanWithEnoughFreeIp.entity().getVlanId());
+        VlanWithEnoughFreeIp.and("stateIpFree", VlanWithEnoughFreeIp.entity().getState(), Op.EQ);
+        VlanWithEnoughFreeIp.groupBy(VlanWithEnoughFreeIp.entity().getVlanId()).having(SearchCriteria.Func.COUNT, this.getAllAttributes().get("vlanId"), Op.GT);
+        VlanWithEnoughFreeIp.done();
     }
 
     @Override
@@ -399,6 +406,14 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         sc.setParameters("state", State.Free);
         sc.setParameters("networkId", networkId);
         return customSearch(sc, null).get(0);
+    }
+
+    @Override
+    public List<Long> listVLanWithFreeElasticIp() {
+        SearchCriteria<Long> sc = VlanWithEnoughFreeIp.create();
+        sc.setParameters("stateIpFree", State.Free);
+        sc.setGroupByValues(2);
+        return customSearch(sc, null);
     }
 
     @Override
