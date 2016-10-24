@@ -730,7 +730,12 @@ public class TemplateServiceImpl implements TemplateService {
             tmpltStore.createEntityExtractUrl(srcTemplate.getInstallPath(), srcTemplate.getFormat(), srcTemplate);
         }
         // generate a URL from source template ssvm to download to destination data store
-        String url = generateCopyUrl(srcTemplate);
+        String url;
+        if (srcTemplate.getDataStore() != null) {
+            url = generateCopyUrl(srcTemplate);
+        } else {
+            url = srcTemplate.getUrl();
+        }
         if (url == null) {
             s_logger.warn("Unable to start/resume copy of template " + srcTemplate.getUniqueName() + " to " + destStore.getName() +
                 ", no secondary storage vm in running state in source zone");
@@ -827,6 +832,9 @@ public class TemplateServiceImpl implements TemplateService {
         CopyCommandResult result = callback.getResult();
         AsyncCallFuture<TemplateApiResult> future = context.getFuture();
         TemplateApiResult res = new TemplateApiResult(destTemplate);
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Performing copy template callback after completion with result=" + result.isSuccess());
+        }
         try {
             if (result.isFailed()) {
                 res.setResult(result.getResult());
@@ -845,13 +853,13 @@ public class TemplateServiceImpl implements TemplateService {
     }
 
     protected Void copyTemplateCrossZoneCallBack(AsyncCallbackDispatcher<TemplateServiceImpl, CreateCmdResult> callback, TemplateOpContext<TemplateApiResult> context) {
-        if (s_logger.isDebugEnabled()) {
-            s_logger.debug("Performing copy template cross zone callback after completion");
-        }
         TemplateInfo destTemplate = context.getTemplate();
         CreateCmdResult result = callback.getResult();
         AsyncCallFuture<TemplateApiResult> future = context.getFuture();
         TemplateApiResult res = new TemplateApiResult(destTemplate);
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("Performing copy template cross zone callback after completion with result=" + result.isSuccess());
+        }
         try {
             if (result.isFailed()) {
                 res.setResult(result.getResult());

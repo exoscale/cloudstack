@@ -623,10 +623,16 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
         }
         AccountVO account = _accountDao.findById(template.getAccountId());
         // find the size of the template to be copied
-        TemplateDataStoreVO srcTmpltStore = _tmplStoreDao.findByStoreTemplate(srcSecStore.getId(), tmpltId);
+        Long templateSize = 0L;
+        if (srcSecStore != null) {
+            TemplateDataStoreVO srcTmpltStore = _tmplStoreDao.findByStoreTemplate(srcSecStore.getId(), tmpltId);
+            templateSize = new Long(srcTmpltStore.getSize());
+        } else {
+            templateSize = template.getSize();
+        }
 
         _resourceLimitMgr.checkResourceLimit(account, ResourceType.template);
-        _resourceLimitMgr.checkResourceLimit(account, ResourceType.secondary_storage, new Long(srcTmpltStore.getSize()));
+        _resourceLimitMgr.checkResourceLimit(account, ResourceType.secondary_storage, templateSize);
 
         // Event details
         String copyEventType;
@@ -648,6 +654,12 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
             if (dstTmpltStore != null && dstTmpltStore.getDownloadState() == Status.DOWNLOADED) {
                 return true; // already downloaded on this image store
             }
+            // Otherwise cleanup store_ref entries
+            List<TemplateDataStoreVO> toClean = _tmplStoreDao.listByTemplateStore(tmpltId, dstSecStore.getId());
+            for (TemplateDataStoreVO t : toClean) {
+                s_logger.debug("Cleaning up entry in template_store_ref for id " + t.getId() + " having state=" + t.getState() + " and download state=" + t.getDownloadState());
+                _tmplStoreDao.remove(t.getId());
+            }
 
             AsyncCallFuture<TemplateApiResult> future = _tmpltSvr.copyTemplate(srcTemplate, dstSecStore);
             try {
@@ -660,12 +672,13 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
                 _tmpltDao.addTemplateToZone(template, dstZoneId);
 
                 if (account.getId() != Account.ACCOUNT_ID_SYSTEM) {
-                    UsageEventUtils.publishUsageEvent(copyEventType, account.getId(), dstZoneId, tmpltId, srcTemplate.getUuid(), null, null, null, null, srcTmpltStore.getPhysicalSize(),
-                            srcTmpltStore.getSize(), template.getClass().getName(), template.getUuid());
+                    TemplateDataStoreVO resultTemplateStore = _tmplStoreDao.findByStoreTemplate(dstSecStore.getId(), tmpltId);
+                    UsageEventUtils.publishUsageEvent(copyEventType, account.getId(), dstZoneId, tmpltId, srcTemplate.getUuid(), null, null, null, null, resultTemplateStore.getPhysicalSize(),
+                            templateSize, template.getClass().getName(), template.getUuid());
                 }
                 return true;
             } catch (Exception ex) {
-                s_logger.debug("failed to copy template to image store:" + dstSecStore.getName() + " ,will try next one");
+                s_logger.debug("failed to copy template to image store:" + dstSecStore.getName() + " ,will try next one", ex);
             }
         }
         return false;
@@ -696,9 +709,10 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
             srcSecStore = getImageStore(templateId);
         }
 
-        if (srcSecStore == null) {
-            throw new InvalidParameterValueException("There is no template " + templateId + " ready on image store.");
-        }
+        // Commented to allow templates that have been removed to be re-activated
+//        if (srcSecStore == null) {
+//            throw new InvalidParameterValueException("There is no template " + templateId + " ready on image store.");
+//        }
 
         if (template.isCrossZones()) {
             // sync template from cache store to region store if it is not there, for cases where we are going to migrate existing NFS to S3.
@@ -726,6 +740,7 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
         DataStore dstSecStore = getImageStore(destZoneId, templateId);
         if (dstSecStore != null) {
             s_logger.debug("There is template " + templateId + " in secondary storage " + dstSecStore.getName() + " in zone " + destZoneId + " , don't need to copy");
+            _tmpltDao.addTemplateToZone(template, destZoneId);
             return template;
         }
 
