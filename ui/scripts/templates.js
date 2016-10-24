@@ -53,6 +53,15 @@
                         name: {
                             label: 'label.name'
                         },
+                        size: {
+                            label: 'label.size',
+                            converter: function(args) {
+                                if (args == null || args == 0)
+                                    return "";
+                                else
+                                    return cloudStack.converters.convertBytes(args);
+                            }
+                        },
                         hypervisor: {
                             label: 'label.hypervisor'
                         }
@@ -609,6 +618,7 @@
                                         itemsView.push({
                                             id: item.id,
                                             name: item.name,
+                                            size: item.size,
                                             description: item.description,
                                             hypervisor: item.hypervisor,
                                             zones: item.zonename,
