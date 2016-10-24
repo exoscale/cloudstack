@@ -277,6 +277,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
     VpcDao _vpcDao;
     SearchBuilder<IPAddressVO> AssignIpAddressSearch;
     SearchBuilder<IPAddressVO> AssignIpAddressFromPodVlanSearch;
+    SearchBuilder<IPAddressVO> AssociatedIpAddressSearch;
 
     @Override
     public boolean configure(String name, Map<String, Object> params) {
@@ -401,6 +402,24 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             JoinType.INNER);
         AssignIpAddressFromPodVlanSearch.join("vlan", podVlanSearch, podVlanSearch.entity().getId(), AssignIpAddressFromPodVlanSearch.entity().getVlanId(), JoinType.INNER);
         AssignIpAddressFromPodVlanSearch.done();
+
+        AssociatedIpAddressSearch = _ipAddressDao.createSearchBuilder();
+        AssociatedIpAddressSearch.and("dc", AssociatedIpAddressSearch.entity().getDataCenterId(), Op.EQ);
+        AssociatedIpAddressSearch.and("account_id", AssociatedIpAddressSearch.entity().getAccountId(), Op.EQ);
+        AssociatedIpAddressSearch.and("state", AssociatedIpAddressSearch.entity().getState(), Op.IN);
+        AssociatedIpAddressSearch.and("address", AssociatedIpAddressSearch.entity().getAddress(), Op.EQ);
+        AssociatedIpAddressSearch.and("elastic", AssociatedIpAddressSearch.entity().isElastic(), Op.EQ);
+
+        SearchBuilder<VlanVO> podVlanSearch2 = _vlanDao.createSearchBuilder();
+        podVlanSearch2.and("type", podVlanSearch2.entity().getVlanType(), Op.EQ);
+        podVlanSearch2.and("networkId", podVlanSearch2.entity().getNetworkId(), Op.EQ);
+
+        SearchBuilder<PodVlanMapVO> podVlanMapSB2 = _podVlanMapDao.createSearchBuilder();
+        podVlanMapSB2.and("podId", podVlanMapSB2.entity().getPodId(), Op.EQ);
+
+        AssociatedIpAddressSearch.join("podVlanMapSB", podVlanMapSB2, podVlanMapSB2.entity().getVlanDbId(), AssociatedIpAddressSearch.entity().getVlanId(), JoinType.INNER);
+        AssociatedIpAddressSearch.join("vlan", podVlanSearch2, podVlanSearch2.entity().getId(), AssociatedIpAddressSearch.entity().getVlanId(), JoinType.INNER);
+        AssociatedIpAddressSearch.done();
 
         Network.State.getStateMachine().registerListener(new NetworkStateListener(_usageEventDao, _networksDao));
 
@@ -1959,25 +1978,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             public IPAddressVO doInTransaction(TransactionStatus status) throws InsufficientAddressCapacityException {
                 StringBuilder errorMessage = new StringBuilder("Unable to get ip adress in ");
 
-                SearchBuilder<IPAddressVO> searchBuilder = _ipAddressDao.createSearchBuilder();
-                searchBuilder.and("dc", searchBuilder.entity().getDataCenterId(), Op.EQ);
-                searchBuilder.and("account_id", searchBuilder.entity().getAccountId(), Op.EQ);
-                searchBuilder.and("state", searchBuilder.entity().getState(), Op.IN);
-                searchBuilder.and("address", searchBuilder.entity().getAddress(), Op.EQ);
-                searchBuilder.and("elastic", searchBuilder.entity().isElastic(), Op.EQ);
-
-                SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();
-                podVlanSearch.and("type", podVlanSearch.entity().getVlanType(), Op.EQ);
-                podVlanSearch.and("networkId", podVlanSearch.entity().getNetworkId(), Op.EQ);
-
-                SearchBuilder<PodVlanMapVO> podVlanMapSB = _podVlanMapDao.createSearchBuilder();
-                podVlanMapSB.and("podId", podVlanMapSB.entity().getPodId(), Op.EQ);
-
-                searchBuilder.join("podVlanMapSB", podVlanMapSB, podVlanMapSB.entity().getVlanDbId(), searchBuilder.entity().getVlanId(), JoinType.INNER);
-                searchBuilder.join("vlan", podVlanSearch, podVlanSearch.entity().getId(), searchBuilder.entity().getVlanId(), JoinType.INNER);
-                searchBuilder.done();
-
-                SearchCriteria<IPAddressVO> sc = searchBuilder.create();
+                SearchCriteria<IPAddressVO> sc = AssociatedIpAddressSearch.create();
                 if (podId != null) {
                     sc.setJoinParameters("podVlanMapSB", "podId", podId);
                     errorMessage.append(" pod id=" + podId);
