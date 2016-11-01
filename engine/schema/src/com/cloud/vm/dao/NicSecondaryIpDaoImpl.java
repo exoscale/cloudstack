@@ -33,7 +33,7 @@ import com.cloud.utils.db.SearchCriteria.Op;
 public class NicSecondaryIpDaoImpl extends GenericDaoBase<NicSecondaryIpVO, Long> implements NicSecondaryIpDao {
     private final SearchBuilder<NicSecondaryIpVO> AllFieldsSearch;
     private final GenericSearchBuilder<NicSecondaryIpVO, String> IpSearch;
-    protected GenericSearchBuilder<NicSecondaryIpVO, Long> CountByNicId;
+    protected GenericSearchBuilder<NicSecondaryIpVO, Long> CountByAny;
 
     protected NicSecondaryIpDaoImpl() {
         super();
@@ -50,10 +50,13 @@ public class NicSecondaryIpDaoImpl extends GenericDaoBase<NicSecondaryIpVO, Long
         IpSearch.and("address", IpSearch.entity().getIp4Address(), Op.NNULL);
         IpSearch.done();
 
-        CountByNicId = createSearchBuilder(Long.class);
-        CountByNicId.select(null, Func.COUNT, null);
-        CountByNicId.and("nic", CountByNicId.entity().getNicId(), SearchCriteria.Op.EQ);
-        CountByNicId.done();
+        CountByAny = createSearchBuilder(Long.class);
+        CountByAny.select(null, Func.COUNT, null);
+        CountByAny.and("instanceId", CountByAny.entity().getVmId(), SearchCriteria.Op.EQ);
+        CountByAny.and("network", CountByAny.entity().getNetworkId(), SearchCriteria.Op.EQ);
+        CountByAny.and("address", CountByAny.entity().getIp4Address(), SearchCriteria.Op.EQ);
+        CountByAny.and("nic", CountByAny.entity().getNicId(), SearchCriteria.Op.EQ);
+        CountByAny.done();
     }
 
     @Override
@@ -142,8 +145,16 @@ public class NicSecondaryIpDaoImpl extends GenericDaoBase<NicSecondaryIpVO, Long
 
     @Override
     public Long countByNicId(long nicId) {
-        SearchCriteria<Long> sc = CountByNicId.create();
+        SearchCriteria<Long> sc = CountByAny.create();
         sc.setParameters("nic", nicId);
+        return customSearch(sc, null).get(0);
+    }
+
+    @Override
+    public Long countByNetworkIdAndIpAddress(long networkId, String ip4Address) {
+        SearchCriteria<Long> sc = CountByAny.create();
+        sc.setParameters("network", networkId);
+        sc.setParameters("address", ip4Address);
         return customSearch(sc, null).get(0);
     }
 }

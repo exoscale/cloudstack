@@ -25,6 +25,7 @@ public class NetworkRulesVmSecondaryIpCommand extends Command {
     private String vmSecIp;
     private String vmMac;
     private String action;
+    private boolean addAction;
 
     public NetworkRulesVmSecondaryIpCommand(String vmName, VirtualMachine.Type type) {
         this.vmName = vmName;
@@ -35,6 +36,7 @@ public class NetworkRulesVmSecondaryIpCommand extends Command {
         this.vmName = vmName;
         this.vmMac = vmMac;
         this.vmSecIp = secondaryIp;
+        this.addAction = action;
         if (action) {
             this.action = "-A";
         } else {
@@ -60,6 +62,10 @@ public class NetworkRulesVmSecondaryIpCommand extends Command {
 
     public String getAction() {
         return action;
+    }
+
+    public boolean getAddAction() {
+        return addAction;
     }
 
     @Override

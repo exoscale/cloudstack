@@ -17,6 +17,7 @@
 package com.cloud.agent.api.to;
 
 import java.net.URI;
+import java.util.regex.Pattern;
 
 import com.cloud.network.Networks.BroadcastDomainType;
 import com.cloud.network.Networks.TrafficType;
@@ -180,5 +181,15 @@ public class NetworkTO {
 
     public boolean isSecurityGroupEnabled() {
         return this.isSecurityGroupEnabled;
+    }
+
+    public int getPrefixFromNetmask() {
+        String[] parts = netmask.split(Pattern.quote("."));
+        int netmaskAsInt = 0;
+        for (int i = 3; i >= 0; i--) {
+            netmaskAsInt += Integer.bitCount(Integer.parseInt(parts[i]));
+        }
+        return netmaskAsInt;
+
     }
 }

@@ -148,13 +148,8 @@ public class MockNetworkManagerImpl extends ManagerBase implements NetworkOrches
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see com.cloud.network.NetworkService#allocateIP(com.cloud.user.Account, long, java.lang.Long)
-     */
     @Override
-    public IpAddress allocateIP(Account ipOwner, long zoneId, Long networkId, Boolean displayIp) throws ResourceAllocationException, InsufficientAddressCapacityException,
-        ConcurrentOperationException {
-        // TODO Auto-generated method stub
+    public IpAddress allocateIP(Account ipOwner, long zoneId, Long networkId, Boolean displayIp, Boolean associate) throws ResourceAllocationException, InsufficientAddressCapacityException, ConcurrentOperationException {
         return null;
     }
 

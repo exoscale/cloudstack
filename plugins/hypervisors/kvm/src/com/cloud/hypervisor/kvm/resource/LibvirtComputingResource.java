@@ -75,15 +75,6 @@ import com.cloud.agent.api.NetworkRulesSystemVmCommand;
 import com.cloud.agent.api.NetworkRulesVmSecondaryIpCommand;
 import com.cloud.agent.api.NetworkUsageAnswer;
 import com.cloud.agent.api.NetworkUsageCommand;
-import com.cloud.agent.api.OvsCreateTunnelAnswer;
-import com.cloud.agent.api.OvsCreateTunnelCommand;
-import com.cloud.agent.api.OvsDestroyBridgeCommand;
-import com.cloud.agent.api.OvsDestroyTunnelCommand;
-import com.cloud.agent.api.OvsFetchInterfaceAnswer;
-import com.cloud.agent.api.OvsFetchInterfaceCommand;
-import com.cloud.agent.api.OvsSetupBridgeCommand;
-import com.cloud.agent.api.OvsVpcPhysicalTopologyConfigCommand;
-import com.cloud.agent.api.OvsVpcRoutingPolicyConfigCommand;
 import com.cloud.agent.api.PingCommand;
 import com.cloud.agent.api.PingRoutingCommand;
 import com.cloud.agent.api.PingRoutingWithNwGroupsCommand;
@@ -118,6 +109,9 @@ import com.cloud.agent.api.check.CheckSshCommand;
 import com.cloud.agent.api.proxy.CheckConsoleProxyLoadCommand;
 import com.cloud.agent.api.proxy.ConsoleProxyLoadAnswer;
 import com.cloud.agent.api.proxy.WatchConsoleProxyLoadCommand;
+import com.cloud.agent.api.routing.CreateIpAliasCommand;
+import com.cloud.agent.api.routing.DeleteIpAliasCommand;
+import com.cloud.agent.api.routing.IpAliasTO;
 import com.cloud.agent.api.routing.IpAssocCommand;
 import com.cloud.agent.api.routing.IpAssocVpcCommand;
 import com.cloud.agent.api.routing.NetworkElementCommand;
@@ -175,7 +169,6 @@ import com.cloud.network.Networks.BroadcastDomainType;
 import com.cloud.network.Networks.IsolationType;
 import com.cloud.network.Networks.RouterPrivateIpStrategy;
 import com.cloud.network.Networks.TrafficType;
-import com.cloud.network.PhysicalNetworkSetupInfo;
 import com.cloud.resource.ServerResource;
 import com.cloud.resource.ServerResourceBase;
 import com.cloud.storage.JavaStorageLayer;
@@ -205,6 +198,8 @@ import com.cloud.vm.DiskProfile;
 import com.cloud.vm.VirtualMachine;
 import com.cloud.vm.VirtualMachine.PowerState;
 import com.cloud.vm.VirtualMachine.State;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.cloudstack.storage.command.RevertSnapshotCommand;
 import org.apache.cloudstack.storage.command.StorageSubSystemCommand;
 import org.apache.cloudstack.storage.to.PrimaryDataStoreTO;
@@ -306,6 +301,24 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private String _createTmplPath;
     private String _heartBeatPath;
     private String _securityGroupPath;
+    private String _juraPath;
+    private JuraState _juraState;
+
+    private enum JuraState {
+        OFF, LOG, EXEC;
+
+        public static JuraState fromString(String value) {
+            for (JuraState juraState : JuraState.values()) {
+                if (juraState.name().equalsIgnoreCase(value)) {
+                    return juraState;
+                }
+            }
+            return JuraState.OFF;
+        }
+    }
+
+    private String _virtualRouterSecondaryIp = "203.0.113.254";
+
     private String _ovsPvlanDhcpHostPath;
     private String _ovsPvlanVmPath;
     private String _routerProxyPath;
@@ -700,6 +713,10 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (_securityGroupPath == null) {
             throw new ConfigurationException("Unable to find the security_group.py");
         }
+
+        _juraPath = "/usr/bin/jura";
+
+        _juraState = JuraState.fromString((String) params.get("jura"));
 
         _ovsTunnelPath = Script.findScript(networkScriptsDir, "ovstunnel.py");
         if (_ovsTunnelPath == null) {
@@ -1194,43 +1211,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return "";
     }
 
-    private boolean checkNetwork(String networkName) {
-        if (networkName == null) {
-            return true;
-        }
-
-        if (_bridgeType == BridgeType.OPENVSWITCH) {
-            return checkOvsNetwork(networkName);
-        } else {
-            return checkBridgeNetwork(networkName);
-        }
-    }
-
-    private boolean checkBridgeNetwork(String networkName) {
-        if (networkName == null) {
-            return true;
-        }
-
-        String name = matchPifFileInDirectory(networkName);
-
-        if (name == null || name.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    private boolean checkOvsNetwork(String networkName) {
-        s_logger.debug("Checking if network " + networkName + " exists as openvswitch bridge");
-        if (networkName == null) {
-            return true;
-        }
-
-        Script command = new Script("/bin/sh", _timeout);
-        command.add("-c");
-        command.add("ovs-vsctl br-exists " + networkName);
-        return "0".equals(command.execute(null));
-    }
 
     private boolean passCmdLine(String vmName, String cmdLine) throws InternalErrorException {
         final Script command = new Script(_patchViaSocketPath, 5 * 1000, s_logger);
@@ -1243,19 +1223,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             return false;
         }
         return true;
-    }
-
-    boolean isDirectAttachedNetwork(String type) {
-        if ("untagged".equalsIgnoreCase(type)) {
-            return true;
-        } else {
-            try {
-                Long.valueOf(type);
-            } catch (NumberFormatException e) {
-                return true;
-            }
-            return false;
-        }
     }
 
     protected String startVM(Connect conn, String vmName, String domainXML) throws LibvirtException, InternalErrorException {
@@ -1386,7 +1353,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             } else if (cmd instanceof UnPlugNicCommand) {
                 return execute((UnPlugNicCommand)cmd);
             } else if (cmd instanceof NetworkElementCommand) {
-                return _virtRouterResource.executeRequest((NetworkElementCommand)cmd);
+                return execute((NetworkElementCommand)cmd);
             } else if (cmd instanceof CheckSshCommand) {
                 return execute((CheckSshCommand)cmd);
             } else if (cmd instanceof NetworkUsageCommand) {
@@ -1411,20 +1378,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 return execute((PvlanSetupCommand)cmd);
             } else if (cmd instanceof CheckOnHostCommand) {
                 return execute((CheckOnHostCommand)cmd);
-            } else if (cmd instanceof OvsFetchInterfaceCommand) {
-                return execute((OvsFetchInterfaceCommand)cmd);
-            } else if (cmd instanceof OvsSetupBridgeCommand) {
-                return execute((OvsSetupBridgeCommand)cmd);
-            } else if (cmd instanceof OvsDestroyBridgeCommand) {
-                return execute((OvsDestroyBridgeCommand)cmd);
-            } else if (cmd instanceof OvsCreateTunnelCommand) {
-                return execute((OvsCreateTunnelCommand)cmd);
-            } else if (cmd instanceof OvsDestroyTunnelCommand) {
-                return execute((OvsDestroyTunnelCommand)cmd);
-            } else if (cmd instanceof OvsVpcPhysicalTopologyConfigCommand) {
-                return execute((OvsVpcPhysicalTopologyConfigCommand) cmd);
-            } else if (cmd instanceof OvsVpcRoutingPolicyConfigCommand) {
-                return execute((OvsVpcRoutingPolicyConfigCommand) cmd);
             } else if (cmd instanceof MigrateWithStorageCommand) {
                 return execute((MigrateWithStorageCommand) cmd);
             } else if (cmd instanceof CancelMigrationCommand) {
@@ -1438,233 +1391,75 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
     }
 
-    private OvsFetchInterfaceAnswer execute(OvsFetchInterfaceCommand cmd) {
-        String label = cmd.getLabel();
-        s_logger.debug("Will look for network with name-label:" + label);
-        try {
-            String ipadd = Script.runSimpleBashScript("ifconfig " + label + " | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'");
-            String mask = Script.runSimpleBashScript("ifconfig " + label + " | grep 'inet addr:' | cut -d: -f4");
-            String mac = Script.runSimpleBashScript("ifconfig " + label + " | grep HWaddr | awk -F \" \" '{print $5}'");
-            return new OvsFetchInterfaceAnswer(cmd, true, "Interface " + label
-                    + " retrieved successfully", ipadd, mask, mac);
+    private Answer execute(NetworkElementCommand cmd) {
+        // Catch some commands to inform JURA about changes
+        if (_juraState == JuraState.LOG || _juraState == JuraState.EXEC) {
+            if (cmd instanceof CreateIpAliasCommand) {
+                CreateIpAliasCommand c = (CreateIpAliasCommand) cmd;
+                String routerIp = c.getRouterip();
+                String routerVifName = getRouterVif(routerIp);
+                Script jCmd = new Script(_juraPath, _timeout, s_logger);
+                jCmd.add("peer", "add", routerVifName);
+                for (IpAliasTO ip : c.getIpAliasList()) {
+                    jCmd.add(ip.getRouterip());
+                }
 
-        } catch (Exception e) {
-            s_logger.warn("Caught execption when fetching interface", e);
-            return new OvsFetchInterfaceAnswer(cmd, false, "EXCEPTION:"
-                    + e.getMessage());
-        }
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("JURA -> " + cmd.toString());
+                }
 
-    }
-
-    private Answer execute(OvsSetupBridgeCommand cmd) {
-        findOrCreateTunnelNetwork(cmd.getBridgeName());
-        configureTunnelNetwork(cmd.getNetworkId(), cmd.getHostId(),
-                cmd.getBridgeName());
-        s_logger.debug("OVS Bridge configured");
-        return new Answer(cmd, true, null);
-    }
-
-    private Answer execute(OvsDestroyBridgeCommand cmd) {
-        destroyTunnelNetwork(cmd.getBridgeName());
-        s_logger.debug("OVS Bridge destroyed");
-        return new Answer(cmd, true, null);
-    }
-
-    public Answer execute(OvsVpcPhysicalTopologyConfigCommand cmd) {
-
-        String bridge = cmd.getBridgeName();
-        try {
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("configure_ovs_bridge_for_network_topology");
-            command.add("--bridge", bridge);
-            command.add("--config", cmd.getVpcConfigInJson());
-
-            String result = command.execute();
-            if (result.equalsIgnoreCase("SUCCESS")) {
-                return new Answer(cmd, true, result);
-            } else {
-                return new Answer(cmd, false, result);
-            }
-        } catch  (Exception e) {
-            s_logger.warn("caught exception while updating host with latest routing polcies", e);
-            return new Answer(cmd, false, e.getMessage());
-        }
-    }
-
-    public Answer execute(OvsVpcRoutingPolicyConfigCommand cmd) {
-
-        try {
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("configure_ovs_bridge_for_routing_policies");
-            command.add("--bridge", cmd.getBridgeName());
-            command.add("--config", cmd.getVpcConfigInJson());
-
-            String result = command.execute();
-            if (result.equalsIgnoreCase("SUCCESS")) {
-                return new Answer(cmd, true, result);
-            } else {
-                return new Answer(cmd, false, result);
-            }
-        } catch  (Exception e) {
-            s_logger.warn("caught exception while updating host with latest VPC topology", e);
-            return new Answer(cmd, false, e.getMessage());
-        }
-    }
-
-    private synchronized void destroyTunnelNetwork(String bridge) {
-        try {
-            findOrCreateTunnelNetwork(bridge);
-            Script cmd = new Script(_ovsTunnelPath, _timeout, s_logger);
-            cmd.add("destroy_ovs_bridge");
-            cmd.add("--bridge", bridge);
-            String result = cmd.execute();
-            if (result != null) {
-                // TODO: Should make this error not fatal?
-                // Can Concurrent VM shutdown/migration/reboot events can cause
-                // this method
-                // to be executed on a bridge which has already been removed?
-                throw new CloudRuntimeException("Unable to remove OVS bridge " + bridge);
-            }
-            return;
-        } catch (Exception e) {
-            s_logger.warn("destroyTunnelNetwork failed:", e);
-            return;
-        }
-    }
-
-    private synchronized boolean findOrCreateTunnelNetwork(String nwName) {
-        try {
-            if (checkNetwork(nwName)) {
-                return true;
-            }
-            // if not found, create a new one
-            Map<String, String> otherConfig = new HashMap<String, String>();
-            otherConfig.put("ovs-host-setup", "");
-            Script.runSimpleBashScript("ovs-vsctl -- --may-exist add-br "
-                    + nwName + " -- set bridge " + nwName
-                    + " other_config:ovs-host-setup='-1'");
-            s_logger.debug("### KVM network for tunnels created:" + nwName);
-        } catch (Exception e) {
-            s_logger.warn("createTunnelNetwork failed", e);
-        }
-        return true;
-    }
-
-    private synchronized boolean configureTunnelNetwork(long networkId,
-            long hostId, String nwName) {
-        try {
-            findOrCreateTunnelNetwork(nwName);
-            String configuredHosts = Script
-                    .runSimpleBashScript("ovs-vsctl get bridge " + nwName
-                            + " other_config:ovs-host-setup");
-            boolean configured = false;
-            if (configuredHosts != null) {
-                String hostIdsStr[] = configuredHosts.split(",");
-                for (String hostIdStr : hostIdsStr) {
-                    if (hostIdStr.equals(((Long)hostId).toString())) {
-                        configured = true;
-                        break;
+                if (_juraState == JuraState.EXEC) {
+                    String result = jCmd.execute();
+                    if (result != null) {
+                        s_logger.error("execute(CreateIpAliasCommand) returned " + result);
+                        return new Answer(cmd, false, result);
                     }
                 }
-            }
-            if (!configured) {
-                Script cmd = new Script(_ovsTunnelPath, _timeout, s_logger);
-                cmd.add("setup_ovs_bridge");
-                cmd.add("--key", nwName);
-                cmd.add("--cs_host_id", ((Long)hostId).toString());
-                cmd.add("--bridge", nwName);
-                String result = cmd.execute();
-                if (result != null) {
-                    throw new CloudRuntimeException(
-                            "Unable to pre-configure OVS bridge " + nwName
-                            + " for network ID:" + networkId);
+
+            } else if (cmd instanceof DeleteIpAliasCommand) {
+                DeleteIpAliasCommand c = (DeleteIpAliasCommand) cmd;
+                String routerIp = c.getRouterip();
+                String routerVifName = getRouterVif(routerIp);
+                Script jCmd = new Script(_juraPath, _timeout, s_logger);
+                jCmd.add("peer", "remove", routerVifName);
+                List<IpAliasTO> deleteAliases = c.getDeleteIpAliasTos();
+                for (IpAliasTO ip : deleteAliases) {
+                    jCmd.add(ip.getRouterip());
                 }
+
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("JURA -> " + cmd.toString());
+                }
+
+                if (_juraState == JuraState.EXEC) {
+                    String result = jCmd.execute();
+                    if (result != null) {
+                        s_logger.error("execute(DeleteIpAliasCommand) returned " + result);
+                        return new Answer(cmd, false, result);
+                    }
+                }
+
             }
-        } catch (Exception e) {
-            s_logger.warn("createandConfigureTunnelNetwork failed", e);
-            return false;
         }
-        return true;
+        return  _virtRouterResource.executeRequest(cmd);
     }
 
-    private OvsCreateTunnelAnswer execute(OvsCreateTunnelCommand cmd) {
-        String bridge = cmd.getNetworkName();
-        try {
-            if (!findOrCreateTunnelNetwork(bridge)) {
-                s_logger.debug("Error during bridge setup");
-                return new OvsCreateTunnelAnswer(cmd, false,
-                        "Cannot create network", bridge);
+    private String getRouterVif(String routerIp) {
+        Map<String, JuraNetwork> juraNetworks = getJuraFirewallState();
+        String routerVifName = null;
+        for (Map.Entry<String, JuraNetwork> entry : juraNetworks.entrySet()) {
+            JuraNetwork juraNetwork = entry.getValue();
+            if (juraNetwork.getDomainName().startsWith("r-") &&
+                    Arrays.asList(juraNetwork.getPeers()).contains(routerIp)) {
+                routerVifName = entry.getKey();
             }
-
-            configureTunnelNetwork(cmd.getNetworkId(), cmd.getFrom(),
-                    cmd.getNetworkName());
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("create_tunnel");
-            command.add("--bridge", bridge);
-            command.add("--remote_ip", cmd.getRemoteIp());
-            command.add("--key", cmd.getKey().toString());
-            command.add("--src_host", cmd.getFrom().toString());
-            command.add("--dst_host", cmd.getTo().toString());
-
-            String result = command.execute();
-            if (result != null) {
-                return new OvsCreateTunnelAnswer(cmd, true, result, null,
-                        bridge);
-            } else {
-                return new OvsCreateTunnelAnswer(cmd, false, result, bridge);
-            }
-        } catch (Exception e) {
-            s_logger.debug("Error during tunnel setup");
-            s_logger.warn("Caught execption when creating ovs tunnel", e);
-            return new OvsCreateTunnelAnswer(cmd, false, e.getMessage(), bridge);
         }
-    }
-
-    private Answer execute(OvsDestroyTunnelCommand cmd) {
-        try {
-            if (!findOrCreateTunnelNetwork(cmd.getBridgeName())) {
-                s_logger.warn("Unable to find tunnel network for GRE key:"
-                        + cmd.getBridgeName());
-                return new Answer(cmd, false, "No network found");
-            }
-
-            Script command = new Script(_ovsTunnelPath, _timeout, s_logger);
-            command.add("destroy_tunnel");
-            command.add("--bridge", cmd.getBridgeName());
-            command.add("--iface_name", cmd.getInPortName());
-            String result = command.execute();
-            if (result == null) {
-                return new Answer(cmd, true, result);
-            } else {
-                return new Answer(cmd, false, result);
-            }
-        } catch (Exception e) {
-            s_logger.warn("caught execption when destroy ovs tunnel", e);
-            return new Answer(cmd, false, e.getMessage());
-        }
+        return routerVifName;
     }
 
     private CheckNetworkAnswer execute(CheckNetworkCommand cmd) {
-        List<PhysicalNetworkSetupInfo> phyNics = cmd.getPhysicalNetworkInfoList();
-        String errMsg = null;
-        for (PhysicalNetworkSetupInfo nic : phyNics) {
-            if (!checkNetwork(nic.getGuestNetworkName())) {
-                errMsg = "Can not find network: " + nic.getGuestNetworkName();
-                break;
-            } else if (!checkNetwork(nic.getPrivateNetworkName())) {
-                errMsg = "Can not find network: " + nic.getPrivateNetworkName();
-                break;
-            } else if (!checkNetwork(nic.getPublicNetworkName())) {
-                errMsg = "Can not find network: " + nic.getPublicNetworkName();
-                break;
-            }
-        }
-
-        if (errMsg != null) {
-            return new CheckNetworkAnswer(cmd, false, errMsg);
-        } else {
-            return new CheckNetworkAnswer(cmd, true, null);
-        }
+        // With JURA, for the moment we don't check anything
+        return new CheckNetworkAnswer(cmd, true, null);
     }
 
     private CopyVolumeAnswer execute(CopyVolumeCommand cmd) {
@@ -3625,6 +3420,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             List<DiskDef> disks = getDisks(conn, vmName);
             List<InterfaceDef> ifaces = getInterfaces(conn, vmName);
 
+
             destroy_network_rules_for_vm(conn, vmName);
             String result = stopVM(conn, vmName);
             if (result == null) {
@@ -3914,12 +3710,18 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
             s_logger.debug("starting " + vmName + ": " + vm.toString());
             startVM(conn, vmName, vm.toString());
 
+            boolean skipInsteadOfBreak = false;
             NicTO[] nics = vmSpec.getNics();
             for (NicTO nic : nics) {
+                if (VirtualMachine.Type.User != vmSpec.getType() && _juraState != JuraState.OFF) {
+                    default_network_rules_for_systemvm_jura(conn, vmName, nic);
+                }
                 if (nic.isSecurityGroupEnabled() || (nic.getIsolationUri() != null && nic.getIsolationUri().getScheme().equalsIgnoreCase(IsolationType.Ec2.toString()))) {
                     if (vmSpec.getType() != VirtualMachine.Type.User) {
-                        default_network_rules_for_systemvm(conn, vmName);
-                        break;
+                        if (!skipInsteadOfBreak && _juraState != JuraState.EXEC) {
+                            default_network_rules_for_systemvm_security_groups(vmName);
+                            skipInsteadOfBreak = true;
+                        }
                     } else {
                         List<String> nicSecIps = nic.getNicSecIps();
                         String secIpsStr;
@@ -3932,7 +3734,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                         } else {
                             secIpsStr = "0:";
                         }
-                        default_network_rules(conn, vmName, nic, vmSpec.getId(), secIpsStr);
+                        default_network_rules(conn, vmName, nic, vmSpec.getId(), secIpsStr, nicSecIps);
                     }
                 }
             }
@@ -5302,6 +5104,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private boolean can_bridge_firewall(String prvNic) {
+        // Not needed for JURA
+        if (_juraState != JuraState.EXEC) {
+            return can_bridge_firewall_security_groups(prvNic);
+        }
+        return true;
+    }
+
+    private boolean can_bridge_firewall_security_groups(String prvNic) {
         Script cmd = new Script(_securityGroupPath, _timeout, s_logger);
         cmd.add("can_bridge_firewall");
         cmd.add(prvNic);
@@ -5312,7 +5122,77 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    protected boolean destroy_network_rules_for_vm(Connect conn, String vmName) {
+    private boolean destroy_network_rules_for_vm(Connect conn, String vmName) {
+        boolean result = false;
+        switch (_juraState) {
+            case OFF:
+                result = destroy_network_rules_for_vm_security_groups(conn, vmName);
+                break;
+            case LOG:
+                destroy_network_rules_for_vm_jura(conn, vmName);
+                result = destroy_network_rules_for_vm_security_groups(conn, vmName);
+                break;
+            case EXEC:
+                result = destroy_network_rules_for_vm_jura(conn, vmName);
+        }
+        s_logger.debug("destroy_network_rules_for_vm return " + result);
+        return result;
+    }
+
+    private boolean destroy_network_rules_for_vm_jura(Connect conn, String vmName) {
+        String vif;
+        List<InterfaceDef> intfs = getInterfaces(conn, vmName);
+        if (intfs == null || intfs.size() == 0) {
+            return false;
+        }
+
+        for (InterfaceDef intf : intfs) {
+            vif = intf.getDevName();
+
+            Script cmdFireWallClear = new Script(_juraPath, _timeout, s_logger);
+            cmdFireWallClear.add("firewall", "clear", vif);
+
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("JURA -> " + cmdFireWallClear.toString());
+            }
+            if (_juraState == JuraState.EXEC) {
+                String result = cmdFireWallClear.execute();
+                if (result != null) {
+                    s_logger.error(("destroy_network_rules_for_vm_jura #1 returns 0 because of result=" + result));
+                    return false;
+                }
+            }
+            Script cmdGatewayClear = new Script(_juraPath, _timeout, s_logger);
+            cmdGatewayClear.add("gateway", "clear", vif);
+
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("JURA -> " + cmdGatewayClear.toString());
+            }
+            if (_juraState == JuraState.EXEC) {
+                String result = cmdGatewayClear.execute();
+                if (result != null) {
+                    s_logger.error(("destroy_network_rules_for_vm_jura #2 returns 0 because of result=" + result));
+                    return false;
+                }
+            }
+            Script cmdPeerClear = new Script(_juraPath, _timeout, s_logger);
+            cmdPeerClear.add("peer", "clear", vif);
+
+            if (s_logger.isDebugEnabled()) {
+                s_logger.debug("JURA -> " + cmdPeerClear.toString());
+            }
+            if (_juraState == JuraState.EXEC) {
+                String result = cmdPeerClear.execute();
+                if (result != null) {
+                    s_logger.error(("destroy_network_rules_for_vm_jura #3 returns 0 because of result=" + result));
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean destroy_network_rules_for_vm_security_groups(Connect conn, String vmName) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5335,7 +5215,88 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    protected boolean default_network_rules(Connect conn, String vmName, NicTO nic, Long vmId, String secIpStr) {
+    private boolean default_network_rules(Connect conn, String vmName, NicTO nic, Long vmId, String secIpStr, List<String> nicSecIps) {
+        boolean result = false;
+        switch (_juraState) {
+            case OFF:
+                result = default_network_rules_security_groups(conn, vmName, nic, vmId, secIpStr);
+                break;
+            case LOG:
+                default_network_rules_jura(conn, vmName, nic, nicSecIps);
+                result = default_network_rules_security_groups(conn, vmName, nic, vmId, secIpStr);
+                break;
+            case EXEC:
+                result = default_network_rules_jura(conn, vmName, nic, nicSecIps);
+                break;
+        }
+        return result;
+    }
+
+    private boolean default_network_rules_jura(Connect conn, String vmName, NicTO nic, List<String> nicSecIps) {
+        List<InterfaceDef> intfs = getInterfaces(conn, vmName);
+        if (intfs.size() == 0 || intfs.size() < nic.getDeviceId()) {
+            s_logger.error("default_network_rules_jura #1 returns 0 because of intfs.size()=" + intfs.size() + ", nic.getDeviceId()=" + nic.getDeviceId());
+            return false;
+        }
+
+        InterfaceDef intf = intfs.get(nic.getDeviceId());
+        String vif = intf.getDevName();
+
+        Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdPeerAdd.add("peer", "set", vif);
+        cmdPeerAdd.add(nic.getIp());
+
+        if (nicSecIps != null) {
+            for (String secIpStr: nicSecIps) {
+                cmdPeerAdd.add(secIpStr);
+            }
+        }
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdPeerAdd.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdPeerAdd.execute();
+            if (result != null) {
+                s_logger.error(("default_network_rules_jura #2 returns 0 because of result=" + result));
+                return false;
+            }
+        }
+
+        Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdGatewayAdd.add("gateway", "set", vif);
+        cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdGatewayAdd.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdGatewayAdd.execute();
+            if (result != null) {
+                s_logger.error(("default_network_rules_jura #3 returns 0 because of result=" + result));
+                return false;
+            }
+        }
+
+        // Force a clear in case something wasn't cleaned up correctly.
+        Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
+        cmdFirewallClear.add("firewall", "clear", vif);
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallClear.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallClear.execute();
+            if (result != null) {
+                s_logger.error(("default_network_rules_jura #4 returns 0 because of result=" + result));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean default_network_rules_security_groups(Connect conn, String vmName, NicTO nic, Long vmId, String secIpStr) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5361,47 +5322,82 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         cmd.add("--brname", brname);
         cmd.add("--nicsecips", secIpStr);
         String result = cmd.execute();
+
         if (result != null) {
             return false;
         }
         return true;
     }
 
-    protected boolean post_default_network_rules(Connect conn, String vmName, NicTO nic, Long vmId, InetAddress dhcpServerIp, String hostIp, String hostMacAddr) {
+    private boolean default_network_rules_for_systemvm_jura(Connect conn, String vmName, NicTO nic) {
         if (!_canBridgeFirewall) {
             return false;
         }
 
         List<InterfaceDef> intfs = getInterfaces(conn, vmName);
-        if (intfs.size() < nic.getDeviceId()) {
+        if (intfs.size() == 0 || intfs.size() < nic.getDeviceId()) {
+            s_logger.error("default_network_rules_for_systemvm_jura #1 returns 0 because of intfs.size()=" + intfs.size() + ", nic.getDeviceId()=" + nic.getDeviceId());
             return false;
         }
 
         InterfaceDef intf = intfs.get(nic.getDeviceId());
-        String brname = intf.getBrName();
         String vif = intf.getDevName();
 
-        Script cmd = new Script(_securityGroupPath, _timeout, s_logger);
-        cmd.add("post_default_network_rules");
-        cmd.add("--vmname", vmName);
-        cmd.add("--vmid", vmId.toString());
-        cmd.add("--vmip", nic.getIp());
-        cmd.add("--vmmac", nic.getMac());
-        cmd.add("--vif", vif);
-        cmd.add("--brname", brname);
-        if (dhcpServerIp != null)
-            cmd.add("--dhcpSvr", dhcpServerIp.getHostAddress());
+        Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdPeerAdd.add("peer", "set", vif);
+        cmdPeerAdd.add(nic.getIp());
 
-        cmd.add("--hostIp", hostIp);
-        cmd.add("--hostMacAddr", hostMacAddr);
-        String result = cmd.execute();
-        if (result != null) {
-            return false;
+        // If it's a virtual router, add a secondary IP on the default nic
+        if (vmName.startsWith("r-") && nic.isDefaultNic()) {
+            cmdPeerAdd.add(_virtualRouterSecondaryIp);
+        }
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdPeerAdd.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdPeerAdd.execute();
+            if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #2 returns 0 because of result=" + result);
+                return false;
+            }
+        }
+
+        Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdGatewayAdd.add("gateway", "set", vif);
+        cmdGatewayAdd.add(String.format("%s/%s", nic.getGateway(), nic.getPrefixFromNetmask()));
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdGatewayAdd.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdGatewayAdd.execute();
+            if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #3 returns 0 because of result=" + result);
+                return false;
+            }
+        }
+
+        // Force a clear in case something wasn't cleaned up correctly.
+        Script cmdFirewallClear = new Script(_juraPath, _timeout, s_logger);
+        cmdFirewallClear.add("firewall", "set", vif);
+        // Short version for firewall fully open
+        cmdFirewallClear.add("I,ip,,");
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallClear.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallClear.execute();
+            if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #4 returns 0 because of result=" + result);
+                return false;
+            }
         }
         return true;
     }
 
-    protected boolean default_network_rules_for_systemvm(Connect conn, String vmName) {
+    private boolean default_network_rules_for_systemvm_security_groups(String vmName) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5417,8 +5413,46 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private boolean add_network_rules(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname,
-            String secIps) {
+    private boolean add_network_rules(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
+        boolean result = false;
+        String newRules = rules.replace(" ", ";");
+        switch(_juraState) {
+            case OFF:
+                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
+                break;
+            case LOG:
+                add_network_rules_jura(vif, newRules, seq);
+                result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
+                break;
+            case EXEC:
+                result = add_network_rules_jura(vif, newRules, seq);
+                break;
+        }
+        return result;
+    }
+
+    private boolean add_network_rules_jura(String vif, String rules, String seq) {
+        Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdFirewallAdd.add("firewall", "set", vif);
+        cmdFirewallAdd.add(rules);
+        cmdFirewallAdd.add("--data", "SeqNum"+seq);
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallAdd.toString());
+        }
+
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallAdd.execute();
+            if (result != null) {
+                s_logger.error(("add_network_rules_jura returns null because of result=" + result));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean add_network_rules_security_groups(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5445,7 +5479,57 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private boolean network_rules_vmSecondaryIp(Connect conn, String vmName, String secIp, String action) {
+    private boolean network_rules_vmSecondaryIp(Connect conn, String vmName, String secIp, String action, boolean addAction) {
+        boolean result = false;
+        switch (_juraState) {
+            case OFF:
+                result = network_rules_vmSecondaryIp_security_groups(vmName, secIp, action);
+                break;
+            case LOG:
+                network_rules_vmSecondaryIp_jura(conn, vmName, secIp, addAction);
+                result = network_rules_vmSecondaryIp_security_groups(vmName, secIp, action);
+                break;
+            case EXEC:
+                result = network_rules_vmSecondaryIp_jura(conn, vmName, secIp, addAction);
+                break;
+        }
+        return result;
+    }
+
+    private boolean network_rules_vmSecondaryIp_jura(Connect conn, String vmName, String secIp, boolean addAction) {
+        List<InterfaceDef> intfs = getInterfaces(conn, vmName);
+
+        if (intfs.size() == 0 || intfs.size() > 1) {
+            s_logger.error(intfs.size() + " interfaces were found on the virtual machine, dunno which one should get the secondary IP");
+            return false;
+        }
+
+        InterfaceDef intf = intfs.get(0);
+        String vif = intf.getDevName();
+        Script cmd = new Script(_juraPath, _timeout, s_logger);
+        if (addAction) {
+            cmd.add("peer", "add");
+        } else {
+            cmd.add("peer", "remove");
+        }
+        cmd.add(vif, secIp);
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmd.toString());
+        }
+
+        if (_juraState == JuraState.EXEC) {
+            String result = cmd.execute();
+            if (result != null) {
+                s_logger.error(("network_rules_vmSecondaryIp_jura returns 0 because of result=" + result));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean network_rules_vmSecondaryIp_security_groups(String vmName, String secIp, String action) {
 
         if (!_canBridgeFirewall) {
             return false;
@@ -5465,6 +5549,14 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private boolean cleanup_rules() {
+        // Not needed for JURA
+        if (_juraState != JuraState.EXEC) {
+            return cleanup_rules_security_groups();
+        }
+        return true;
+    }
+
+    private boolean cleanup_rules_security_groups() {
         if (!_canBridgeFirewall) {
             return false;
         }
@@ -5478,6 +5570,48 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private String get_rule_logs_for_vms() {
+        String result = "";
+        switch(_juraState) {
+            case OFF:
+                result = get_rule_logs_for_vms_security_groups();
+                break;
+            case LOG:
+                get_rule_logs_for_vms_jura();
+                result = get_rule_logs_for_vms_security_groups();
+                break;
+            case EXEC:
+                // Should skip the command entirely. Will return JURA output to see what fails in CS on the controller.
+                result = get_rule_logs_for_vms_jura();
+                break;
+        }
+        return result;
+    }
+
+    private String get_rule_logs_for_vms_jura() {
+        Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdFirewallAdd.add("list", "--format", "json");
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdFirewallAdd.toString());
+        }
+        OutputInterpreter.AllLinesParser parser = new OutputInterpreter.AllLinesParser();
+
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdFirewallAdd.execute(parser);
+            if (result == null) {
+                if (s_logger.isDebugEnabled()) {
+                    s_logger.debug("JURA output -> " + parser.getLines());
+                }
+                return parser.getLines();
+            } else {
+                s_logger.error(("get_rule_logs_for_vms_jura returns null because of result=" + result));
+            }
+        }
+
+        return null;
+    }
+
+    private String get_rule_logs_for_vms_security_groups() {
         Script cmd = new Script(_securityGroupPath, _timeout, s_logger);
         cmd.add("get_rule_logs_for_vms");
         OutputInterpreter.OneLineParser parser = new OutputInterpreter.OneLineParser();
@@ -5488,21 +5622,52 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return null;
     }
 
+    private Map<String, JuraNetwork> getJuraFirewallState() {
+        // To refactor with function below when we are 100% JURA
+        Gson gson = new Gson();
+        java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
+        Map<String, JuraNetwork> juraNetworks = gson.fromJson(get_rule_logs_for_vms_jura(), type);
+        return juraNetworks;
+    }
+
+    /*
+    Should return a map with the key being the vm's name, and a pair containing the VM id with the seq number of the security group rules.
+     */
     private HashMap<String, Pair<Long, Long>> syncNetworkGroups(long id) {
         HashMap<String, Pair<Long, Long>> states = new HashMap<String, Pair<Long, Long>>();
 
         String result = get_rule_logs_for_vms();
-        s_logger.trace("syncNetworkGroups: id=" + id + " got: " + result);
-        String[] rulelogs = result != null ? result.split(";") : new String[0];
-        for (String rulesforvm : rulelogs) {
-            String[] log = rulesforvm.split(",");
-            if (log.length != 6) {
-                continue;
+        if (_juraState == JuraState.EXEC) {
+            Gson gson = new Gson();
+            java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
+            Map<String, JuraNetwork> juraNetworks = gson.fromJson(result, type);
+            for (JuraNetwork juraNet : juraNetworks.values()) {
+                if (juraNet.getDomainName() != null && juraNet.getDomainName().startsWith("i-")) {
+                    try {
+                        String[] domainName = juraNet.getDomainName().split("-");
+                        Long vmId = Long.parseLong(domainName[2]);
+                        Long seqNum = Long.parseLong(juraNet.getRules().getData() == null ? "0" : juraNet.getRules().getData().substring(6));
+                        states.put(juraNet.getDomainName(), new Pair<>(vmId, seqNum));
+                    } catch (NumberFormatException nfe) {
+                        states.put(juraNet.getDomainName(), new Pair<>(-1L, -1L));
+                    }
+                }
             }
-            try {
-                states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[5])));
-            } catch (NumberFormatException nfe) {
-                states.put(log[0], new Pair<Long, Long>(-1L, -1L));
+        } else {
+            // security_groups.py output parsing
+            // Sample output is i-3-5-DEV,5,192.0.2.103,4,bb38d127218745fafc62d4fcd261f0eb,1
+            // What's returned: i-3-5-DEV:<5,1>
+            String[] rulelogs = result != null ? result.split(";") : new String[0];
+            for (String rulesforvm : rulelogs) {
+                String[] log = rulesforvm.split(",");
+                if (log.length != 6) {
+                    continue;
+                }
+                try {
+                    states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[5])));
+                } catch (NumberFormatException nfe) {
+                    states.put(log[0], new Pair<Long, Long>(-1L, -1L));
+                }
             }
         }
         return states;
@@ -5533,27 +5698,36 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     }
 
     private Answer execute(NetworkRulesSystemVmCommand cmd) {
-        boolean success = false;
+        boolean success = true;
         Connect conn;
+        VirtualMachineTO vmSpec = cmd.getVirtualMachine();
+
         try {
             conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
-            success = default_network_rules_for_systemvm(conn, cmd.getVmName());
+            if (_juraState != JuraState.OFF) {
+                for (NicTO nic : vmSpec.getNics()) {
+                    success &= default_network_rules_for_systemvm_jura(conn, cmd.getVmName(), nic);
+                }
+            }
+            if (_juraState != JuraState.EXEC) {
+                success = default_network_rules_for_systemvm_security_groups(cmd.getVmName());
+            }
         } catch (LibvirtException e) {
-            s_logger.trace("Ignoring libvirt error.", e);
+            s_logger.error("Libvirt exception while executing NetworkRulesSystemVmCommand", e);
+            success = false;
         }
 
         return new Answer(cmd, success, "");
     }
 
     private Answer execute(NetworkRulesVmSecondaryIpCommand cmd) {
-        boolean success = false;
         Connect conn;
+        boolean success = false;
         try {
             conn = LibvirtConnection.getConnectionByVmName(cmd.getVmName());
-            success = network_rules_vmSecondaryIp(conn, cmd.getVmName(), cmd.getVmSecIp(), cmd.getAction());
+            success = network_rules_vmSecondaryIp(conn, cmd.getVmName(), cmd.getVmSecIp(), cmd.getAction(), cmd.getAddAction());
         } catch (LibvirtException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            s_logger.error("Libvirt exception while executing NetworkRulesVmSecondaryIpCommand", e);
         }
 
         return new Answer(cmd, success, "");

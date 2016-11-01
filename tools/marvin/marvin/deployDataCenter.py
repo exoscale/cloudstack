@@ -239,7 +239,7 @@ class DeployDataCenters(object):
                 primarycmd = createStoragePool.createStoragePoolCmd()
                 if primary.details:
                     for key, value in vars(primary.details).iteritems():
-                        primarycmd.details.append({ key: value})
+                        primarycmd.details.append({key: value})
                 primarycmd.name = primary.name
                 primarycmd.podid = podId
                 primarycmd.tags = primary.tags
@@ -838,7 +838,7 @@ class DeployDataCenters(object):
             if ret.id:
                 self.__tcRunLogger.debug("===AddS3 Successfull===")
                 self.__addToCleanUp("s3", ret.id)
-        except Exception as e:
+        except Exception:
             self.__tcRunLogger.exception("====AddS3 Failed===")
             self.__cleanAndExit()
 

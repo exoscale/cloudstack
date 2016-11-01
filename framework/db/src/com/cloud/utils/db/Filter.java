@@ -84,12 +84,21 @@ public class Filter {
         } else {
             order.append(column.table());
         }
-        order.append(".").append(name).append(ascending ? " ASC " : " DESC ");
+        order.append(".").append(name).append(ascending ? " ASC" : " DESC");
 
         if (_orderBy == null) {
             _orderBy = order.insert(0, " ORDER BY ").toString();
         } else {
-            _orderBy = order.insert(0, _orderBy).toString();
+            _orderBy = order.insert(0, _orderBy + ", ").toString();
+        }
+    }
+
+    public void addRandomness() {
+        if (_orderBy == null) {
+            _orderBy = " ORDER BY RAND()";
+        } else {
+            StringBuilder order = new StringBuilder();
+            _orderBy = _orderBy + ", RAND()";
         }
     }
 

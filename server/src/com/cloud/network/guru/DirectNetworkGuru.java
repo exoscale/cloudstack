@@ -294,16 +294,6 @@ public class DirectNetworkGuru extends AdapterBase implements NetworkGuru {
                             _ipAddrMgr.markIpAsUnavailable(ip.getId());
                             _ipAddressDao.unassignIpAddress(ip.getId());
                         }
-
-                        //unassign nic secondary ip address
-                        s_logger.debug("remove nic " + nic.getId() + " secondary ip ");
-                        List<String> nicSecIps = null;
-                        nicSecIps = _nicSecondaryIpDao.getSecondaryIpAddressesForNic(nic.getId());
-                        for (String secIp : nicSecIps) {
-                            IPAddressVO pubIp = _ipAddressDao.findByIpAndSourceNetworkId(nic.getNetworkId(), secIp);
-                            _ipAddrMgr.markIpAsUnavailable(pubIp.getId());
-                            _ipAddressDao.unassignIpAddress(pubIp.getId());
-                        }
                     }
                 });
             }

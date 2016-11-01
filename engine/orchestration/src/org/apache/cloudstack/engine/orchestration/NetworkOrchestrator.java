@@ -545,6 +545,7 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         AssignIpAddressSearch = _ipAddressDao.createSearchBuilder();
         AssignIpAddressSearch.and("dc", AssignIpAddressSearch.entity().getDataCenterId(), Op.EQ);
         AssignIpAddressSearch.and("allocated", AssignIpAddressSearch.entity().getAllocatedTime(), Op.NULL);
+        AssignIpAddressSearch.and("associated", AssignIpAddressSearch.entity().getAssociatedWithNetworkId(), Op.NULL);
         AssignIpAddressSearch.and("vlanId", AssignIpAddressSearch.entity().getVlanId(), Op.IN);
         SearchBuilder<VlanVO> vlanSearch = _vlanDao.createSearchBuilder();
         vlanSearch.and("type", vlanSearch.entity().getVlanType(), Op.EQ);
@@ -555,6 +556,7 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         AssignIpAddressFromPodVlanSearch = _ipAddressDao.createSearchBuilder();
         AssignIpAddressFromPodVlanSearch.and("dc", AssignIpAddressFromPodVlanSearch.entity().getDataCenterId(), Op.EQ);
         AssignIpAddressFromPodVlanSearch.and("allocated", AssignIpAddressFromPodVlanSearch.entity().getAllocatedTime(), Op.NULL);
+        AssignIpAddressFromPodVlanSearch.and("associated", AssignIpAddressFromPodVlanSearch.entity().getAssociatedTime(), Op.NULL);
         AssignIpAddressFromPodVlanSearch.and("vlanId", AssignIpAddressFromPodVlanSearch.entity().getVlanId(), Op.IN);
 
         SearchBuilder<VlanVO> podVlanSearch = _vlanDao.createSearchBuilder();
@@ -1607,7 +1609,7 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         _nicDao.remove(nic.getId());
         s_logger.debug("Removed nic id=" + nic.getId());
         //remove the secondary ip addresses corresponding to to this nic
-        if (!removeVmSecondaryIpsOfNic(nic.getId())) {
+        if (!removeVmSecondaryIpsOfNic(nic.getId(), nic.getNetworkId())) {
             s_logger.debug("Removing nic " + nic.getId() + " secondary ip addreses failed");
         }
     }
@@ -3168,16 +3170,21 @@ public class NetworkOrchestrator extends ManagerBase implements NetworkOrchestra
         return nic.getSecondaryIp();
     }
 
-    private boolean removeVmSecondaryIpsOfNic(final long nicId) {
+    private boolean removeVmSecondaryIpsOfNic(final long nicId, final long networkId) {
         Transaction.execute(new TransactionCallbackNoReturn() {
             @Override
             public void doInTransactionWithoutResult(TransactionStatus status) {
                 List<NicSecondaryIpVO> ipList = _nicSecondaryIpDao.listByNicId(nicId);
                 if (ipList != null) {
+                    s_logger.debug("Removing nic secondary ip entry ...");
                     for (NicSecondaryIpVO ip : ipList) {
                         _nicSecondaryIpDao.remove(ip.getId());
+                        if (_nicSecondaryIpDao.countByNetworkIdAndIpAddress(networkId, ip.getIp4Address()) == 0) {
+                            s_logger.debug("No more vm has this ip address, moving its state to Associated");
+                            IPAddressVO addressVO = _ipAddressDao.findByIpAndNetworkId(networkId, ip.getIp4Address());
+                            _ipAddressDao.detachIpAddress(addressVO.getId());
+                        }
                     }
-                    s_logger.debug("Revoving nic secondary ip entry ...");
                 }
             }
         });

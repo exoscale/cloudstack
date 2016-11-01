@@ -63,6 +63,10 @@ public class IPAddressVO implements IpAddress {
     @Column(name = "source_nat")
     private boolean sourceNat;
 
+    @Column(name = "associated")
+    @Temporal(value = TemporalType.TIMESTAMP)
+    private Date associatedTime;
+
     @Column(name = "allocated")
     @Temporal(value = TemporalType.TIMESTAMP)
     private Date allocatedTime;
@@ -123,6 +127,9 @@ public class IPAddressVO implements IpAddress {
     @Column(name = GenericDao.CREATED_COLUMN)
     private Date created;
 
+    @Column(name = "is_elastic")
+    private boolean elastic;
+
     protected IPAddressVO() {
         uuid = UUID.randomUUID().toString();
     }
@@ -139,6 +146,7 @@ public class IPAddressVO implements IpAddress {
         this.sourceNat = sourceNat;
         allocatedInDomainId = null;
         allocatedToAccountId = null;
+        associatedTime = null;
         allocatedTime = null;
         state = State.Free;
         this.macAddress = macAddress;
@@ -204,6 +212,11 @@ public class IPAddressVO implements IpAddress {
     }
 
     @Override
+    public Date getAssociatedTime() {
+        return associatedTime;
+    }
+
+    @Override
     public Date getAllocatedTime() {
         return allocatedTime;
     }
@@ -223,6 +236,10 @@ public class IPAddressVO implements IpAddress {
     @Override
     public boolean isSourceNat() {
         return sourceNat;
+    }
+
+    public void setAssociatedTime(Date associated) {
+        associatedTime = associated;
     }
 
     public void setAllocatedTime(Date allocated) {
@@ -366,5 +383,14 @@ public class IPAddressVO implements IpAddress {
     @Override
     public Date getCreated() {
         return created;
+    }
+
+    @Override
+    public boolean isElastic() {
+        return elastic;
+    }
+
+    public void setElastic(boolean elastic) {
+        this.elastic = elastic;
     }
 }

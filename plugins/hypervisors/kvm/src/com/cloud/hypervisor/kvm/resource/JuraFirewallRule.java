@@ -14,37 +14,37 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-package com.cloud.agent.api;
+package com.cloud.hypervisor.kvm.resource;
 
-import com.cloud.agent.api.to.VirtualMachineTO;
-import com.cloud.vm.VirtualMachine;
+import com.google.gson.annotations.SerializedName;
 
-public class NetworkRulesSystemVmCommand extends Command {
+public class JuraFirewallRule {
+    @SerializedName("Data") private String data;
 
-    private String vmName;
-    private VirtualMachine.Type type;
-    private VirtualMachineTO vmTO;
+    @SerializedName("Ingress") private String[] ingress;
+    @SerializedName("Engress") private String[] egress;
 
-    public NetworkRulesSystemVmCommand(String vmName, VirtualMachine.Type type, VirtualMachineTO vmTO) {
-        this.vmName = vmName;
-        this.type = type;
-        this.vmTO = vmTO;
+    public String getData() {
+        return data;
     }
 
-    public String getVmName() {
-        return vmName;
+    public void setData(String data) {
+        this.data = data;
     }
 
-    public VirtualMachine.Type getType() {
-        return type;
+    public String[] getIngress() {
+        return ingress;
     }
 
-    public VirtualMachineTO getVirtualMachine() {
-        return vmTO;
+    public void setIngress(String[] ingress) {
+        this.ingress = ingress;
     }
 
-    @Override
-    public boolean executeInSequence() {
-        return false;
+    public String[] getEgress() {
+        return egress;
+    }
+
+    public void setEgress(String[] egress) {
+        this.egress = egress;
     }
 }

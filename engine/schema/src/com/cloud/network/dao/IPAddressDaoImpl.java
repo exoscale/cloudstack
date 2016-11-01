@@ -57,6 +57,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
     protected GenericSearchBuilder<IPAddressVO, Integer> AllIpCountForDashboard;
     protected SearchBuilder<IPAddressVO> DeleteAllExceptGivenIp;
     protected GenericSearchBuilder<IPAddressVO, Long> AllocatedIpCountForAccount;
+    protected GenericSearchBuilder<IPAddressVO, Long> VlanWithEnoughFreeIp;
     @Inject
     protected VlanDao _vlanDao;
     protected GenericSearchBuilder<IPAddressVO, Long> CountFreePublicIps;
@@ -89,6 +90,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
 
         VlanDbIdSearchUnallocated = createSearchBuilder();
         VlanDbIdSearchUnallocated.and("allocated", VlanDbIdSearchUnallocated.entity().getAllocatedTime(), Op.NULL);
+        VlanDbIdSearchUnallocated.and("associated", VlanDbIdSearchUnallocated.entity().getAssociatedTime(), Op.NULL);
         VlanDbIdSearchUnallocated.and("vlanDbId", VlanDbIdSearchUnallocated.entity().getVlanId(), Op.EQ);
         VlanDbIdSearchUnallocated.done();
 
@@ -102,7 +104,8 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         AllocatedIpCount.select(null, Func.COUNT, AllocatedIpCount.entity().getAddress());
         AllocatedIpCount.and("dc", AllocatedIpCount.entity().getDataCenterId(), Op.EQ);
         AllocatedIpCount.and("vlan", AllocatedIpCount.entity().getVlanId(), Op.EQ);
-        AllocatedIpCount.and("allocated", AllocatedIpCount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCount.and().op("allocated", AllocatedIpCount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCount.or("associated", AllocatedIpCount.entity().getAssociatedTime(), Op.NNULL).cp();
         AllocatedIpCount.done();
 
         AllIpCountForDashboard = createSearchBuilder(Integer.class);
@@ -121,7 +124,8 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         AllocatedIpCountForAccount = createSearchBuilder(Long.class);
         AllocatedIpCountForAccount.select(null, Func.COUNT, AllocatedIpCountForAccount.entity().getAddress());
         AllocatedIpCountForAccount.and("account", AllocatedIpCountForAccount.entity().getAllocatedToAccountId(), Op.EQ);
-        AllocatedIpCountForAccount.and("allocated", AllocatedIpCountForAccount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCountForAccount.and().op("allocated", AllocatedIpCountForAccount.entity().getAllocatedTime(), Op.NNULL);
+        AllocatedIpCountForAccount.or("associated", AllocatedIpCountForAccount.entity().getAssociatedTime(), Op.NNULL).cp();
         AllocatedIpCountForAccount.and("network", AllocatedIpCountForAccount.entity().getAssociatedWithNetworkId(), Op.NNULL);
         AllocatedIpCountForAccount.done();
 
@@ -137,6 +141,12 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         DeleteAllExceptGivenIp = createSearchBuilder();
         DeleteAllExceptGivenIp.and("vlanDbId", DeleteAllExceptGivenIp.entity().getVlanId(), Op.EQ);
         DeleteAllExceptGivenIp.and("ip", DeleteAllExceptGivenIp.entity().getAddress(), Op.NEQ);
+
+        VlanWithEnoughFreeIp = createSearchBuilder(Long.class);
+        VlanWithEnoughFreeIp.selectFields(VlanWithEnoughFreeIp.entity().getVlanId());
+        VlanWithEnoughFreeIp.and("stateIpFree", VlanWithEnoughFreeIp.entity().getState(), Op.EQ);
+        VlanWithEnoughFreeIp.groupBy(VlanWithEnoughFreeIp.entity().getVlanId()).having(SearchCriteria.Func.COUNT, this.getAllAttributes().get("vlanId"), Op.GT);
+        VlanWithEnoughFreeIp.done();
     }
 
     @Override
@@ -163,6 +173,25 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         address.setAssociatedWithVmId(null);
         address.setState(State.Free);
         address.setAssociatedWithNetworkId(null);
+        address.setVpcId(null);
+        address.setSystem(false);
+        address.setVmIp(null);
+        address.setAssociatedTime(null);
+        address.setElastic(false);
+        address.setDisplay(true);
+        //remove resource details for the ip
+        _detailsDao.removeDetails(ipAddressId);
+        update(ipAddressId, address);
+    }
+
+    @Override
+    public void detachIpAddress(long ipAddressId) {
+        IPAddressVO address = createForUpdate();
+        address.setSourceNat(false);
+        address.setOneToOneNat(false);
+        address.setAllocatedTime(null);
+        address.setAssociatedWithVmId(null);
+        address.setState(State.Associated);
         address.setVpcId(null);
         address.setSystem(false);
         address.setVmIp(null);
@@ -377,6 +406,14 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         sc.setParameters("state", State.Free);
         sc.setParameters("networkId", networkId);
         return customSearch(sc, null).get(0);
+    }
+
+    @Override
+    public List<Long> listVLanWithFreeElasticIp() {
+        SearchCriteria<Long> sc = VlanWithEnoughFreeIp.create();
+        sc.setParameters("stateIpFree", State.Free);
+        sc.setGroupByValues(2);
+        return customSearch(sc, null);
     }
 
     @Override

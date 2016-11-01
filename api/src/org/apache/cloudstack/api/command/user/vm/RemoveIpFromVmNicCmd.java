@@ -162,9 +162,10 @@ public class RemoveIpFromVmNicCmd extends BaseAsyncCmd {
                 SuccessResponse response = new SuccessResponse(getCommandName());
                 setResponseObject(response);
             } else {
-                throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to remove secondary  ip address for the nic");
+                throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to remove secondary ip address for the nic");
             }
         } catch (InvalidParameterValueException e) {
+            s_logger.info(e);
             throw new InvalidParameterValueException("Removing guest ip from nic failed");
         }
     }

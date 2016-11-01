@@ -160,7 +160,7 @@ public interface IpAddressManager {
     PublicIp assignDedicateIpAddress(Account owner, Long guestNtwkId, Long vpcId, long dcId, boolean isSourceNat) throws ConcurrentOperationException,
         InsufficientAddressCapacityException;
 
-    IpAddress allocateIp(Account ipOwner, boolean isSystem, Account caller, long callerId, DataCenter zone, Boolean displayIp) throws ConcurrentOperationException,
+    IpAddress allocateIp(Account ipOwner, boolean isSystem, Account caller, long callerId, DataCenter zone, Boolean displayIp, Long networkId, Boolean associate) throws ConcurrentOperationException,
         ResourceAllocationException, InsufficientAddressCapacityException;
 
     PublicIp assignPublicIpAddressFromVlans(long dcId, Long podId, Account owner, VlanType type, List<Long> vlanDbIds, Long networkId, String requestedIp,
@@ -171,5 +171,7 @@ public interface IpAddressManager {
     public String allocateGuestIP(Network network, String requestedIp) throws InsufficientAddressCapacityException;
 
     String allocatePublicIpForGuestNic(Network network, Long podId, Account ipOwner, String requestedIp) throws InsufficientAddressCapacityException;
+
+    public String getAssociatedIpAddress(final long dcId, final Network network, final Long podId, final Account ipOwner, final String requestedIp) throws InsufficientAddressCapacityException ;
 
 }

@@ -35,7 +35,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -138,25 +137,6 @@ public class Script implements Callable<String> {
         return builder.toString();
     }
 
-    protected String buildCommandLine(List<String> command) {
-        StringBuilder builder = new StringBuilder();
-        boolean obscureParam = false;
-        for (String cmd : command) {
-            if (obscureParam) {
-                builder.append("******").append(" ");
-                obscureParam = false;
-            } else {
-                builder.append(cmd).append(" ");
-            }
-
-            if ("-y".equals(cmd) || "-z".equals(cmd)) {
-                obscureParam = true;
-                _passwordCommand = true;
-            }
-        }
-        return builder.toString();
-    }
-
     public String execute() {
         return execute(new OutputInterpreter.OutputLogger(_logger));
     }
@@ -169,10 +149,6 @@ public class Script implements Callable<String> {
 
     public String execute(OutputInterpreter interpreter) {
         String[] command = _command.toArray(new String[_command.size()]);
-
-        if (_logger.isDebugEnabled()) {
-            _logger.debug("Executing: " + buildCommandLine(command));
-        }
 
         try {
             ProcessBuilder pb = new ProcessBuilder(command);

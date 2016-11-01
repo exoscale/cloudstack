@@ -387,7 +387,6 @@ public class AlertManagerImpl extends ManagerBase implements AlertManager, Confi
 
         int totalIPs;
         int allocatedIPs;
-        capacities = _capacityDao.search(capacitySC, null);
         if (capacityType == Capacity.CAPACITY_TYPE_PRIVATE_IP) {
             totalIPs = _privateIPAddressDao.countIPs(podId, dcId, false);
             allocatedIPs = _privateIPAddressDao.countIPs(podId, dcId, true);

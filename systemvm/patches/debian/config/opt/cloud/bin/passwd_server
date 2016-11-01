@@ -16,8 +16,4 @@
 # specific language governing permissions and limitations
 # under the License.
 
-ips=$(ip addr show dev eth0 | grep inet | grep eth0 | awk '{print $2}' ); echo $ips
-for ip in $ips; do
-	addr=$(echo $ip | awk -F'/' '{print $1}')
-	/opt/cloud/bin/passwd_server_ip $addr >> /var/log/cloud.log 2>&1 &
-done;
+/opt/cloud/bin/passwd_server_ip 0.0.0.0 >> /var/log/cloud.log 2>&1 &

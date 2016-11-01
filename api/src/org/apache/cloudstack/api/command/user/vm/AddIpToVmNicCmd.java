@@ -79,11 +79,7 @@ public class AddIpToVmNicCmd extends BaseAsyncCreateCmd {
     }
 
     private String getIpaddress() {
-        if (ipAddr != null) {
-            return ipAddr;
-        } else {
-            return null;
-        }
+        return ipAddr;
     }
 
     private NetworkType getNetworkType() {
@@ -171,7 +167,6 @@ public class AddIpToVmNicCmd extends BaseAsyncCreateCmd {
     public void create() throws ResourceAllocationException {
         String ip;
         NicSecondaryIp result;
-        String secondaryIp = null;
         if ((ip = getIpaddress()) != null) {
             if (!NetUtils.isValidIp(ip)) {
                 throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Invalid ip address " + ip);

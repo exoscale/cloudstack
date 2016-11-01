@@ -64,6 +64,8 @@ public interface IPAddressDao extends GenericDao<IPAddressVO, Long> {
 
     long countFreeIPsInNetwork(long networkId);
 
+    List<Long> listVLanWithFreeElasticIp();
+
     IPAddressVO findByVmIp(String vmIp);
 
     IPAddressVO findByAssociatedVmIdAndVmIp(long vmId, String vmIp);
@@ -79,4 +81,6 @@ public interface IPAddressDao extends GenericDao<IPAddressVO, Long> {
     boolean deletePublicIPRange(long vlanDbId);
 
     void lockRange(long vlandbId);
+
+    public void detachIpAddress(long id);
 }

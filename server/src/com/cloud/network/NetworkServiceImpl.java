@@ -65,7 +65,6 @@ import com.cloud.dc.DataCenter;
 import com.cloud.dc.DataCenter.NetworkType;
 import com.cloud.dc.DataCenterVO;
 import com.cloud.dc.DataCenterVnetVO;
-import com.cloud.dc.Vlan.VlanType;
 import com.cloud.dc.VlanVO;
 import com.cloud.dc.dao.AccountVlanMapDao;
 import com.cloud.dc.dao.DataCenterDao;
@@ -524,7 +523,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
 
     @Override
     @ActionEvent(eventType = EventTypes.EVENT_NET_IP_ASSIGN, eventDescription = "allocating Ip", create = true)
-    public IpAddress allocateIP(Account ipOwner, long zoneId, Long networkId, Boolean displayIp) throws ResourceAllocationException, InsufficientAddressCapacityException,
+    public IpAddress allocateIP(Account ipOwner, long zoneId, Long networkId, Boolean displayIp, Boolean associate) throws ResourceAllocationException, InsufficientAddressCapacityException,
             ConcurrentOperationException {
 
         Account caller = CallContext.current().getCallingAccount();
@@ -548,7 +547,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                         if (s_logger.isDebugEnabled()) {
                             s_logger.debug("Associate IP address called by the user " + callerUserId + " account " + ipOwner.getId());
                         }
-                        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp);
+                        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp, networkId, false);
                     } else {
                         throw new InvalidParameterValueException("Associate IP address can only be called on the shared networks in the advanced zone"
                                 + " with Firewall/Source Nat/Static Nat/Port Forwarding/Load balancing services enabled");
@@ -559,7 +558,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             _accountMgr.checkAccess(caller, null, false, ipOwner);
         }
 
-        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp);
+        return _ipAddrMgr.allocateIp(ipOwner, false, caller, callerUserId, zone, displayIp, networkId, associate);
     }
 
     @Override
@@ -696,6 +695,13 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             throw new InvalidParameterValueException("Invalid network id is given");
         }
 
+        // Verify if the IP is not already on the VM nic and return it
+        NicSecondaryIpVO nicSecondaryIpVO = _nicSecondaryIpDao.findByIp4AddressAndNicId(requestedIp, nicId);
+        if (nicSecondaryIpVO != null) {
+            return nicSecondaryIpVO;
+        }
+
+
         int maxAllowedIpsPerNic = NumbersUtil.parseInt(_configDao.getValue(Config.MaxNumberOfSecondaryIPsPerNIC.key()), 10);
         Long nicWiseIpCount = _nicSecondaryIpDao.countByNicId(nicId);
         if(nicWiseIpCount.intValue() >= maxAllowedIpsPerNic) {
@@ -714,27 +720,18 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
                 throw new InvalidParameterValueException("Allocating guest ip for nic failed");
             }
         } else if (network.getGuestType() == Network.GuestType.Shared) {
-            //for basic zone, need to provide the podId to ensure proper ip alloation
+            //for basic zone, need to provide the podId to ensure proper ip allocation
             Long podId = null;
             DataCenter dc = _dcDao.findById(network.getDataCenterId());
 
             if (dc.getNetworkType() == NetworkType.Basic) {
-            VMInstanceVO vmi = (VMInstanceVO)vm;
+                VMInstanceVO vmi = (VMInstanceVO)vm;
                 podId = vmi.getPodIdToDeployIn();
-            if (podId == null) {
-                    throw new InvalidParameterValueException("vm pod id is null in Basic zone; can't decide the range for ip allocation");
-            }
-            }
-
-            try {
-                ipaddr = _ipAddrMgr.allocatePublicIpForGuestNic(network, podId, ipOwner, requestedIp);
-                if (ipaddr == null) {
-                    throw new InvalidParameterValueException("Allocating ip to guest nic " + nicId + " failed");
+                if (podId == null) {
+                        throw new InvalidParameterValueException("vm pod id is null in Basic zone; can't decide the range for ip allocation");
                 }
-            } catch (InsufficientAddressCapacityException e) {
-                s_logger.error("Allocating ip to guest nic " + nicId + " failed");
-                return null;
             }
+            ipaddr = _ipAddrMgr.getAssociatedIpAddress(dc.getId(), network, podId, ipOwner, requestedIp);
         } else {
             s_logger.error("AddIpToVMNic is not supported in this network...");
             return null;
@@ -801,11 +798,19 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
         Long nicId = secIpVO.getNicId();
         s_logger.debug("ip id = " + ipAddressId + " nic id = " + nicId);
         //check is this the last secondary ip for NIC
-        List<NicSecondaryIpVO> ipList = _nicSecondaryIpDao.listByNicId(nicId);
+        Long ipListSize = _nicSecondaryIpDao.countByNicId(nicId);
         boolean lastIp = false;
-        if (ipList.size() == 1) {
+        if (ipListSize != null && ipListSize.intValue() == 1) {
             // this is the last secondary ip to nic
             lastIp = true;
+            s_logger.debug("This is the last secondary IP on the Nic");
+        }
+
+        boolean lastVmNic = false;
+        Long numberOfVmWithSameIp = _nicSecondaryIpDao.countByNetworkIdAndIpAddress(secIpVO.getNetworkId(), secIpVO.getIp4Address());
+        if (numberOfVmWithSameIp != null && numberOfVmWithSameIp.intValue() == 1) {
+            lastVmNic = true;
+            s_logger.debug("This is the last VM having this secondary IP");
         }
 
         DataCenter dc = _dcDao.findById(network.getDataCenterId());
@@ -840,15 +845,19 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             }
 
         } else if (dc.getNetworkType() == NetworkType.Basic || ntwkOff.getGuestType() == Network.GuestType.Shared) {
-            final IPAddressVO ip = _ipAddressDao.findByIpAndSourceNetworkId(secIpVO.getNetworkId(), secIpVO.getIp4Address());
-            if (ip != null) {
-                Transaction.execute(new TransactionCallbackNoReturn() {
-                    @Override
-                    public void doInTransactionWithoutResult(TransactionStatus status) {
-                _ipAddrMgr.markIpAsUnavailable(ip.getId());
-                _ipAddressDao.unassignIpAddress(ip.getId());
-                    }
-                });
+            if (lastVmNic) {
+                final IPAddressVO ip = _ipAddressDao.findByIpAndSourceNetworkId(secIpVO.getNetworkId(), secIpVO.getIp4Address());
+                if (ip != null) {
+                    Transaction.execute(new TransactionCallbackNoReturn() {
+                        @Override
+                        public void doInTransactionWithoutResult(TransactionStatus status) {
+                            _ipAddrMgr.markIpAsUnavailable(ip.getId());
+                            _ipAddressDao.detachIpAddress(ip.getId());
+                        }
+                    });
+                }
+            } else {
+                s_logger.debug("One or more VM has this secondary ip, no need to release it for now");
             }
         } else {
             throw new InvalidParameterValueException("Not supported for this network now");
@@ -871,7 +880,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             _nicDao.update(nicId, nic);
         }
 
-        s_logger.debug("Revoving nic secondary ip entry ...");
+        s_logger.debug("Removing nic secondary ip entry ...");
         _nicSecondaryIpDao.remove(ipVO.getId());
             }
         });
@@ -904,7 +913,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             throw new InvalidParameterValueException("Unable to find ip address by id");
         }
 
-        if (ipVO.getAllocatedTime() == null) {
+        if (ipVO.getAllocatedTime() == null && ipVO.getAssociatedTime() == null) {
             s_logger.debug("Ip Address id= " + ipAddressId + " is not allocated, so do nothing.");
             return true;
         }
@@ -918,16 +927,16 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
             throw new IllegalArgumentException("ip address is used for source nat purposes and can not be disassociated.");
         }
 
-        VlanVO vlan = _vlanDao.findById(ipVO.getVlanId());
-        if (!vlan.getVlanType().equals(VlanType.VirtualNetwork)) {
-            throw new IllegalArgumentException("only ip addresses that belong to a virtual network may be disassociated.");
-        }
-
         // don't allow releasing system ip address
         if (ipVO.getSystem()) {
             InvalidParameterValueException ex = new InvalidParameterValueException("Can't release system IP address with specified id");
             ex.addProxyObject(ipVO.getUuid(), "systemIpAddrId");
             throw ex;
+        }
+
+        // don't release elastic IP that is allocated on a VM
+        if (ipVO.isElastic() && ipVO.getState() != State.Associated) {
+            throw new InvalidParameterValueException("ip address is allocated to a vm and can not be disassociated.");
         }
 
         boolean success = _ipAddrMgr.disassociatePublicIpAddress(ipAddressId, userId, caller);

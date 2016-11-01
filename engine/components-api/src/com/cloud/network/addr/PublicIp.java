@@ -88,6 +88,11 @@ public class PublicIp implements PublicIpAddress {
     }
 
     @Override
+    public Date getAssociatedTime() {
+        return _addr.getAllocatedTime();
+    }
+
+    @Override
     public Date getAllocatedTime() {
         return _addr.getAllocatedTime();
     }
@@ -246,6 +251,11 @@ public class PublicIp implements PublicIpAddress {
     @Override
     public Date getCreated() {
         return _addr.getCreated();
+    }
+
+    @Override
+    public boolean isElastic() {
+        return _addr.isElastic();
     }
 
     @Override

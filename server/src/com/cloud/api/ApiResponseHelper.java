@@ -636,6 +636,9 @@ public class ApiResponseHelper implements ResponseGenerator {
         IPAddressResponse ipResponse = new IPAddressResponse();
         ipResponse.setId(ipAddr.getUuid());
         ipResponse.setIpAddress(ipAddr.getAddress().toString());
+        if (ipAddr.getAssociatedTime() != null) {
+            ipResponse.setAssociated(ipAddr.getAssociatedTime());
+        }
         if (ipAddr.getAllocatedTime() != null) {
             ipResponse.setAllocated(ipAddr.getAllocatedTime());
         }
@@ -733,6 +736,8 @@ public class ApiResponseHelper implements ResponseGenerator {
         ipResponse.setForDisplay(ipAddr.isDisplay());
 
         ipResponse.setPortable(ipAddr.isPortable());
+
+        ipResponse.setElastic(ipAddr.isElastic());
 
         //set tag information
         List<? extends ResourceTag> tags = ApiDBUtils.listByResourceTypeAndId(ResourceObjectType.PublicIpAddress, ipAddr.getId());
