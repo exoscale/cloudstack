@@ -378,12 +378,10 @@ public class AlertManagerImpl extends ManagerBase implements AlertManager, Confi
 
     public void createOrUpdateIpCapacity(Long dcId, Long podId, short capacityType, AllocationState capacityState) {
         SearchCriteria<CapacityVO> capacitySC = _capacityDao.createSearchCriteria();
-
-        List<CapacityVO> capacities = _capacityDao.search(capacitySC, null);
-        capacitySC = _capacityDao.createSearchCriteria();
         capacitySC.addAnd("podId", SearchCriteria.Op.EQ, podId);
         capacitySC.addAnd("dataCenterId", SearchCriteria.Op.EQ, dcId);
         capacitySC.addAnd("capacityType", SearchCriteria.Op.EQ, capacityType);
+        List<CapacityVO> capacities = _capacityDao.search(capacitySC, null);
 
         int totalIPs;
         int allocatedIPs;
