@@ -623,8 +623,10 @@ public class StatsCollector extends ManagerBase implements ComponentMethodInterc
                     Answer answer = ssAhost.sendMessage(command);
                     if (answer != null && answer.getResult()) {
                         storageStats.put(storeId, (StorageStats)answer);
-                        s_logger.trace("HostId: " + storeId + " Used: " + ((StorageStats)answer).getByteUsed() + " Total Available: " +
-                            ((StorageStats)answer).getCapacityBytes());
+                        if (s_logger.isDebugEnabled()) {
+                            s_logger.debug("HostId: " + storeId + " Used: " + ((StorageStats) answer).getByteUsed() + " Total Available: " +
+                                    ((StorageStats) answer).getCapacityBytes());
+                        }
                     }
                 }
                 _storageStats = storageStats;
