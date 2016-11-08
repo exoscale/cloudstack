@@ -738,8 +738,6 @@ public class VMTemplateDaoImpl extends GenericDaoBase<VMTemplateVO, Long> implem
     @Override
     @DB
     public long addTemplateToZone(VMTemplateVO tmplt, long zoneId) {
-        TransactionLegacy txn = TransactionLegacy.currentTxn();
-        txn.start();
         VMTemplateVO tmplt2 = findById(tmplt.getId());
         if (tmplt2 == null) {
             if (persist(tmplt) == null) {
@@ -759,11 +757,9 @@ public class VMTemplateDaoImpl extends GenericDaoBase<VMTemplateVO, Long> implem
             tmpltZoneVO = new VMTemplateZoneVO(zoneId, tmplt.getId(), new Date());
             _templateZoneDao.persist(tmpltZoneVO);
         } else {
-            tmpltZoneVO.setRemoved(null);
             tmpltZoneVO.setLastUpdated(new Date());
             _templateZoneDao.update(tmpltZoneVO.getId(), tmpltZoneVO);
         }
-        txn.commit();
 
         return tmplt.getId();
     }

@@ -19,6 +19,7 @@ package com.cloud.storage.dao;
 import java.util.List;
 
 
+import com.cloud.utils.db.DB;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,6 @@ import com.cloud.storage.VMTemplateZoneVO;
 import com.cloud.utils.db.GenericDaoBase;
 import com.cloud.utils.db.SearchBuilder;
 import com.cloud.utils.db.SearchCriteria;
-import com.cloud.utils.db.TransactionLegacy;
 
 @Component
 public class VMTemplateZoneDaoImpl extends GenericDaoBase<VMTemplateZoneVO, Long> implements VMTemplateZoneDao {
@@ -55,14 +55,14 @@ public class VMTemplateZoneDaoImpl extends GenericDaoBase<VMTemplateZoneVO, Long
     public List<VMTemplateZoneVO> listByZoneId(long id) {
         SearchCriteria<VMTemplateZoneVO> sc = ZoneSearch.create();
         sc.setParameters("zone_id", id);
-        return listIncludingRemovedBy(sc);
+        return listBy(sc);
     }
 
     @Override
     public List<VMTemplateZoneVO> listByTemplateId(long templateId) {
         SearchCriteria<VMTemplateZoneVO> sc = TemplateSearch.create();
         sc.setParameters("template_id", templateId);
-        return listIncludingRemovedBy(sc);
+        return listBy(sc);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class VMTemplateZoneDaoImpl extends GenericDaoBase<VMTemplateZoneVO, Long
         SearchCriteria<VMTemplateZoneVO> sc = ZoneTemplateSearch.create();
         sc.setParameters("zone_id", zoneId);
         sc.setParameters("template_id", templateId);
-        return findOneIncludingRemovedBy(sc);
+        return findOneBy(sc);
     }
 
     @Override
@@ -84,14 +84,11 @@ public class VMTemplateZoneDaoImpl extends GenericDaoBase<VMTemplateZoneVO, Long
     }
 
     @Override
+    @DB
     public void deletePrimaryRecordsForTemplate(long templateId) {
         SearchCriteria<VMTemplateZoneVO> sc = TemplateSearch.create();
         sc.setParameters("template_id", templateId);
-        TransactionLegacy txn = TransactionLegacy.currentTxn();
-        txn.start();
         remove(sc);
-        txn.commit();
-
     }
 
 }
