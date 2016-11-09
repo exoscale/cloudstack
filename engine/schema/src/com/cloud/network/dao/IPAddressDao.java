@@ -46,6 +46,8 @@ public interface IPAddressDao extends GenericDao<IPAddressVO, Long> {
 
     long countAllocatedIPsForAccount(long accountId);
 
+    long countElasticIpsForAccount(long accountId);
+
     boolean mark(long dcId, Ip ip);
 
     int countIPsForNetwork(long dcId, boolean onlyCountAllocated, VlanType vlanType);

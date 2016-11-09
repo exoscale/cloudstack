@@ -785,6 +785,9 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
             // Check that the maximum number of public IPs for the given accountId will not be exceeded
             try {
                 _resourceLimitMgr.checkResourceLimit(owner, ResourceType.public_ip);
+                if (associate) {
+                    _resourceLimitMgr.checkResourceLimit(owner, ResourceType.public_elastic_ip);
+                }
             } catch (ResourceAllocationException ex) {
                 s_logger.warn("Failed to allocate resource of type " + ex.getResourceType() + " for account " + owner);
                 throw new AccountLimitException("Maximum number of public IP addresses for account: " + owner.getAccountName() + " has been exceeded.");
@@ -801,9 +804,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         }
 
         if (associate) {
-            addr.setState(State.Associated);
-            addr.setAssociatedTime(new Date());
-            addr.setElastic(true);
+            markPublicIpAsAssociated(addr);
         } else if (assign) {
             markPublicIpAsAllocated(addr);
         } else {
@@ -860,6 +861,32 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         }
             }
         });
+    }
+
+    @DB
+    private void markPublicIpAsAssociated(final IPAddressVO addr) {
+
+        assert (addr.getState() == IpAddress.State.Allocating || addr.getState() == IpAddress.State.Free) : "Unable to transition from state " + addr.getState() + " to "
+                + State.Associated;
+        Account owner = _accountMgr.getAccount(addr.getAllocatedToAccountId());
+
+        addr.setState(State.Associated);
+        addr.setAssociatedTime(new Date());
+        addr.setElastic(true);
+        _ipAddressDao.update(addr.getId(), addr);
+
+        // Save usage event
+        if (owner.getAccountId() != Account.ACCOUNT_ID_SYSTEM) {
+            // TODO: do a usage event with the elastic flag
+            VlanVO vlan = _vlanDao.findById(addr.getVlanId());
+
+            String guestType = vlan.getVlanType().toString();
+            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NET_IP_ASSIGN, owner.getId(), addr.getDataCenterId(), addr.getId(), addr.getAddress().toString(),
+                    addr.isSourceNat(), guestType, addr.getSystem(), addr.getClass().getName(), addr.getUuid());
+            if (updateIpResourceCount(addr)) {
+                _resourceLimitMgr.incrementResourceCount(owner.getId(), ResourceType.public_elastic_ip);
+            }
+        }
     }
 
     private boolean isIpDedicated(IPAddressVO addr) {
@@ -1021,7 +1048,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
     @DB
     @Override
-    public IpAddress allocateIp(final Account ipOwner, final boolean isSystem, Account caller, long callerUserId, final DataCenter zone, final Boolean displayIp, final Long guestNetworkId, final Boolean associate)
+    public IpAddress allocateIp(final Account ipOwner, final boolean isSystem, Account caller, long callerUserId, final DataCenter zone, final Boolean displayIp, final Long guestNetworkId, final boolean associate)
             throws ConcurrentOperationException,
         ResourceAllocationException, InsufficientAddressCapacityException {
 
@@ -1217,7 +1244,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
         }
 
         if (ipToAssoc.getAssociatedWithNetworkId() != null) {
-            s_logger.debug("IP " + ipToAssoc + " is already assocaited with network id" + networkId);
+            s_logger.debug("IP " + ipToAssoc + " is already associated with network id" + networkId);
             return ipToAssoc;
         }
 
@@ -1658,7 +1685,10 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
                 @Override
                 public IPAddressVO doInTransaction(TransactionStatus status) {
                     if (updateIpResourceCount(ip)) {
-                _resourceLimitMgr.decrementResourceCount(_ipAddressDao.findById(addrId).getAllocatedToAccountId(), ResourceType.public_ip);
+                _resourceLimitMgr.decrementResourceCount(ip.getAllocatedToAccountId(), ResourceType.public_ip);
+                        if (ip.isElastic()) {
+                            _resourceLimitMgr.decrementResourceCount(ip.getAllocatedToAccountId(), ResourceType.public_elastic_ip);
+                        }
             }
 
             // Save usage event
@@ -1683,7 +1713,7 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
     protected boolean updateIpResourceCount(IPAddressVO ip) {
         // don't increment resource count for direct and dedicated ip addresses
-        return (ip.getAssociatedWithNetworkId() != null || ip.getVpcId() != null) && !isIpDedicated(ip);
+        return (ip.getAssociatedWithNetworkId() != null || ip.getVpcId() != null || ip.isElastic()) && !isIpDedicated(ip);
     }
 
     @Override

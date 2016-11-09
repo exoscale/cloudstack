@@ -148,6 +148,10 @@ public class ProjectResponse extends BaseResponse implements ResourceLimitAndCou
     @Param(description = "the total number of virtual machines available for this project to acquire", since = "4.2.0")
     private String vmAvailable;
 
+    @SerializedName(ApiConstants.EIP_LIMIT)
+    @Param(description = "the total number of public elastic ip addresses this account can acquire", since = "4.4.2-exo")
+    private String eipLimit;
+
     @SerializedName(ApiConstants.IP_LIMIT)
     @Param(description = "the total number of public ip addresses this project can acquire", since = "4.2.0")
     private String ipLimit;
@@ -253,6 +257,11 @@ public class ProjectResponse extends BaseResponse implements ResourceLimitAndCou
     @Override
     public void setVmAvailable(String vmAvailable) {
         this.vmAvailable = vmAvailable;
+    }
+
+    @Override
+    public void setEIpLimit(String eipLimit) {
+        this.eipLimit = eipLimit;
     }
 
     @Override

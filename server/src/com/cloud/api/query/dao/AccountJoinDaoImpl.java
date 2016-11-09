@@ -137,6 +137,10 @@ public class AccountJoinDaoImpl extends GenericDaoBase<AccountJoinVO, Long> impl
         response.setIpTotal(ipTotal);
         response.setIpAvailable(ipAvail);
 
+        long eipLimit = ApiDBUtils.findCorrectResourceLimit(account.getEIpLimit(), account.getId(), ResourceType.public_elastic_ip);
+        String eipLimitDisplay = (fullView || ipLimit == -1) ? "Unlimited" : String.valueOf(eipLimit);
+        response.setEIpLimit(eipLimitDisplay);
+
         long volumeLimit = ApiDBUtils.findCorrectResourceLimit(account.getVolumeLimit(), account.getId(), ResourceType.volume);
         String volumeLimitDisplay = (fullView || volumeLimit == -1) ? "Unlimited" : String.valueOf(volumeLimit);
         long volumeTotal = (account.getVolumeTotal() == 0) ? 0 : account.getVolumeTotal();

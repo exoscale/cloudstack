@@ -523,7 +523,7 @@ public class NetworkServiceImpl extends ManagerBase implements  NetworkService {
 
     @Override
     @ActionEvent(eventType = EventTypes.EVENT_NET_IP_ASSIGN, eventDescription = "allocating Ip", create = true)
-    public IpAddress allocateIP(Account ipOwner, long zoneId, Long networkId, Boolean displayIp, Boolean associate) throws ResourceAllocationException, InsufficientAddressCapacityException,
+    public IpAddress allocateIP(Account ipOwner, long zoneId, Long networkId, Boolean displayIp, boolean associate) throws ResourceAllocationException, InsufficientAddressCapacityException,
             ConcurrentOperationException {
 
         Account caller = CallContext.current().getCallingAccount();
