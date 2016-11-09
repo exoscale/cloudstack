@@ -119,6 +119,8 @@ public class EventTypes {
     public static final String EVENT_NET_IP_ASSIGN = "NET.IPASSIGN";
     public static final String EVENT_NET_IP_RELEASE = "NET.IPRELEASE";
     public static final String EVENT_NET_IP_UPDATE = "NET.IPUPDATE";
+    public static final String EVENT_NET_EIP_ASSIGN = "NET.EIPASSIGN";
+    public static final String EVENT_NET_EIP_RELEASE = "NET.EIPRELEASE";
     public static final String EVENT_PORTABLE_IP_ASSIGN = "PORTABLE.IPASSIGN";
     public static final String EVENT_PORTABLE_IP_RELEASE = "PORTABLE.IPRELEASE";
     public static final String EVENT_NET_RULE_ADD = "NET.RULEADD";

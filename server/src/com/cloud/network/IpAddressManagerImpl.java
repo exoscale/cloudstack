@@ -877,11 +877,10 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
         // Save usage event
         if (owner.getAccountId() != Account.ACCOUNT_ID_SYSTEM) {
-            // TODO: do a usage event with the elastic flag
             VlanVO vlan = _vlanDao.findById(addr.getVlanId());
 
             String guestType = vlan.getVlanType().toString();
-            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NET_IP_ASSIGN, owner.getId(), addr.getDataCenterId(), addr.getId(), addr.getAddress().toString(),
+            UsageEventUtils.publishUsageEvent(EventTypes.EVENT_NET_EIP_ASSIGN, owner.getId(), addr.getDataCenterId(), addr.getId(), addr.getAddress().toString(),
                     addr.isSourceNat(), guestType, addr.getSystem(), addr.getClass().getName(), addr.getUuid());
             if (updateIpResourceCount(addr)) {
                 _resourceLimitMgr.incrementResourceCount(owner.getId(), ResourceType.public_elastic_ip);
@@ -1697,7 +1696,8 @@ public class IpAddressManagerImpl extends ManagerBase implements IpAddressManage
 
                 String guestType = vlan.getVlanType().toString();
                 if (!isIpDedicated(ip)) {
-                    String eventType = ip.isPortable() ? EventTypes.EVENT_PORTABLE_IP_RELEASE : EventTypes.EVENT_NET_IP_RELEASE;
+
+                    String eventType = ip.isPortable() ? EventTypes.EVENT_PORTABLE_IP_RELEASE : (ip.isElastic() ? EventTypes.EVENT_NET_EIP_RELEASE : EventTypes.EVENT_NET_IP_RELEASE);
                             UsageEventUtils.publishUsageEvent(eventType, ip.getAllocatedToAccountId(), ip.getDataCenterId(), addrId, ip.getAddress().addr(), ip.isSourceNat(),
                                     guestType, ip.getSystem(), ip.getClass().getName(), ip.getUuid());
                 }
