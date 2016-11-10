@@ -1437,7 +1437,8 @@ public class AgentManagerImpl extends ManagerBase implements AgentManager, Handl
         if (attache != null) {
             attache.setMaintenanceMode(true);
             // Now cancel all of the commands except for the active one.
-            attache.cancelAllCommands(Status.Disconnected, false);
+            // 2016-11-10: Skip disconnecting the agent to let maintenance aware commands to go through (stop, migrate, destroy...)
+//            attache.cancelAllCommands(Status.Disconnected, false);
         }
     }
 
