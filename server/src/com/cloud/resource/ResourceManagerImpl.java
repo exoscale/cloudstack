@@ -102,7 +102,6 @@ import com.cloud.gpu.VGPUTypesVO;
 import com.cloud.gpu.dao.HostGpuGroupsDao;
 import com.cloud.gpu.dao.VGPUTypesDao;
 import com.cloud.ha.HighAvailabilityManager;
-import com.cloud.ha.HighAvailabilityManager.WorkType;
 import com.cloud.host.DetailVO;
 import com.cloud.host.Host;
 import com.cloud.host.Host.Type;
@@ -1180,24 +1179,7 @@ public class ResourceManagerImpl extends ManagerBase implements ResourceManager,
 
         _agentMgr.pullAgentToMaintenance(hostId);
 
-        /* TODO: move below to listener */
-        if (host.getType() == Host.Type.Routing) {
-
-            final List<VMInstanceVO> vms = _vmDao.listByHostId(hostId);
-            if (vms.size() == 0) {
-                return true;
-            }
-
-            List<HostVO> hosts = listAllUpAndEnabledHosts(Host.Type.Routing, host.getClusterId(), host.getPodId(), host.getDataCenterId());
-            for (final VMInstanceVO vm : vms) {
-                if (hosts == null || hosts.isEmpty() || !answer.getMigrate()) {
-                    // for the last host in this cluster, stop all the VMs
-                    _haMgr.scheduleStop(vm, hostId, WorkType.ForceStop);
-                } else {
-                    _haMgr.scheduleMigration(vm);
-                }
-            }
-        }
+        s_logger.warn("No more HA work (stop/migrate) for VMs on that host when put into maintenance!");
 
         return true;
     }
