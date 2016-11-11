@@ -704,15 +704,7 @@ public class TemplateManagerImpl extends ManagerBase implements TemplateManager,
         if (sourceZoneId != null) {
             // template is on zone-wide secondary storage
             srcSecStore = getImageStore(sourceZoneId, templateId);
-        } else {
-            // template is on region store
-            srcSecStore = getImageStore(templateId);
         }
-
-        // Commented to allow templates that have been removed to be re-activated
-//        if (srcSecStore == null) {
-//            throw new InvalidParameterValueException("There is no template " + templateId + " ready on image store.");
-//        }
 
         if (template.isCrossZones()) {
             // sync template from cache store to region store if it is not there, for cases where we are going to migrate existing NFS to S3.

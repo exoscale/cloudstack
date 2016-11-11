@@ -16,15 +16,15 @@
 // under the License.
 package com.cloud.storage.template;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 
-import org.apache.commons.httpclient.ChunkedInputStream;
+import org.apache.cloudstack.utils.imagestore.ImageStoreUtil;
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
@@ -113,7 +113,7 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
             request = new GetMethod(downloadUrl);
             request.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, myretryhandler);
             completionCallback = callback;
-            //this.request.setFollowRedirects(false);
+            this.request.setFollowRedirects(true);
 
             File f = File.createTempFile("dnld", "tmp_", new File(toDir));
 
@@ -228,9 +228,9 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
                 remoteSize = maxTemplateSizeInBytes;
             }
 
-            InputStream in = !chunked ? new BufferedInputStream(request.getResponseBodyAsStream()) : new ChunkedInputStream(request.getResponseBodyAsStream());
+            InputStream in = request.getResponseBodyAsStream();
 
-            RandomAccessFile out = new RandomAccessFile(file, "rwd");
+            RandomAccessFile out = new RandomAccessFile(file, "rw");
             out.seek(localFileSize);
 
             s_logger.info("Starting download from " + getDownloadUrl() + " to " + toFile + " remoteSize=" + remoteSize + " , max size=" + maxTemplateSizeInBytes);
@@ -238,6 +238,7 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
             byte[] block = new byte[CHUNK_SIZE];
             long offset = 0;
             boolean done = false;
+            boolean verifiedFormat=false;
             status = TemplateDownloader.Status.IN_PROGRESS;
             while (!done && status != Status.ABORTED && offset <= remoteSize) {
                 if ((bytes = in.read(block, 0, CHUNK_SIZE)) > -1) {
@@ -245,10 +246,36 @@ public class HttpTemplateDownloader extends ManagedContextRunnable implements Te
                     offset += bytes;
                     out.seek(offset);
                     totalBytes += bytes;
+                        if (!verifiedFormat && (offset >= 1048576 || offset >= remoteSize)) { //let's check format after we get 1MB or full file
+                        String uripath = null;
+                        try {
+                            URI str = new URI(getDownloadUrl());
+                            uripath = str.getPath();
+                        } catch (URISyntaxException e) {
+                            s_logger.warn("Invalid download url: " + getDownloadUrl() + ", This should not happen since we have validated the url before!!");
+                        }
+                        String unsupportedFormat = ImageStoreUtil.checkTemplateFormat(file.getAbsolutePath(), uripath);
+                            if (unsupportedFormat == null || !unsupportedFormat.isEmpty()) {
+                                 try {
+                                     request.abort();
+                                     out.close();
+                                     in.close();
+                                 } catch (Exception ex) {
+                                     s_logger.debug("Error on http connection : " + ex.getMessage());
+                                 }
+                                 status = Status.UNRECOVERABLE_ERROR;
+                                 errorString = "Template content is unsupported, or mismatch between selected format and template content. Found  : " + unsupportedFormat;
+                                 return 0;
+                            }
+                            s_logger.debug("Verified format of downloading file " + file.getAbsolutePath() + " is supported");
+                            verifiedFormat = true;
+                        }
                 } else {
                     done = true;
                 }
             }
+            out.getFD().sync();
+
             Date finish = new Date();
             String downloaded = "(incomplete download)";
             if (totalBytes >= remoteSize) {
