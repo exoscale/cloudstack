@@ -3170,7 +3170,7 @@ public class UserVmManagerImpl extends ManagerBase implements UserVmManager, Vir
     private void validateUserData(String userData, HTTPMethod httpmethod) {
         byte[] decodedUserData = null;
         if (userData != null) {
-            if (!Base64.isBase64(userData)) {
+            if (!Base64.isBase64(userData) || !(userData.length() % 4 == 0)) {
                 throw new InvalidParameterValueException("User data is not base64 encoded");
             }
             // If GET, use 4K. If POST, support upto 32K.
