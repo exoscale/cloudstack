@@ -952,8 +952,7 @@ setup_router() {
       reboot
     fi
   fi
-
-  apt_update  
+  
   setup_aesni
   setup_dnsmasq
   setup_apache2 $ETH0_IP
@@ -1156,8 +1155,6 @@ setup_secstorage() {
   else
     setup_sshd $ETH0_IP "eth0"
   fi
-
-  apt_update
   setup_apache2 $ETH2_IP
 
   disable_rpfilter
@@ -1185,7 +1182,6 @@ setup_console_proxy() {
     setup_sshd $ETH0_IP "eth0"
   fi
 
-  apt_update
   disable_rpfilter
   enable_fwding 0
   enable_svc haproxy 0
@@ -1271,6 +1267,7 @@ start() {
   log_it "Detected that we are running inside $hyp guest"
   get_boot_params
   patch
+  apt_update
   patch_log4j
   parse_cmd_line
   change_password
