@@ -48,6 +48,7 @@ log_it() {
 }
 
 apt_update() {
+  log_it "Patching doing apt-get upgrade"
   sed -i 's/http.us.debian.org/ftp.ch.debian.org/g' /etc/apt/sources.list
   apt-get update -q
   DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
@@ -1266,10 +1267,10 @@ start() {
   log_it "Detected that we are running inside $hyp guest"
   get_boot_params
   patch
+  apt_update
   patch_log4j
   parse_cmd_line
   change_password
-  apt_update
   case $TYPE in 
      router)
          [ "$NAME" == "" ] && NAME=router
