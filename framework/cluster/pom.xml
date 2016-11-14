@@ -14,7 +14,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack-framework</artifactId>
-    <version>4.4.2-exoscale-20161114-1058</version>
+    <version>4.4.2-exoscale-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <dependencies>
