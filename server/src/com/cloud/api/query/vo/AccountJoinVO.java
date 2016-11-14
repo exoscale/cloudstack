@@ -97,6 +97,9 @@ public class AccountJoinVO extends BaseViewVO implements InternalIdentity, Ident
     @Column(name = "ipLimit")
     private Long ipLimit;
 
+    @Column(name = "eipLimit")
+    private Long eipLimit;
+
     @Column(name = "ipTotal")
     private Long ipTotal;
 
@@ -320,6 +323,10 @@ public class AccountJoinVO extends BaseViewVO implements InternalIdentity, Ident
 
     public Long getIpLimit() {
         return ipLimit;
+    }
+
+    public Long getEIpLimit() {
+        return eipLimit;
     }
 
     public Long getVolumeLimit() {
