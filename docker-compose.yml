@@ -1,0 +1,16 @@
+# Edit those files and change the dbhost according to your docker setup:
+# - build/replace.properties (DBHOST)
+# - utils/conf/db.properties (db.*.host x3)
+version: '2'
+services:
+    db:
+        image: mariadb:10.0
+        volumes:
+            - /var/lib/mysql
+        environment:
+            MYSQL_DATABASE: cloud
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_USER: cloud
+            MYSQL_PASSWORD: cloud
+        ports:
+            - "3306:3306"
