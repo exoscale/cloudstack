@@ -16,6 +16,7 @@
 // under the License.
 package org.apache.cloudstack.api.response;
 
+import com.cloud.configuration.Resource;
 import com.google.gson.annotations.SerializedName;
 
 import org.apache.cloudstack.api.ApiConstants;
@@ -80,12 +81,9 @@ public class ResourceLimitResponse extends BaseResponse implements ControlledEnt
         this.domainName = domainName;
     }
 
-    public void setResourceType(String resourceType) {
-        this.resourceType = resourceType;
-    }
-
-    public void setResourceTypeName(String resourceTypeName) {
-        this.resourceTypeName = resourceTypeName;
+    public void setResourceType(Resource.ResourceType resourceType) {
+        this.resourceType = Integer.valueOf(resourceType.getOrdinal()).toString();
+        this.resourceTypeName = resourceType.getName();
     }
 
     public void setMax(Long max) {
