@@ -32,12 +32,12 @@ public class Upgrade442exo1to442exo2 implements DbUpgrade {
 
     @Override
     public String[] getUpgradableVersionRange() {
-        return new String[] {"4.4.2-exo-1", "4.4.2-exo-2"};
+        return new String[] {"4.4.2.1", "4.4.2.2"};
     }
 
     @Override
     public String getUpgradedVersion() {
-        return "4.4.2-exo-2";
+        return "4.4.2.2";
     }
 
     @Override

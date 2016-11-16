@@ -492,12 +492,8 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
                 }
 
                 if (dbVersion.compareTo(currentVersion) == 0) {
-                    if (currentVersion.compareTo(CloudStackVersion.parse("4.4.2")) == 0) {
-                        s_logger.info("DB version and code version matches but running exoscale extension in 4.4.2");
-                    } else {
-                        s_logger.info("DB version and code version matches so no upgrade needed.");
-                        return;
-                    }
+                    s_logger.info("DB version and code version matches so no upgrade needed.");
+                    return;
                 }
                 upgrade(dbVersion, currentVersion);
             } finally {
