@@ -29,7 +29,7 @@
 
   <groupId>org.apache.cloudstack</groupId>
   <artifactId>cloudstack</artifactId>
-  <version>4.4.2.2-exoscale-20161116-1653</version>
+  <version>4.4.2.2-exoscale-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache CloudStack</name>
   <description>Apache CloudStack is an IaaS (“Infrastructure as a Service”) cloud orchestration platform.</description>
@@ -37,7 +37,7 @@
   <scm>
     <connection>scm:git:https://github.com/exoscale/cloudstack-private</connection>
     <developerConnection>scm:git:https://github.com/exoscale/cloudstack-private</developerConnection>
-    <tag>4.4.2.2-exoscale-20161116-1653</tag>
+    <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>jira</system>
@@ -116,7 +116,7 @@
     <cs.daemon.version>1.0.15</cs.daemon.version>
     <cs.jna.version>4.0.0</cs.jna.version>
     <cs.checkstyle.version>2.11</cs.checkstyle.version>
-    <cs.cloudstack.checkstyle.version>4.4.2.2-exoscale-20161116-1653</cs.cloudstack.checkstyle.version>
+    <cs.cloudstack.checkstyle.version>4.4.2-exoscale</cs.cloudstack.checkstyle.version>
     <cs.mycila.license.version>2.11</cs.mycila.license.version>
     <cs.findbugs.version>3.0.1</cs.findbugs.version>
     <cs.javadoc.version>2.10.1</cs.javadoc.version>
