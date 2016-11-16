@@ -265,7 +265,7 @@ public class AssociateIPAddrCmd extends BaseAsyncCreateCmd {
         if (isPortable()) {
             return EventTypes.EVENT_PORTABLE_IP_ASSIGN;
         } else {
-            return EventTypes.EVENT_NET_IP_ASSIGN;
+            return EventTypes.EVENT_NET_EIP_ASSIGN;
         }
     }
 

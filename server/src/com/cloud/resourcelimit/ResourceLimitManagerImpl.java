@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
+import org.apache.cloudstack.framework.config.ConfigKey;
+import org.apache.cloudstack.framework.config.Configurable;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -107,7 +109,7 @@ import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.VMInstanceDao;
 
 @Component
-public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLimitService {
+public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLimitService, Configurable {
     public static final Logger s_logger = Logger.getLogger(ResourceLimitManagerImpl.class);
 
     @Inject
@@ -154,6 +156,8 @@ public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLim
     private VlanDao _vlanDao;
     @Inject
     private SnapshotDataStoreDao _snapshotDataStoreDao;
+
+    public static final ConfigKey<Long> DefaultMaxPublicElasticIp = new ConfigKey<>("Account Defaults", Long.class, "max.public.elastic.ip", "20", "The default maximum number of public elastic IPs that can be consumed by an account/domain", false);
 
     protected GenericSearchBuilder<TemplateDataStoreVO, SumCount> templateSizeSearch;
     protected GenericSearchBuilder<SnapshotDataStoreVO, SumCount> snapshotSizeSearch;
@@ -221,6 +225,7 @@ public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLim
             projectResourceLimitMap.put(Resource.ResourceType.memory, Long.parseLong(_configDao.getValue(Config.DefaultMaxProjectMemory.key())));
             projectResourceLimitMap.put(Resource.ResourceType.primary_storage, Long.parseLong(_configDao.getValue(Config.DefaultMaxProjectPrimaryStorage.key())));
             projectResourceLimitMap.put(Resource.ResourceType.secondary_storage, Long.parseLong(_configDao.getValue(Config.DefaultMaxProjectSecondaryStorage.key())));
+            projectResourceLimitMap.put(Resource.ResourceType.public_elastic_ip, DefaultMaxPublicElasticIp.value());
 
             accountResourceLimitMap.put(Resource.ResourceType.public_ip, Long.parseLong(_configDao.getValue(Config.DefaultMaxAccountPublicIPs.key())));
             accountResourceLimitMap.put(Resource.ResourceType.snapshot, Long.parseLong(_configDao.getValue(Config.DefaultMaxAccountSnapshots.key())));
@@ -233,6 +238,7 @@ public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLim
             accountResourceLimitMap.put(Resource.ResourceType.memory, Long.parseLong(_configDao.getValue(Config.DefaultMaxAccountMemory.key())));
             accountResourceLimitMap.put(Resource.ResourceType.primary_storage, Long.parseLong(_configDao.getValue(Config.DefaultMaxAccountPrimaryStorage.key())));
             accountResourceLimitMap.put(Resource.ResourceType.secondary_storage, Long.parseLong(_configDao.getValue(Config.DefaultMaxAccountSecondaryStorage.key())));
+            accountResourceLimitMap.put(Resource.ResourceType.public_elastic_ip, DefaultMaxPublicElasticIp.value());
         } catch (NumberFormatException e) {
             s_logger.error("NumberFormatException during configuration", e);
             throw new ConfigurationException("Configuration failed due to NumberFormatException, see log for the stacktrace");
@@ -852,6 +858,8 @@ public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLim
             newCount = _snapshotDao.countSnapshotsForAccount(accountId);
         } else if (type == Resource.ResourceType.public_ip) {
             newCount = calculatePublicIpForAccount(accountId);
+        } else if (type == Resource.ResourceType.public_elastic_ip) {
+            newCount = calculatePublicElasticIpForAccount(accountId);
         } else if (type == Resource.ResourceType.template) {
             newCount = _vmTemplateDao.countTemplatesForAccount(accountId);
         } else if (type == Resource.ResourceType.project) {
@@ -975,6 +983,10 @@ public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLim
             return allocatedCount;
     }
 
+    private long calculatePublicElasticIpForAccount(long accountId) {
+        return _ipAddressDao.countElasticIpsForAccount(accountId);
+    }
+
     @Override
     public long getResourceCount(Account account, ResourceType type) {
         return _resourceCountDao.getResourceCount(account.getId(), ResourceOwnerType.Account, type);
@@ -1056,5 +1068,15 @@ public class ResourceLimitManagerImpl extends ManagerBase implements ResourceLim
                 }
             }
         }
+    }
+
+    @Override
+    public String getConfigComponentName() {
+        return ResourceLimitService.class.getSimpleName();
+    }
+
+    @Override
+    public ConfigKey<?>[] getConfigKeys() {
+        return new ConfigKey<?>[] {DefaultMaxPublicElasticIp};
     }
 }

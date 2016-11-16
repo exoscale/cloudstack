@@ -57,7 +57,8 @@ public class ListResourceLimitsCmd extends BaseListProjectAndAccountResourcesCmd
             + "8 - CPU. Number of CPU an account can allocate for his resources. "
             + "9 - Memory. Amount of RAM an account can allocate for his resources. "
             + "10 - PrimaryStorage. Total primary storage space (in GiB) a user can use. "
-            + "11 - SecondaryStorage. Total secondary storage space (in GiB) a user can use. ")
+            + "11 - SecondaryStorage. Total secondary storage space (in GiB) a user can use. "
+            + "12 - Elastic IP. Number of public elastic IP addresses an account can own. ")
     private Integer resourceType;
 
     @Parameter(name = ApiConstants.RESOURCE_TYPE_NAME, type = CommandType.STRING, description = "Type of resource (wins over resourceType if both are provided). Values are: "
@@ -72,7 +73,8 @@ public class ListResourceLimitsCmd extends BaseListProjectAndAccountResourcesCmd
             + "cpu - CPU. Number of CPU an account can allocate for his resources. "
             + "memory - Memory. Amount of RAM an account can allocate for his resources. "
             + "primary_storage - PrimaryStorage. Total primary storage space (in GiB) a user can use. "
-            + "secondary_storage - SecondaryStorage. Total secondary storage space (in GiB) a user can use. ")
+            + "secondary_storage - SecondaryStorage. Total secondary storage space (in GiB) a user can use. "
+            + "public_elastic_ip - IP. Number of public elastic IP addresses an account can own. ")
     private String resourceTypeName;
 
     /////////////////////////////////////////////////////

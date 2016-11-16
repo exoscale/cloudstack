@@ -51,6 +51,7 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
     private static final Logger s_logger = Logger.getLogger(IPAddressDaoImpl.class);
 
     protected SearchBuilder<IPAddressVO> AllFieldsSearch;
+    protected GenericSearchBuilder<IPAddressVO, Long> AllFieldsCount;
     protected SearchBuilder<IPAddressVO> VlanDbIdSearchUnallocated;
     protected GenericSearchBuilder<IPAddressVO, Integer> AllIpCount;
     protected GenericSearchBuilder<IPAddressVO, Integer> AllocatedIpCount;
@@ -86,7 +87,26 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
         AllFieldsSearch.and("physicalNetworkId", AllFieldsSearch.entity().getPhysicalNetworkId(), Op.EQ);
         AllFieldsSearch.and("vpcId", AllFieldsSearch.entity().getVpcId(), Op.EQ);
         AllFieldsSearch.and("associatedVmIp", AllFieldsSearch.entity().getVmIp(), Op.EQ);
+        AllFieldsSearch.and("elastic", AllFieldsSearch.entity().isElastic(), Op.EQ);
         AllFieldsSearch.done();
+
+        AllFieldsCount = createSearchBuilder(Long.class);
+        AllFieldsCount.select(null, Func.COUNT, AllFieldsCount.entity().getAddress());
+        AllFieldsCount.and("id", AllFieldsCount.entity().getId(), Op.EQ);
+        AllFieldsCount.and("dataCenterId", AllFieldsCount.entity().getDataCenterId(), Op.EQ);
+        AllFieldsCount.and("ipAddress", AllFieldsCount.entity().getAddress(), Op.EQ);
+        AllFieldsCount.and("vlan", AllFieldsCount.entity().getVlanId(), Op.EQ);
+        AllFieldsCount.and("accountId", AllFieldsCount.entity().getAllocatedToAccountId(), Op.EQ);
+        AllFieldsCount.and("sourceNat", AllFieldsCount.entity().isSourceNat(), Op.EQ);
+        AllFieldsCount.and("network", AllFieldsCount.entity().getAssociatedWithNetworkId(), Op.EQ);
+        AllFieldsCount.and("associatedWithVmId", AllFieldsCount.entity().getAssociatedWithVmId(), Op.EQ);
+        AllFieldsCount.and("oneToOneNat", AllFieldsCount.entity().isOneToOneNat(), Op.EQ);
+        AllFieldsCount.and("sourcenetwork", AllFieldsCount.entity().getSourceNetworkId(), Op.EQ);
+        AllFieldsCount.and("physicalNetworkId", AllFieldsCount.entity().getPhysicalNetworkId(), Op.EQ);
+        AllFieldsCount.and("vpcId", AllFieldsCount.entity().getVpcId(), Op.EQ);
+        AllFieldsCount.and("associatedVmIp", AllFieldsCount.entity().getVmIp(), Op.EQ);
+        AllFieldsCount.and("elastic", AllFieldsCount.entity().isElastic(), Op.EQ);
+        AllFieldsCount.done();
 
         VlanDbIdSearchUnallocated = createSearchBuilder();
         VlanDbIdSearchUnallocated.and("allocated", VlanDbIdSearchUnallocated.entity().getAllocatedTime(), Op.NULL);
@@ -363,6 +383,14 @@ public class IPAddressDaoImpl extends GenericDaoBase<IPAddressVO, Long> implemen
     public long countAllocatedIPsForAccount(long accountId) {
         SearchCriteria<Long> sc = AllocatedIpCountForAccount.create();
         sc.setParameters("account", accountId);
+        return customSearch(sc, null).get(0);
+    }
+
+    @Override
+    public long countElasticIpsForAccount(final long accountId) {
+        SearchCriteria<Long> sc = AllFieldsCount.create();
+        sc.setParameters("account", accountId);
+        sc.setParameters("elastic", true);
         return customSearch(sc, null).get(0);
     }
 

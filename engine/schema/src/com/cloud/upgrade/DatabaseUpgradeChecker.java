@@ -37,6 +37,8 @@ import java.util.TreeMap;
 
 import javax.inject.Inject;
 
+import com.cloud.upgrade.dao.Upgrade442to442exo1;
+import com.cloud.upgrade.dao.Upgrade442exo1to442exo2;
 import org.apache.log4j.Logger;
 
 import com.cloud.upgrade.dao.DbUpgrade;
@@ -202,29 +204,33 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
         _upgradeMap.put(CloudStackVersion.parse("3.0.2"), new DbUpgrade[] {new Upgrade302to40(), new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(),
             new Upgrade430to440(), new Upgrade440to441()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.0.0"), new DbUpgrade[] {new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.0.0"), new DbUpgrade[] {new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.0.1"), new DbUpgrade[] {new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.0.1"), new DbUpgrade[] {new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.0.2"), new DbUpgrade[] {new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.0.2"), new DbUpgrade[] {new Upgrade40to41(), new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.1.0"), new DbUpgrade[] {new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.1.0"), new DbUpgrade[] {new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.1.1"), new DbUpgrade[] {new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.1.1"), new DbUpgrade[] {new Upgrade410to420(), new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.2.0"), new DbUpgrade[] {new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.2.0"), new DbUpgrade[] {new Upgrade420to421(), new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.2.1"), new DbUpgrade[] {new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.2.1"), new DbUpgrade[] {new Upgrade421to430(), new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.3.0"), new DbUpgrade[] {new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.3.0"), new DbUpgrade[] {new Upgrade430to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.3.1"), new DbUpgrade[] {new Upgrade431to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.3.1"), new DbUpgrade[] {new Upgrade431to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.3.2"), new DbUpgrade[] {new Upgrade432to440(), new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.3.2"), new DbUpgrade[] {new Upgrade432to440(), new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.4.0"), new DbUpgrade[] {new Upgrade440to441(), new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.4.0"), new DbUpgrade[] {new Upgrade440to441(), new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
 
-        _upgradeMap.put(CloudStackVersion.parse("4.4.1"), new DbUpgrade[] {new Upgrade441to442()});
+        _upgradeMap.put(CloudStackVersion.parse("4.4.1"), new DbUpgrade[] {new Upgrade441to442(), new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
+
+        _upgradeMap.put(CloudStackVersion.parse("4.4.2"), new DbUpgrade[] {new Upgrade442to442exo1(), new Upgrade442exo1to442exo2()});
+
+        _upgradeMap.put(CloudStackVersion.parse("4.4.2.1"), new DbUpgrade[] {new Upgrade442exo1to442exo2()});
 
         //CP Upgrades
         _upgradeMap.put(CloudStackVersion.parse("3.0.3"), new DbUpgrade[] {new Upgrade303to304(), new Upgrade304to305(), new Upgrade305to306(), new Upgrade306to307(), new Upgrade307to410(),
@@ -489,7 +495,6 @@ public class DatabaseUpgradeChecker implements SystemIntegrityChecker {
                     s_logger.info("DB version and code version matches so no upgrade needed.");
                     return;
                 }
-
                 upgrade(dbVersion, currentVersion);
             } finally {
                 lock.unlock();

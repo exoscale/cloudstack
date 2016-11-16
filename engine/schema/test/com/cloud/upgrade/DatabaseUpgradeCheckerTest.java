@@ -50,7 +50,7 @@ public class DatabaseUpgradeCheckerTest {
         final DbUpgrade[] upgrades = checker.calculateUpgradePath(dbVersion, currentVersion);
 
         assertNotNull(upgrades);
-        assertEquals(3, upgrades.length);
+        assertEquals(5, upgrades.length);
         assertTrue(upgrades[0] instanceof Upgrade440to441);
         assertTrue(upgrades[1] instanceof Upgrade441to442);
     }
@@ -68,7 +68,7 @@ public class DatabaseUpgradeCheckerTest {
         final DbUpgrade[] upgrades = checker.calculateUpgradePath(dbVersion, currentVersion);
 
         assertNotNull(upgrades);
-        assertEquals(2, upgrades.length);
+        assertEquals(5, upgrades.length);
 
         assertTrue(upgrades[0] instanceof Upgrade440to441);
 
@@ -90,7 +90,7 @@ public class DatabaseUpgradeCheckerTest {
         final DbUpgrade[] upgrades = checker.calculateUpgradePath(dbVersion, currentVersion);
 
         assertNotNull(upgrades);
-        assertEquals(1, upgrades.length);
+        assertEquals(4, upgrades.length);
 
         assertTrue(Arrays.equals(new String[] { "4.4.1", currentVersion.toString()}, upgrades[0].getUpgradableVersionRange()));
         assertEquals(currentVersion.toString(), upgrades[0].getUpgradedVersion());
@@ -110,7 +110,7 @@ public class DatabaseUpgradeCheckerTest {
         final DbUpgrade[] upgrades = checker.calculateUpgradePath(dbVersion, currentVersion);
 
         assertNotNull(upgrades);
-        assertEquals(4, upgrades.length);
+        assertEquals(6, upgrades.length);
 
         assertTrue(upgrades[0] instanceof Upgrade430to440);
         assertTrue(upgrades[1] instanceof Upgrade440to441);
@@ -131,7 +131,7 @@ public class DatabaseUpgradeCheckerTest {
         final DbUpgrade[] upgrades = checker.calculateUpgradePath(dbVersion, currentVersion);
 
         assertNotNull(upgrades);
-        assertEquals(6, upgrades.length);
+        assertEquals(9, upgrades.length);
 
         assertTrue(upgrades[0] instanceof Upgrade410to420);
         assertTrue(upgrades[1] instanceof Upgrade420to421);

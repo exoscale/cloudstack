@@ -66,6 +66,8 @@ public interface ResourceLimitAndCountResponse {
 
     public void setIpLimit(String ipLimit);
 
+    public void setEIpLimit(String eipLimit);
+
     public void setIpTotal(Long ipTotal);
 
     public void setIpAvailable(String ipAvailable);

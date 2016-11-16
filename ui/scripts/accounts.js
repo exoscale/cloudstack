@@ -377,6 +377,24 @@
                                             }
                                         });
                                     }
+
+                                    if (args.data.eipLimit != null) {
+                                        var data = {
+                                            resourceType: 12,
+                                            max: args.data.eipLimit,
+                                            domainid: accountObj.domainid,
+                                            account: accountObj.name
+                                        };
+                                        $.ajax({
+                                            url: createURL('updateResourceLimit'),
+                                            data: data,
+                                            async: false,
+                                            success: function(json) {
+                                                accountObj["eipLimit"] = args.data.eipLimit;
+                                            }
+                                        });
+                                    }
+
                                     args.response.success({
                                         data: accountObj
                                     });
@@ -446,7 +464,10 @@
                                             			break;
                                             		case '11':
                                             			msg += 'Secondary Storage'; //secondaryStorageLimit
-                                            			break;      
+                                            			break;
+                                                    case '12':
+                                                        msg += 'Public Elastic IP'; //eipLimit
+                                                        break;
                                             		}
                                             		                                      		
                                             		msg += ' Count: ' + resourcecounts[i].resourcecount + ' <br> ';
@@ -781,6 +802,15 @@
                                                 return false;
                                         }
                                     },
+                                    eipLimit: {
+                                        label: 'label.eip.limits',
+                                        isEditable: function(context) {
+                                            if (context.accounts[0].accounttype == roleTypeUser || context.accounts[0].accounttype == roleTypeDomainAdmin) //updateResourceLimits is only allowed on account whose type is user or domain-admin
+                                                return true;
+                                            else
+                                                return false;
+                                        }
+                                    },
 
                                     vmtotal: {
                                         label: 'label.total.of.vm'
@@ -862,6 +892,9 @@
                                                                     break;
                                                                 case "11":
                                                                     accountObj["secondaryStorageLimit"] = limit.max;
+                                                                    break;
+                                                                case "12":
+                                                                    accountObj["eipLimit"] = limit.max;
                                                                     break;
                                                             }
                                                         }
