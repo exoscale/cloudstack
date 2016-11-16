@@ -573,6 +573,7 @@ dictionary = {
 'label.egress.rules': '<fmt:message key="label.egress.rules" />',
 'label.elastic': '<fmt:message key="label.elastic" />',
 'label.elastic.IP': '<fmt:message key="label.elastic.IP" />',
+'label.elastic.ip.limits': '<fmt:message key="label.elastic.ip.limits" />',
 'label.elastic.LB': '<fmt:message key="label.elastic.LB" />',
 'label.email': '<fmt:message key="label.email" />',
 'label.enable.provider': '<fmt:message key="label.enable.provider" />',
