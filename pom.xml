@@ -49,6 +49,7 @@
   </prerequisites>
 
   <properties>
+    <cs.exoscale.version>4.4.2.2-exoscale</cs.exoscale.version>
     <cs.jdk.version>1.7</cs.jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -1168,24 +1169,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>parse-version</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>regex-property</goal>
-                </goals>
-                <configuration>
-                  <name>release.version</name>
-                  <regex>(\d\.\d\.\d\.\d-\w*)</regex><!-- Remove the -SNAPSHOT from the version on 4 digits -->
-                  <value>${project.version}</value>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
             <artifactId>maven-release-plugin</artifactId>
             <inherited>false</inherited>
             <configuration>
@@ -1195,7 +1178,7 @@
               <tagNameFormat>@{project.version}</tagNameFormat>
               <developmentVersion>${project.version}</developmentVersion>
               <autoVersionSubmodules>true</autoVersionSubmodules>
-              <releaseVersion>${release.version}-${timestamp}</releaseVersion>
+              <releaseVersion>${cs.exoscale.version}-${timestamp}</releaseVersion>
             </configuration>
           </plugin>
         </plugins>
