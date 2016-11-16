@@ -1168,6 +1168,23 @@
       <build>
         <plugins>
           <plugin>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>parse-version</id>
+                <phase>validate</phase>
+                <goals>
+                  <goal>regex-property</goal>
+                </goals>
+                <configuration>
+                  <name>release.version</name>
+                  <regex>(\d\.\d\.\d\.\d-\w*)</regex><!-- Remove the -SNAPSHOT from the version on 4 digits -->
+                  <value>${project.version}</value>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
             <artifactId>maven-release-plugin</artifactId>
             <inherited>false</inherited>
             <configuration>
@@ -1177,7 +1194,7 @@
               <tagNameFormat>@{project.version}</tagNameFormat>
               <developmentVersion>${project.version}</developmentVersion>
               <autoVersionSubmodules>true</autoVersionSubmodules>
-              <releaseVersion>${project.version}-${timestamp}</releaseVersion>
+              <releaseVersion>${release.version}-${timestamp}</releaseVersion>
             </configuration>
           </plugin>
         </plugins>
