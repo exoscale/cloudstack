@@ -1173,7 +1173,7 @@
             <executions>
               <execution>
                 <id>parse-version</id>
-                <phase>validate</phase>
+                <phase>verify</phase>
                 <goals>
                   <goal>regex-property</goal>
                 </goals>
