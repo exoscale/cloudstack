@@ -17,6 +17,8 @@
 
 package com.cloud.vm;
 
+import static org.junit.Assert.assertTrue;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyFloat;
@@ -41,6 +43,7 @@ import com.cloud.event.dao.UsageEventDao;
 import com.cloud.storage.SnapshotVO;
 import com.cloud.storage.dao.SnapshotDao;
 import io.exo.cloudstack.restrictions.ServiceOfferingService;
+import org.apache.cloudstack.api.BaseCmd;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -691,6 +694,17 @@ public class UserVmManagerTest {
         } finally {
             CallContext.unregister();
         }
+    }
+
+    @Test
+    public void testValideBase64WithoutPadding() {
+        // fo should be encoded in base64 either as Zm8 or Zm8=
+        String encodedUserdata = "Zm8";
+        String encodedUserdataWithPadding = "Zm8=";
+
+        // Verify that we accept both but return the padded version
+        assertTrue("validate return the value with padding", encodedUserdataWithPadding.equals(_userVmMgr.validateUserData(encodedUserdata, BaseCmd.HTTPMethod.GET)));
+        assertTrue("validate return the value with padding", encodedUserdataWithPadding.equals(_userVmMgr.validateUserData(encodedUserdataWithPadding, BaseCmd.HTTPMethod.GET)));
     }
 
 }
