@@ -23,6 +23,7 @@ build: build-indep
 build-indep: build-indep-stamp
 
 build-indep-stamp: configure
+	cd tools/checkstyle; mvn install
 	mvn -T C1.5 package -DskipTests -Dsystemvm \
         -Dcs.replace.properties=replace.properties.tmp \
 		${ACS_BUILD_OPTS}
