@@ -116,7 +116,6 @@
     <cs.daemon.version>1.0.15</cs.daemon.version>
     <cs.jna.version>4.0.0</cs.jna.version>
     <cs.checkstyle.version>2.11</cs.checkstyle.version>
-    <cs.cloudstack.checkstyle.version>4.4.2-exoscale</cs.cloudstack.checkstyle.version>
     <cs.mycila.license.version>2.11</cs.mycila.license.version>
     <cs.findbugs.version>3.0.1</cs.findbugs.version>
     <cs.javadoc.version>2.10.1</cs.javadoc.version>
@@ -572,7 +571,7 @@
             <dependency>
               <groupId>org.apache.cloudstack</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>${cs.cloudstack.checkstyle.version}</version>
+              <version>${project.version}</version>
             </dependency>
           </dependencies>
           <executions>
