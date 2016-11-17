@@ -966,7 +966,7 @@
             <dependency>
               <groupId>org.apache.cloudstack</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>${cs.cloudstack.checkstyle.version}</version>
+              <version>${project.version}</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -994,7 +994,7 @@
             <dependency>
               <groupId>org.apache.cloudstack</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>${cs.cloudstack.checkstyle.version}</version>
+              <version>${project.version}</version>
             </dependency>
           </dependencies>
           <configuration>
