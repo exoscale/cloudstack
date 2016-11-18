@@ -293,6 +293,9 @@ public class UserVmJoinVO extends BaseViewVO implements ControlledViewEntity {
     @Column(name = "isolation_uri")
     private URI isolationUri;
 
+    @Column(name = "has_secondary_ip")
+    private boolean secondaryIp;
+
     @Column(name = "network_id")
     private long networkId;
 
@@ -710,6 +713,10 @@ public class UserVmJoinVO extends BaseViewVO implements ControlledViewEntity {
 
     public URI getIsolationUri() {
         return isolationUri;
+    }
+
+    public boolean hasSecondaryIp() {
+        return secondaryIp;
     }
 
     public long getNetworkId() {

@@ -18,12 +18,18 @@ package com.cloud.api.query;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.cloud.service.ServiceOfferingAuthorizationVO;
 import com.cloud.api.query.vo.VMInstanceUsageVO;
+import com.cloud.utils.Pair;
+import com.cloud.vm.dao.NicSecondaryIpVO;
+import org.apache.cloudstack.api.response.NicResponse;
+import org.apache.cloudstack.api.response.NicSecondaryIpResponse;
 import org.apache.cloudstack.api.response.ServiceOfferingAuthorizationResponse;
 import org.apache.cloudstack.api.response.UsageUserVmResponse;
 import org.apache.log4j.Logger;
@@ -149,6 +155,7 @@ public class ViewResponseHelper {
         Account caller = CallContext.current().getCallingAccount();
 
         Hashtable<Long, UserVmResponse> vmDataList = new Hashtable<Long, UserVmResponse>();
+        Map<Long, Pair<String, List<NicSecondaryIpResponse>>> secondaryIps = new HashMap<>();
         // Initialise the vmdatalist with the input data
 
         for (UserVmJoinVO userVm : userVms) {
@@ -156,12 +163,40 @@ public class ViewResponseHelper {
             if (userVmData == null) {
                 // first time encountering this vm
                 userVmData = ApiDBUtils.newUserVmResponse(view, objectName, userVm, details, caller);
+
+                if (userVm.hasSecondaryIp()) {
+                    List<NicSecondaryIpVO> nicSecondaryIps = ApiDBUtils.findNicSecondaryIps(userVm.getNicId());
+                    if (nicSecondaryIps != null) {
+                        List<NicSecondaryIpResponse> ipList = new ArrayList<NicSecondaryIpResponse>();
+                        for (NicSecondaryIpVO ip : nicSecondaryIps) {
+                            NicSecondaryIpResponse ipRes = new NicSecondaryIpResponse();
+                            ipRes.setId(ip.getUuid());
+                            ipRes.setIpAddr(ip.getIp4Address());
+                            ipList.add(ipRes);
+                        }
+                        secondaryIps.put(userVm.getId(), new Pair<>(userVm.getNicUuid(), ipList));
+                    }
+
+                }
             } else{
                 // update nics, securitygroups, tags, affinitygroups for 1 to many mapping fields
                 userVmData = ApiDBUtils.fillVmDetails(view, userVmData, userVm);
             }
             vmDataList.put(userVm.getId(), userVmData);
         }
+
+        for(Long vmId : secondaryIps.keySet()) {
+            UserVmResponse userVmResponse = vmDataList.get(vmId);
+            String vmNicUuid = secondaryIps.get(vmId).first();
+            List<NicSecondaryIpResponse> nicSecondaryIps = secondaryIps.get(vmId).second();
+            for (NicResponse nic : userVmResponse.getNics()) {
+                if (vmNicUuid.equals(nic.getId())) {
+                    nic.setSecondaryIps(nicSecondaryIps);
+                    break;
+                }
+            }
+        }
+
         return new ArrayList<UserVmResponse>(vmDataList.values());
     }
 
