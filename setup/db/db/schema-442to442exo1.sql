@@ -59,7 +59,6 @@ ALTER TABLE `cloud`.`pod_vlan_map` DROP INDEX IF EXISTS `id` ;
 ALTER TABLE `cloud`.`portable_ip_address` DROP INDEX IF EXISTS `id` ;
 ALTER TABLE `cloud`.`portable_ip_range` DROP INDEX IF EXISTS `id` ;
 ALTER TABLE `cloud`.`region` DROP INDEX IF EXISTS `id` ;
-ALTER TABLE `cloud`.`remote_access_vpn` DROP INDEX IF EXISTS `id` ;
 ALTER TABLE `cloud`.`sequence` DROP INDEX IF EXISTS `name` ;
 ALTER TABLE `cloud`.`snapshot_details` DROP INDEX IF EXISTS `id` ;
 ALTER TABLE `cloud`.`snapshots` DROP INDEX IF EXISTS `id` ;
