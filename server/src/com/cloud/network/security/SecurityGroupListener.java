@@ -17,11 +17,14 @@
 package com.cloud.network.security;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.cloud.agent.api.PingRoutingWithJuraNwGroupsCommand;
+import com.cloud.utils.Ternary;
 import org.apache.log4j.Logger;
 
 import com.cloud.agent.AgentManager;
@@ -142,8 +145,14 @@ public class SecurityGroupListener implements Listener {
         for (Command cmd : commands) {
             if (cmd instanceof PingRoutingWithNwGroupsCommand) {
                 PingRoutingWithNwGroupsCommand ping = (PingRoutingWithNwGroupsCommand)cmd;
+                HashMap<String, Ternary<Long, String, String[]>> juraGateways = null;
+                HashMap<String, Ternary<Long, String, String[]>> juraPeers = null;
+                if (cmd instanceof PingRoutingWithJuraNwGroupsCommand) {
+                    juraGateways = ((PingRoutingWithJuraNwGroupsCommand)cmd).getGateways();
+                    juraPeers = ((PingRoutingWithJuraNwGroupsCommand)cmd).getPeers();
+                }
                 if (ping.getNewGroupStates().size() > 0) {
-                    _securityGroupManager.fullSync(agentId, ping.getNewGroupStates());
+                    _securityGroupManager.fullSync(agentId, ping.getNewGroupStates(), juraGateways, juraPeers);
                 }
                 processed = true;
             }

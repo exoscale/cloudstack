@@ -604,7 +604,7 @@ def get_rule_log_for_vm(vmName):
     vm_name = vmName;
     logfilename = logpath + vm_name + ".log"
     if not os.path.exists(logfilename):
-        return ''
+        return vm_name
 
     lines = (line.rstrip() for line in open(logfilename))
 

@@ -17,6 +17,7 @@
 package com.cloud.network.security;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,7 +41,11 @@ import javax.inject.Inject;
 import javax.naming.ConfigurationException;
 
 import com.cloud.agent.api.to.VirtualMachineTO;
+import com.cloud.api.ApiDBUtils;
+import com.cloud.utils.Ternary;
+import com.cloud.vm.NicSecondaryIp;
 import com.cloud.vm.VirtualMachineProfileImpl;
+import com.google.common.base.Joiner;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 
@@ -124,7 +129,7 @@ import com.cloud.vm.dao.UserVmDao;
 import com.cloud.vm.dao.VMInstanceDao;
 
 public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGroupManager, SecurityGroupService, StateListener<State, VirtualMachine.Event, VirtualMachine> {
-    public static final Logger s_logger = Logger.getLogger(SecurityGroupManagerImpl.class);
+    private static final Logger s_logger = Logger.getLogger(SecurityGroupManagerImpl.class);
 
     @Inject
     SecurityGroupDao _securityGroupDao;
@@ -504,7 +509,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
         return affectedVms;
     }
 
-    protected SecurityGroupRulesCmd generateRulesetCmd(String vmName, String guestIp, String guestMac, Long vmId, String signature, long seqnum,
+    protected SecurityGroupRulesCmd generateRulesetCmd(String vmName, String guestIp, String guestMac, String gateway, String netmask, Long vmId, String signature, long seqnum,
             Map<PortAndProto, Set<String>> ingressRules, Map<PortAndProto, Set<String>> egressRules, List<String> secIps) {
         List<IpPortAndProto> ingressResult = new ArrayList<IpPortAndProto>();
         List<IpPortAndProto> egressResult = new ArrayList<IpPortAndProto>();
@@ -524,7 +529,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
                 egressResult.add(ipPortAndProto);
             }
         }
-        return new SecurityGroupRulesCmd(guestIp, guestMac, vmName, vmId, signature, seqnum, ingressResult.toArray(new IpPortAndProto[ingressResult.size()]),
+        return new SecurityGroupRulesCmd(guestIp, guestMac, gateway, netmask, vmName, vmId, signature, seqnum, ingressResult.toArray(new IpPortAndProto[ingressResult.size()]),
                 egressResult.toArray(new IpPortAndProto[egressResult.size()]), secIps);
     }
 
@@ -1017,7 +1022,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
                                     nicSecIps = _nicSecIpDao.getSecondaryIpAddressesForNic(nic.getId());
                                 }
                             }
-                            SecurityGroupRulesCmd cmd = generateRulesetCmd(vm.getInstanceName(), vm.getPrivateIpAddress(), vm.getPrivateMacAddress(), vm.getId(),
+                            SecurityGroupRulesCmd cmd = generateRulesetCmd(vm.getInstanceName(), vm.getPrivateIpAddress(), vm.getPrivateMacAddress(), nic.getGateway(), nic.getNetmask(), vm.getId(),
                                     generateRulesetSignature(ingressRules, egressRules), seqnum, ingressRules, egressRules, nicSecIps);
                             Commands cmds = new Commands(cmd);
                             try {
@@ -1175,11 +1180,43 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
     }
 
     @Override
-    public void fullSync(long agentId, HashMap<String, Pair<Long, Long>> newGroupStates) {
-        ArrayList<Long> affectedVms = new ArrayList<Long>();
+    public void fullSync(long agentId, HashMap<String, Pair<Long, Long>> newGroupStates, HashMap<String, Ternary<Long, String, String[]>> juraGateways, HashMap<String, Ternary<Long, String, String[]>> juraPeers) {
+        Set<Long> affectedVms = new HashSet<>();
         for (String vmName : newGroupStates.keySet()) {
             Long vmId = newGroupStates.get(vmName).first();
             Long seqno = newGroupStates.get(vmName).second();
+            if (juraPeers != null) {
+                List<? extends Nic> vmNics = _nicDao.listByVmId(vmId);
+
+                Set<String> gateways = new HashSet<>(Arrays.asList(juraGateways.get(vmName).third()));
+                Set<String> peers = new HashSet<>(Arrays.asList(juraPeers.get(vmName).third()));
+                List<? extends NicSecondaryIp> secondaryIps = ApiDBUtils.listVMsSecondaryIps(vmId);
+                Set<String> actualPeers = new HashSet<>();
+                Set<String> actualGateways = new HashSet<>();
+                for (Nic nic : vmNics) {
+                    actualPeers.add(nic.getIp4Address());
+                    actualGateways.add(String.format("%s/%s", nic.getGateway(), NetUtils.getCidrSize(nic.getNetmask())));
+                }
+
+                for (NicSecondaryIp ip : secondaryIps) {
+                    actualPeers.add(ip.getIp4Address());
+                }
+
+                if (!actualGateways.equals(gateways) || !actualPeers.equals(peers)) {
+                    affectedVms.add(vmId);
+                    if (!actualGateways.equals(gateways)) {
+                        s_logger.warn("Gateways for vm " + vmId + " differ between agent response and the database");
+                        s_logger.debug("Gateways in the database: " + Joiner.on(", ").join(actualGateways));
+                        s_logger.debug("Gateways in the agent response: " + Joiner.on(", ").join(gateways));
+                    }
+                    if (!actualPeers.equals(peers)) {
+                        s_logger.warn("Peers for vm " + vmId + " differ between agent response and the database");
+                        s_logger.debug("Peers in the database: " + Joiner.on(", ").join(actualPeers));
+                        s_logger.debug("Peerss in the agent response: " + Joiner.on(", ").join(peers));
+                    }
+                }
+
+            }
 
             VmRulesetLogVO log = _rulesetLogDao.findByVmId(vmId);
             if (log != null && log.getLogsequence() != seqno) {
@@ -1188,7 +1225,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
         }
         if (affectedVms.size() > 0) {
             s_logger.info("Network Group full sync for agent " + agentId + " found " + affectedVms.size() + " vms out of sync");
-            scheduleRulesetUpdateToHosts(affectedVms, false, null);
+            scheduleRulesetUpdateToHosts(new ArrayList(affectedVms), false, null);
         }
 
     }
@@ -1348,7 +1385,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
     }
 
     @Override
-    public boolean securityGroupRulesForVmSecIp(long nicId, String secondaryIp, boolean ruleAction) {
+    public boolean securityGroupRulesForVmSecIp(long nicId, String secondaryIp, boolean addAction) {
         Account caller = CallContext.current().getCallingAccount();
 
         if (secondaryIp == null) {
@@ -1387,7 +1424,7 @@ public class SecurityGroupManagerImpl extends ManagerBase implements SecurityGro
         }
 
         //create command for the to add ip in ipset and arptables rules
-        NetworkRulesVmSecondaryIpCommand cmd = new NetworkRulesVmSecondaryIpCommand(vmName, vmMac, secondaryIp, ruleAction);
+        NetworkRulesVmSecondaryIpCommand cmd = new NetworkRulesVmSecondaryIpCommand(vmName, vmMac, secondaryIp, addAction);
         s_logger.debug("Asking agent to configure rules for vm secondary ip");
         Commands cmds = null;
 

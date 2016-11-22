@@ -29,6 +29,7 @@ import javax.inject.Inject;
 
 import com.cloud.domain.Domain;
 import com.cloud.offering.ServiceOfferingAuthorization;
+import com.cloud.vm.NicSecondaryIp;
 import org.apache.cloudstack.affinity.AffinityGroup;
 import org.apache.cloudstack.affinity.AffinityGroupResponse;
 import org.apache.cloudstack.affinity.dao.AffinityGroupDao;
@@ -1938,5 +1939,9 @@ public class ApiDBUtils {
 
     public static List<ResourceTagJoinVO> listResourceTagViewByResourceUUID(String resourceUUID, ResourceObjectType resourceType) {
         return s_tagJoinDao.listBy(resourceUUID, resourceType);
+    }
+
+    public static List<? extends NicSecondaryIp> listVMsSecondaryIps(Long vmId) {
+        return s_nicSecondaryIpDao.listByVmId(vmId);
     }
 }

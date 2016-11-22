@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.cloud.utils.Pair;
+import com.cloud.utils.Ternary;
 
 /**
  * Ensures that network firewall rules stay updated as VMs go up and down
@@ -40,7 +41,7 @@ public interface SecurityGroupManager {
 
     public void removeInstanceFromGroups(long userVmId);
 
-    public void fullSync(long agentId, HashMap<String, Pair<Long, Long>> newGroupStates);
+    public void fullSync(long agentId, HashMap<String, Pair<Long, Long>> newGroupStates, HashMap<String, Ternary<Long, String, String[]>> juraGateways, HashMap<String, Ternary<Long, String, String[]>> juraPeers);
 
     public String getSecurityGroupsNamesForVm(long vmId);
 

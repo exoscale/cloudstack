@@ -42,12 +42,14 @@ import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.mgmt.JmxUtil;
 import com.cloud.vm.NicVO;
 import com.cloud.vm.VirtualMachine.State;
+import org.apache.log4j.Logger;
 
 /**
  * Same as the base class -- except it uses the abstracted security group work queue
  *
  */
 public class SecurityGroupManagerImpl2 extends SecurityGroupManagerImpl {
+    private static final Logger s_logger = Logger.getLogger(SecurityGroupManagerImpl2.class);
     SecurityGroupWorkQueue _workQueue = new LocalSecurityGroupWorkQueue();
     SecurityGroupWorkTracker _workTracker;
     SecurityManagerMBeanImpl _mBean;
@@ -190,7 +192,7 @@ public class SecurityGroupManagerImpl2 extends SecurityGroupManagerImpl {
                     }
                 }
                 SecurityGroupRulesCmd cmd =
-                    generateRulesetCmd(vm.getInstanceName(), vm.getPrivateIpAddress(), vm.getPrivateMacAddress(), vm.getId(), null, work.getLogsequenceNumber(),
+                    generateRulesetCmd(vm.getInstanceName(), vm.getPrivateIpAddress(), vm.getPrivateMacAddress(), nic.getGateway(), nic.getNetmask(), vm.getId(), null, work.getLogsequenceNumber(),
                         ingressRules, egressRules, nicSecIps);
                 cmd.setMsId(_serverId);
                 if (s_logger.isDebugEnabled()) {

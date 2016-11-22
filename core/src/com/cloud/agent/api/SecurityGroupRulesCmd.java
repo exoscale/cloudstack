@@ -19,6 +19,7 @@ package com.cloud.agent.api;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.zip.DeflaterOutputStream;
 
 import org.apache.commons.codec.binary.Base64;
@@ -72,6 +73,8 @@ public class SecurityGroupRulesCmd extends Command {
     }
 
     String guestIp;
+    String gateway;
+    String netmask;
     String vmName;
     String guestMac;
     String signature;
@@ -86,10 +89,12 @@ public class SecurityGroupRulesCmd extends Command {
         super();
     }
 
-    public SecurityGroupRulesCmd(String guestIp, String guestMac, String vmName, Long vmId, String signature, Long seqNum, IpPortAndProto[] ingressRuleSet,
+    public SecurityGroupRulesCmd(String guestIp, String guestMac, String gateway, String netmask, String vmName, Long vmId, String signature, Long seqNum, IpPortAndProto[] ingressRuleSet,
             IpPortAndProto[] egressRuleSet) {
         super();
         this.guestIp = guestIp;
+        this.gateway = gateway;
+        this.netmask = netmask;
         this.vmName = vmName;
         this.ingressRuleSet = ingressRuleSet;
         this.egressRuleSet = egressRuleSet;
@@ -103,10 +108,12 @@ public class SecurityGroupRulesCmd extends Command {
         }
     }
 
-    public SecurityGroupRulesCmd(String guestIp, String guestMac, String vmName, Long vmId, String signature, Long seqNum, IpPortAndProto[] ingressRuleSet,
+    public SecurityGroupRulesCmd(String guestIp, String guestMac, String gateway, String netmask, String vmName, Long vmId, String signature, Long seqNum, IpPortAndProto[] ingressRuleSet,
             IpPortAndProto[] egressRuleSet, List<String> secIps) {
         super();
         this.guestIp = guestIp;
+        this.gateway = gateway;
+        this.netmask = netmask;
         this.vmName = vmName;
         this.ingressRuleSet = ingressRuleSet;
         this.egressRuleSet = egressRuleSet;
@@ -144,6 +151,10 @@ public class SecurityGroupRulesCmd extends Command {
 
     public String getGuestIp() {
         return guestIp;
+    }
+
+    public String getGateway() {
+        return gateway;
     }
 
     public List<String> getSecIps() {
@@ -289,6 +300,24 @@ public class SecurityGroupRulesCmd extends Command {
 
     public Long getMsId() {
         return msId;
+    }
+
+    public String getNetmask() {
+        return netmask;
+    }
+
+    public int getPrefixFromNetmask() {
+        String[] parts = netmask.split(Pattern.quote("."));
+        int netmaskAsInt = 0;
+        for (int i = 3; i >= 0; i--) {
+            netmaskAsInt += Integer.bitCount(Integer.parseInt(parts[i]));
+        }
+        return netmaskAsInt;
+
+    }
+
+    public String getGatewayWithPrefixFromNetmask() {
+        return String.format("%s/%s", getGateway(), getPrefixFromNetmask());
     }
 
 }

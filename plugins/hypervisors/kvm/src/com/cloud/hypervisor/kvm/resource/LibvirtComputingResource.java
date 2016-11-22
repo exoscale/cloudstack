@@ -77,6 +77,7 @@ import com.cloud.agent.api.NetworkUsageAnswer;
 import com.cloud.agent.api.NetworkUsageCommand;
 import com.cloud.agent.api.PingCommand;
 import com.cloud.agent.api.PingRoutingCommand;
+import com.cloud.agent.api.PingRoutingWithJuraNwGroupsCommand;
 import com.cloud.agent.api.PingRoutingWithNwGroupsCommand;
 import com.cloud.agent.api.PingTestCommand;
 import com.cloud.agent.api.PlugNicAnswer;
@@ -188,6 +189,7 @@ import com.cloud.utils.ExecutionResult;
 import com.cloud.utils.NumbersUtil;
 import com.cloud.utils.Pair;
 import com.cloud.utils.PropertiesUtil;
+import com.cloud.utils.Ternary;
 import com.cloud.utils.exception.CloudRuntimeException;
 import com.cloud.utils.net.NetUtils;
 import com.cloud.utils.script.OutputInterpreter;
@@ -302,9 +304,9 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     private String _heartBeatPath;
     private String _securityGroupPath;
     private String _juraPath;
-    private JuraState _juraState;
+    protected JuraState _juraState;
 
-    private enum JuraState {
+    protected enum JuraState {
         OFF, LOG, EXEC;
 
         public static JuraState fromString(String value) {
@@ -475,7 +477,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
     protected String _privateIp;
     protected String _pool;
     protected String _localGateway;
-    private boolean _canBridgeFirewall;
+    protected boolean _canBridgeFirewall;
     protected String _localStoragePath;
     protected String _localStorageUUID;
     protected boolean _noMemBalloon = false;
@@ -2706,8 +2708,8 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         }
 
         boolean result =
-                add_network_rules(cmd.getVmName(), Long.toString(cmd.getVmId()), cmd.getGuestIp(), cmd.getSignature(), Long.toString(cmd.getSeqNum()), cmd.getGuestMac(),
-                        cmd.stringifyRules(), vif, brname, cmd.getSecIpsString());
+                add_network_rules(cmd.getVmName(), Long.toString(cmd.getVmId()), cmd.getGuestIp(), cmd.getGatewayWithPrefixFromNetmask(), cmd.getSignature(), Long.toString(cmd.getSeqNum()), cmd.getGuestMac(),
+                        cmd.stringifyRules(), vif, brname, cmd.getSecIpsString(), cmd.getSecIps());
 
         if (!result) {
             s_logger.warn("Failed to program network rules for vm " + cmd.getVmName());
@@ -4095,9 +4097,71 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         if (!_canBridgeFirewall) {
             return new PingRoutingCommand(com.cloud.host.Host.Type.Routing, id, newStates, this.getHostVmStateReport());
         } else {
-            HashMap<String, Pair<Long, Long>> nwGrpStates = syncNetworkGroups(id);
-            return new PingRoutingWithNwGroupsCommand(getType(), id, newStates, this.getHostVmStateReport(), nwGrpStates);
+            HashMap<String, Pair<Long, Long>> nwGrpStates = new HashMap<>();
+            String result = get_rule_logs_for_vms();
+
+            if (_juraState == JuraState.EXEC) {
+                HashMap<String, Ternary<Long, String, String[]>> juraGateways = new HashMap<>();
+                HashMap<String, Ternary<Long, String, String[]>> juraPeers = new HashMap<>();
+                Gson gson = new Gson();
+                java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
+                Map<String, JuraNetwork> juraNetworks = gson.fromJson(result, type);
+                for (JuraNetwork juraNet : juraNetworks.values()) {
+                    if (juraNet.getDomainName() != null && juraNet.getDomainName().startsWith("i-")) {
+                        Long vmId = extractVmId(juraNet.getDomainName());
+                        try {
+                            Long seqNum = Long.parseLong(juraNet.getRules().getData() == null || juraNet.getRules().getData().length() < 7 ? "-1" : juraNet.getRules().getData().substring(6));
+                            nwGrpStates.put(juraNet.getDomainName(), new Pair<>(vmId, seqNum));
+                        } catch (NumberFormatException nfe) {
+                            nwGrpStates.put(juraNet.getDomainName(), new Pair<>(-1L, -1L));
+                        }
+                        juraGateways.put(juraNet.getDomainName(), new Ternary<>(vmId, juraNet.getMac(), juraNet.getGateways()));
+                        juraPeers.put(juraNet.getDomainName(), new Ternary<>(vmId, juraNet.getMac(), juraNet.getPeers()));
+                    }
+                }
+                return new PingRoutingWithJuraNwGroupsCommand(getType(), id, newStates, this.getHostVmStateReport(), nwGrpStates, juraGateways, juraPeers);
+            } else {
+                // security_groups.py output parsing
+                // Sample output is i-3-5-DEV,5,192.0.2.103,4,bb38d127218745fafc62d4fcd261f0eb,1
+                // What's returned: i-3-5-DEV:<5,1>
+                String[] rulelogs = result != null ? result.split(";") : new String[0];
+                for (String rulesforvm : rulelogs) {
+                    String[] log = rulesforvm.split(",");
+                    String vmName = "";
+                    Long vmId = -1L;
+                    Long secGroupSeq = -1L;
+                    if (log.length >= 1) {
+                        vmName = log[0];
+                        vmId = extractVmId(vmName);
+                    }
+                    if (log.length == 6) {
+                        try {
+                            secGroupSeq = Long.parseLong(log[5]);
+                        } catch (NumberFormatException nfe) {
+                        }
+                    }
+                    nwGrpStates.put(vmName, new Pair<>(vmId, secGroupSeq));
+                }
+                return new PingRoutingWithNwGroupsCommand(getType(), id, newStates, this.getHostVmStateReport(), nwGrpStates);
+            }
         }
+    }
+
+    /**
+     * Extract a vm id from it's cloudstack name.
+     * @param vmName should not be null
+     * @return a Long representing the VM ID
+     */
+    private Long extractVmId(String vmName) {
+        Long result = -1L;
+        String[] splittedName = vmName.split("-");
+        if (splittedName.length >= 3) {
+            try {
+                result = Long.parseLong(splittedName[2]);
+            } catch (NumberFormatException nfe) {
+            }
+        }
+        return result;
     }
 
     @Override
@@ -5413,7 +5477,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private boolean add_network_rules(String vmName, String vmId, String guestIP, String sig, String seq, String mac, String rules, String vif, String brname, String secIps) {
+    private boolean add_network_rules(String vmName, String vmId, String guestIP, String gatewayWithNetmaskPrefix, String sig, String seq, String mac, String rules, String vif, String brname, String secIps, List<String> secondaryIps) {
         boolean result = false;
         String newRules = rules.replace(" ", ";");
         switch(_juraState) {
@@ -5421,17 +5485,52 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
                 result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
                 break;
             case LOG:
-                add_network_rules_jura(vif, newRules, seq);
+                add_network_rules_jura(guestIP, gatewayWithNetmaskPrefix, seq, newRules, vif, secondaryIps);
                 result = add_network_rules_security_groups(vmName, vmId, guestIP, sig, seq, mac, newRules, vif, brname, secIps);
                 break;
             case EXEC:
-                result = add_network_rules_jura(vif, newRules, seq);
+                result = add_network_rules_jura(guestIP, gatewayWithNetmaskPrefix, seq, newRules, vif, secondaryIps);
                 break;
         }
         return result;
     }
 
-    private boolean add_network_rules_jura(String vif, String rules, String seq) {
+    private boolean add_network_rules_jura(String guestIP, String gatewayWithNetmaskPrefix, String seq, String rules, String vif, List<String> nicSecIps) {
+        Script cmdPeerAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdPeerAdd.add("peer", "set", vif);
+        cmdPeerAdd.add(guestIP);
+
+        if (nicSecIps != null) {
+            for (String secIpStr: nicSecIps) {
+                cmdPeerAdd.add(secIpStr);
+            }
+        }
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdPeerAdd.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdPeerAdd.execute();
+            if (result != null) {
+                s_logger.error("add_network_rules_jura returns 0 because of result=" + result);
+                return false;
+            }
+        }
+
+        Script cmdGatewayAdd = new Script(_juraPath, _timeout, s_logger);
+        cmdGatewayAdd.add("gateway", "set", vif);
+        cmdGatewayAdd.add(gatewayWithNetmaskPrefix);
+
+        if (s_logger.isDebugEnabled()) {
+            s_logger.debug("JURA -> " + cmdGatewayAdd.toString());
+        }
+        if (_juraState == JuraState.EXEC) {
+            String result = cmdGatewayAdd.execute();
+            if (result != null) {
+                s_logger.error("default_network_rules_for_systemvm_jura #3 returns 0 because of result=" + result);
+                return false;
+            }
+        }
+
         Script cmdFirewallAdd = new Script(_juraPath, _timeout, s_logger);
         cmdFirewallAdd.add("firewall", "set", vif);
         cmdFirewallAdd.add(rules);
@@ -5569,7 +5668,7 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         return true;
     }
 
-    private String get_rule_logs_for_vms() {
+    protected String get_rule_logs_for_vms() {
         String result = "";
         switch(_juraState) {
             case OFF:
@@ -5628,49 +5727,6 @@ public class LibvirtComputingResource extends ServerResourceBase implements Serv
         java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
         Map<String, JuraNetwork> juraNetworks = gson.fromJson(get_rule_logs_for_vms_jura(), type);
         return juraNetworks;
-    }
-
-    /*
-    Should return a map with the key being the vm's name, and a pair containing the VM id with the seq number of the security group rules.
-     */
-    private HashMap<String, Pair<Long, Long>> syncNetworkGroups(long id) {
-        HashMap<String, Pair<Long, Long>> states = new HashMap<String, Pair<Long, Long>>();
-
-        String result = get_rule_logs_for_vms();
-        if (_juraState == JuraState.EXEC) {
-            Gson gson = new Gson();
-            java.lang.reflect.Type type = new TypeToken<Map<String, JuraNetwork>>(){}.getType();
-            Map<String, JuraNetwork> juraNetworks = gson.fromJson(result, type);
-            for (JuraNetwork juraNet : juraNetworks.values()) {
-                if (juraNet.getDomainName() != null && juraNet.getDomainName().startsWith("i-")) {
-                    try {
-                        String[] domainName = juraNet.getDomainName().split("-");
-                        Long vmId = Long.parseLong(domainName[2]);
-                        Long seqNum = Long.parseLong(juraNet.getRules().getData() == null ? "0" : juraNet.getRules().getData().substring(6));
-                        states.put(juraNet.getDomainName(), new Pair<>(vmId, seqNum));
-                    } catch (NumberFormatException nfe) {
-                        states.put(juraNet.getDomainName(), new Pair<>(-1L, -1L));
-                    }
-                }
-            }
-        } else {
-            // security_groups.py output parsing
-            // Sample output is i-3-5-DEV,5,192.0.2.103,4,bb38d127218745fafc62d4fcd261f0eb,1
-            // What's returned: i-3-5-DEV:<5,1>
-            String[] rulelogs = result != null ? result.split(";") : new String[0];
-            for (String rulesforvm : rulelogs) {
-                String[] log = rulesforvm.split(",");
-                if (log.length != 6) {
-                    continue;
-                }
-                try {
-                    states.put(log[0], new Pair<Long, Long>(Long.parseLong(log[1]), Long.parseLong(log[5])));
-                } catch (NumberFormatException nfe) {
-                    states.put(log[0], new Pair<Long, Long>(-1L, -1L));
-                }
-            }
-        }
-        return states;
     }
 
     /* online snapshot supported by enhanced qemu-kvm */
