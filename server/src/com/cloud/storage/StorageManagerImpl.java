@@ -1134,7 +1134,7 @@ public class StorageManagerImpl extends ManagerBase implements StorageManager, C
                         " snapshots to cleanup on snapshot_store_ref for store: " + store.getName());
                     for (SnapshotDataStoreVO destroyedSnapshotStoreVO : destroyedSnapshotStoreVOs) {
                         // check if this snapshot has child
-                        SnapshotInfo snap = snapshotFactory.getSnapshot(destroyedSnapshotStoreVO.getSnapshotId(), store);
+                        SnapshotInfo snap = snapshotFactory.getSnapshotIncludingRemoved(destroyedSnapshotStoreVO.getSnapshotId(), store);
                         if (snap.getChild() != null) {
                             s_logger.debug("Skip snapshot on store: " + destroyedSnapshotStoreVO + " , because it has child");
                             continue;

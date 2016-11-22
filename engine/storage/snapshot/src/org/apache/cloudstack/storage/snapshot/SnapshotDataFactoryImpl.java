@@ -58,6 +58,13 @@ public class SnapshotDataFactoryImpl implements SnapshotDataFactory {
     }
 
     @Override
+    public SnapshotInfo getSnapshotIncludingRemoved(long snapshotId, DataStore store) {
+        SnapshotVO snapshot = snapshotDao.findByIdIncludingRemoved(snapshotId);
+        SnapshotObject so = SnapshotObject.getSnapshotObject(snapshot, store);
+        return so;
+    }
+
+    @Override
     public SnapshotInfo getSnapshot(DataObject obj, DataStore store) {
         SnapshotVO snapshot = snapshotDao.findById(obj.getId());
         if (snapshot == null) {

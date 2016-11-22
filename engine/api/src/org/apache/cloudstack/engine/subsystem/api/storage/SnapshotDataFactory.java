@@ -25,6 +25,8 @@ import com.cloud.storage.DataStoreRole;
 public interface SnapshotDataFactory {
     SnapshotInfo getSnapshot(long snapshotId, DataStore store);
 
+    SnapshotInfo getSnapshotIncludingRemoved(long snapshotId, DataStore store);
+
     SnapshotInfo getSnapshot(DataObject obj, DataStore store);
 
     SnapshotInfo getSnapshot(long snapshotId, DataStoreRole role);
