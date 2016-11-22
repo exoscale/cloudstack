@@ -1075,7 +1075,7 @@ setup_dhcpsrvr() {
   cat >> /etc/network/interfaces <<EOF
 auto eth0:eip
 iface eth0:eip inet static
-  address 203.0.113.254
+  address $EIP
   netmask 255.255.255.255
 EOF
   ifup eth0:eip
@@ -1355,6 +1355,9 @@ for i in $CMDLINE
           ;;
       eth0ip6prelen)
           ETH0_IP6_PRELEN=$VALUE
+          ;;
+      eip)
+          EIP=$VALUE
           ;;
       internaldns1)
           internalNS1=$VALUE

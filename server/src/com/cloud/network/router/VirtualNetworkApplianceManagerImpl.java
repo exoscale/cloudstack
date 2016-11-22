@@ -405,6 +405,8 @@ public class VirtualNetworkApplianceManagerImpl extends ManagerBase implements V
     @Inject
     OpRouterMonitorServiceDao _opRouterMonitorServiceDao;
 
+    public static final ConfigKey<String> RouterElasticIp = new ConfigKey<>("Advanced", String.class, "router.elastic.ip", "1.2.3.4", "The EIP loopback IP assigned to the virtual router", true, ConfigKey.Scope.Zone);
+
     int _routerRamSize;
     int _routerCpuMHz;
     int _retry = 2;
@@ -2304,6 +2306,8 @@ public class VirtualNetworkApplianceManagerImpl extends ManagerBase implements V
                 buf.append(" useextdns=true");
             }
         }
+
+        buf.append(" eip=").append(RouterElasticIp.valueIn(dc.getId()));
 
         if (s_logger.isDebugEnabled()) {
             s_logger.debug("Boot Args for " + profile + ": " + buf.toString());
@@ -4390,7 +4394,7 @@ public class VirtualNetworkApplianceManagerImpl extends ManagerBase implements V
 
     @Override
     public ConfigKey<?>[] getConfigKeys() {
-        return new ConfigKey<?>[] {UseExternalDnsServers, routerVersionCheckEnabled, SetServiceMonitor, RouterAlertsCheckInterval};
+        return new ConfigKey<?>[] {UseExternalDnsServers, routerVersionCheckEnabled, SetServiceMonitor, RouterAlertsCheckInterval, RouterElasticIp};
     }
 
     @Override
