@@ -263,6 +263,3 @@ FROM ((((((((((((((((((((((((((((((((
    left join `user_vm_details` `custom_speed` on(((`custom_speed`.`vm_id` = `vm_instance`.`id`) and (`custom_speed`.`name` = 'CpuSpeed'))))
    left join `user_vm_details` `custom_ram_size` on(((`custom_ram_size`.`vm_id` = `vm_instance`.`id`) and (`custom_ram_size`.`name` = 'memory'))));
 
-
--- To fix current base64 encoded user data
-UPDATE user_vm SET user_data=TO_BASE64(FROM_BASE64(user_data));
