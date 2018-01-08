@@ -55,6 +55,16 @@ public class DateUtilTest {
         } catch (ParseException e) {
             System.err.println("Parsing failed\n string : " + str + "\nexception :" + e.getLocalizedMessage());
         }
+
+        dfDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        str = dfDate.format(time);
+        System.out.println("Formated TZ time string : " + str);
+        try {
+            Date dtParsed = DateUtil.parseTZDateString(str);
+            System.out.println("Parsed TZ time string : " + dtParsed.toString());
+        } catch (ParseException e) {
+            System.err.println("Parsing failed\n string : " + str + "\nexception :" + e.getLocalizedMessage());
+        }
     }
 
 }
