@@ -27,6 +27,9 @@ import java.util.TimeZone;
 
 import com.cloud.utils.DateUtil.IntervalType;
 
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class DateUtilTest {
 
@@ -45,26 +48,17 @@ public class DateUtilTest {
             System.out.println("Next run time: " + DateUtil.getNextRunTime(IntervalType.getIntervalType(args[0]), args[1], "GMT", time).toString());
         }
 
-        time = new Date();
-        DateFormat dfDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'Z");
-        String str = dfDate.format(time);
-        System.out.println("Formated TZ time string : " + str);
-        try {
-            Date dtParsed = DateUtil.parseTZDateString(str);
-            System.out.println("Parsed TZ time string : " + dtParsed.toString());
-        } catch (ParseException e) {
-            System.err.println("Parsing failed\n string : " + str + "\nexception :" + e.getLocalizedMessage());
-        }
+//        zonedTimeFormat();
 
-        dfDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        str = dfDate.format(time);
-        System.out.println("Formated TZ time string : " + str);
-        try {
-            Date dtParsed = DateUtil.parseTZDateString(str);
-            System.out.println("Parsed TZ time string : " + dtParsed.toString());
-        } catch (ParseException e) {
-            System.err.println("Parsing failed\n string : " + str + "\nexception :" + e.getLocalizedMessage());
-        }
     }
 
+    @Test
+    public void zonedTimeFormat() throws ParseException {
+        Date time = new Date();
+        DateFormat dfDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        String str = dfDate.format(time);
+        Date dtParsed = dtParsed = DateUtil.parseTZDateString(str);
+
+        assertEquals(time.toString(), dtParsed.toString());
+    }
 }
